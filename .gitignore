@@ -1,0 +1,22 @@
+# Ambiente
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Streamlit
+.streamlit/secrets.toml
+
+# IDE
+.vscode/
+.idea/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Dados
+data/*.csv
+data/*.parquet
