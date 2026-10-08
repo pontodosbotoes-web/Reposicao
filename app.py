@@ -122,8 +122,8 @@ if "show_params" not in st.session_state:
 # ============================================================
 hoje = date.today()
 
-c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 = st.columns(
-    [1.1, 1.2, 2.2, 1.6, 1.6, 1.6, 0.45, 0.45, 0.45, 0.45],
+c1, c2, c3, c4, c5, c6, c7, c8, c9 = st.columns(
+    [1.1, 1.2, 2.2, 1.6, 1.6, 1.6, 0.5, 0.5, 0.5],
     vertical_alignment="bottom",
 )
 
@@ -152,9 +152,6 @@ with c8:
     btn_limpar = st.button("🧹", use_container_width=True, help="Limpar filtros")
 
 with c9:
-    st.button("📄", disabled=True, use_container_width=True, help="Escolha uma filial na aba")
-
-with c10:
     btn_params = st.button("⚙️", use_container_width=True, help="Parâmetros")
 
 
