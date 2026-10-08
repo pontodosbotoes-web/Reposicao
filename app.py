@@ -41,7 +41,6 @@ st.markdown("""
             padding: 6px 0;
             color: #FAFAFA;
             line-height: 1.6;
-            overflow: visible;
         }
         .secao-titulo {
             font-size: 1.05rem;
@@ -51,22 +50,38 @@ st.markdown("""
             margin-bottom: 6px;
             border-bottom: 2px solid #334155;
         }
-        div[data-testid="stButton"] button {
-            width: 100% !important;
-            padding: 4px 2px !important;
-        }
-        div[data-testid="stDownloadButton"] button {
-            width: 100% !important;
+
+        /* Centralizar abas */
+        .stTabs [data-baseweb="tab-list"] {
+            justify-content: center;
+            gap: 4px;
         }
         .stTabs [data-baseweb="tab"] {
-            font-size: 0.85rem;
-            padding: 6px 12px;
+            font-size: 0.88rem;
+            padding: 8px 18px;
         }
-        div[data-testid="stMetricValue"] {
+
+        /* Centralizar métricas */
+        [data-testid="stMetric"] {
+            text-align: center;
+        }
+        [data-testid="stMetricValue"] {
             font-size: 1.3rem;
+            text-align: center;
         }
-        div[data-testid="stMetricLabel"] {
-            font-size: 0.8rem;
+        [data-testid="stMetricLabel"] {
+            font-size: 0.82rem;
+            text-align: center;
+        }
+
+        /* Botões */
+        div[data-testid="stButton"] button,
+        div[data-testid="stDownloadButton"] button {
+            width: 100% !important;
+            height: 40px !important;
+            padding: 4px 2px !important;
+            font-size: 1.1rem !important;
+            border-radius: 6px !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -102,12 +117,13 @@ if "show_params" not in st.session_state:
 
 
 # ============================================================
-# FILTROS + BOTÕES (mesma linha, alinhados)
+# FILTROS + BOTÕES (alinhados verticalmente pela base)
 # ============================================================
 hoje = date.today()
 
 c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 = st.columns(
-    [1.1, 1.2, 2.2, 1.6, 1.6, 1.6, 0.4, 0.4, 0.4, 0.4]
+    [1.1, 1.2, 2.2, 1.6, 1.6, 1.6, 0.45, 0.45, 0.45, 0.45],
+    vertical_alignment="bottom",
 )
 
 with c1:
@@ -129,25 +145,16 @@ with c6:
     subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel")
 
 with c7:
-    st.write("")
     btn_consultar = st.button("🔍", type="primary", use_container_width=True, help="Consultar")
 
 with c8:
-    st.write("")
     btn_limpar = st.button("🧹", use_container_width=True, help="Limpar filtros")
 
 with c9:
-    st.write("")
-    tem_dados = "df_transf" in st.session_state and not st.session_state["df_transf"].empty
-    if tem_dados:
-        pdf_bytes = None  # será gerado abaixo via função
-        # placeholder para o botão PDF
-        pdf_slot = st.empty()
-    else:
-        st.button("📄", disabled=True, use_container_width=True, help="Faça uma consulta primeiro")
+    # Placeholder — será preenchido com o botão PDF após o resultado
+    pdf_placeholder = st.empty()
 
 with c10:
-    st.write("")
     btn_params = st.button("⚙️", use_container_width=True, help="Parâmetros")
 
 
@@ -183,7 +190,7 @@ else:
 # LIMPAR
 # ============================================================
 if btn_limpar:
-    for k in ["df_base", "df_transf", "df_base_n"]:
+    for k in ["df_base", "df_transf", "df_base_n", "modo_env_usado"]:
         if k in st.session_state:
             del st.session_state[k]
     st.rerun()
@@ -219,8 +226,6 @@ def gerar_pdf_completo(df, modo):
             return Paragraph("<i>Nenhum item.</i>", cell_style)
 
         if tipo == "ENV":
-            cols = ["#", "Prioridade", "Produto", "NomeFilialDestino", "QtdTransferir",
-                    "ReservaOrigem", "Qtd Ideal", "Motivo"]
             heads = ["#", "Pr.", "Produto", "Destino", "Qtd", "Reserva", "Ideal", "Motivo"]
             widths = [25, 45, 200, 70, 45, 50, 45, 250]
             mapper = lambda r: [
@@ -229,8 +234,6 @@ def gerar_pdf_completo(df, modo):
                 int(r["Qtd Ideal"]), r["Motivo"],
             ]
         else:
-            cols = ["#", "Prioridade", "Produto", "NomeFilialOrigem", "QtdTransferir",
-                    "DiasAteZerarDestino", "Qtd Ideal", "Motivo"]
             heads = ["#", "Pr.", "Produto", "Origem", "Qtd", "Dias", "Ideal", "Motivo"]
             widths = [25, 45, 200, 70, 45, 50, 45, 250]
             mapper = lambda r: [
@@ -280,7 +283,6 @@ def gerar_pdf_completo(df, modo):
 
         elements.append(Paragraph(f"<b>{nome_filial}</b>", filial_style))
 
-        # ENVIAR
         df_env = df_env.reset_index(drop=True)
         df_env.insert(0, "#", range(1, len(df_env) + 1))
         df_env["Qtd Ideal"] = df_env["IdealDestino"] if modo == "Destino" else df_env["IdealOrigem"]
@@ -289,7 +291,6 @@ def gerar_pdf_completo(df, modo):
         elements.append(_build(df_env, "ENV"))
         elements.append(Spacer(1, 12))
 
-        # RECEBER
         df_rec = df_rec.reset_index(drop=True)
         df_rec.insert(0, "#", range(1, len(df_rec) + 1))
         df_rec["Qtd Ideal"] = df_rec["IdealDestino"] if modo == "Destino" else df_rec["IdealOrigem"]
@@ -341,10 +342,10 @@ if btn_consultar:
 
 
 # ============================================================
-# RENDER PDF NO SLOT (após consulta)
+# PREENCHE PDF PLACEHOLDER (após consulta)
 # ============================================================
-if tem_dados:
-    with pdf_slot.container():
+if "df_transf" in st.session_state and not st.session_state["df_transf"].empty:
+    with pdf_placeholder.container():
         try:
             pdf_bytes = gerar_pdf_completo(
                 st.session_state["df_transf"],
@@ -360,6 +361,9 @@ if tem_dados:
             )
         except Exception as e:
             st.button("📄", disabled=True, use_container_width=True, help=f"Erro: {e}")
+else:
+    with pdf_placeholder.container():
+        st.button("📄", disabled=True, use_container_width=True, help="Faça uma consulta primeiro")
 
 
 # ============================================================
@@ -403,7 +407,6 @@ if "df_transf" in st.session_state:
                                "ReservaOrigem", "Qtd Ideal", "Motivo"]]
                     dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Fabricante",
                                    "Emb.", "Destino", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
-                    dfe = dfe.dropna(how="all")
                     h = min(420, max(120, len(dfe) * 36 + 42))
                     st.dataframe(dfe, use_container_width=True, hide_index=True, height=h)
 
@@ -421,6 +424,5 @@ if "df_transf" in st.session_state:
                                "DiasAteZerarDestino", "Qtd Ideal", "Motivo"]]
                     dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Fabricante",
                                    "Emb.", "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
-                    dfr = dfr.dropna(how="all")
                     h = min(420, max(120, len(dfr) * 36 + 42))
                     st.dataframe(dfr, use_container_width=True, hide_index=True, height=h)
