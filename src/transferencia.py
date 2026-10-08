@@ -20,7 +20,7 @@ def calcular_indicadores(
     piso_exposicao: int = 0,
     reserva_pct: float = 25,
     atacado_tem_piso: bool = False,
-    atacado_tem_reserva: bool = True,
+    atacado_tem_reserva: bool = False,
 ) -> pd.DataFrame:
     df = df.copy()
     dias = cobertura_alvo + lead_time
@@ -159,12 +159,16 @@ def gerar_sugestoes(
     piso_exposicao: int = 0,
     reserva_pct: float = 25,
     atacado_tem_piso: bool = False,
-    atacado_tem_reserva: bool = True,
+    atacado_tem_reserva: bool = False,
 ) -> pd.DataFrame:
     df = calcular_indicadores(
-        df_base, cobertura_alvo, lead_time,
-        piso_exposicao, reserva_pct,
-        atacado_tem_piso, atacado_tem_reserva,
+        df_base,
+        cobertura_alvo=cobertura_alvo,
+        lead_time=lead_time,
+        piso_exposicao=piso_exposicao,
+        reserva_pct=reserva_pct,
+        atacado_tem_piso=atacado_tem_piso,
+        atacado_tem_reserva=atacado_tem_reserva,
     )
     df = excluir_descontinuados(df)
 
