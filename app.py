@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import date
+from datetime import date, datetime
 from io import BytesIO
 
 from reportlab.lib.pagesizes import A4, landscape
@@ -152,7 +152,7 @@ with c8:
     btn_limpar = st.button("🧹", use_container_width=True, help="Limpar filtros")
 
 with c9:
-    pdf_placeholder = st.empty()
+    st.button("📄", disabled=True, use_container_width=True, help="Escolha uma filial na aba")
 
 with c10:
     btn_params = st.button("⚙️", use_container_width=True, help="Parâmetros")
@@ -207,7 +207,8 @@ if btn_limpar:
 # ============================================================
 # PDF
 # ============================================================
-def gerar_pdf_completo(df, modo_env, modo_rec):
+def gerar_pdf_filial(nome_filial, cod, df, modo_env, modo_rec):
+    """Gera PDF de UMA filial específica."""
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer, pagesize=landscape(A4),
@@ -216,18 +217,17 @@ def gerar_pdf_completo(df, modo_env, modo_rec):
     elements = []
     styles = getSampleStyleSheet()
 
-    title_style = ParagraphStyle('T', parent=styles['Heading1'], fontSize=14, leading=16, alignment=1)
+    page_w = landscape(A4)[0] - 30  # 15 esq + 15 dir
+
+    title_style = ParagraphStyle('T', parent=styles['Heading1'], fontSize=14, leading=16, alignment=0)
+    date_style = ParagraphStyle('D', parent=styles['Normal'], fontSize=9, leading=16,
+                                alignment=2, textColor=colors.HexColor('#475569'))
     filial_style = ParagraphStyle('F', parent=styles['Heading2'], fontSize=12, leading=14,
                                   textColor=colors.HexColor('#1E293B'), spaceBefore=10, spaceAfter=6)
-    sub_style = ParagraphStyle('S', parent=styles['Normal'], fontSize=8, leading=10,
-                               alignment=1, textColor=colors.HexColor('#475569'))
     cell_style = ParagraphStyle('C', parent=styles['Normal'], fontSize=7, leading=9)
+    cell_right = ParagraphStyle('CR', parent=styles['Normal'], fontSize=7, leading=9, alignment=2)
     header_style = ParagraphStyle('H', parent=styles['Normal'], fontSize=7, leading=9,
                                   fontName='Helvetica-Bold', textColor=colors.white, alignment=1)
-
-    elements.append(Paragraph("<b>Relatorio de Transferencias</b>", title_style))
-    elements.append(Paragraph(f"Gerado em {date.today().strftime('%d/%m/%Y')}", sub_style))
-    elements.append(Spacer(1, 12))
 
     def _build(df_part, tipo):
         if df_part.empty:
@@ -235,34 +235,42 @@ def gerar_pdf_completo(df, modo_env, modo_rec):
 
         if tipo == "ENV":
             heads = ["#", "Pr.", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Reserva", "Ideal", "Motivo"]
-            widths = [22, 42, 175, 35, 80, 60, 40, 42, 40, 200]
+            widths = [22, 42, 320, 35, 80, 60, 40, 42, 40, 110]
             mapper = lambda r: [
-                r["#"], r["Prioridade"], r["Produto"], r["Embalagem"], r["Fabricante"],
-                r["NomeFilialDestino"], int(r["QtdTransferir"]),
-                int(r["ReservaOrigem"]), int(r["Qtd Ideal"]), r["Motivo"],
+                (r["#"], "C"), (r["Prioridade"], "C"), (r["Produto"], "C"),
+                (r["Embalagem"], "C"), (r["Fabricante"], "C"),
+                (r["NomeFilialDestino"], "C"),
+                (int(r["QtdTransferir"]), "R"),
+                (int(r["ReservaOrigem"]), "R"),
+                (int(r["Qtd Ideal"]), "R"),
+                (r["Motivo"], "C"),
             ]
         else:
             heads = ["#", "Pr.", "Produto", "Emb.", "Fabricante", "Origem", "Qtd", "Dias", "Ideal", "Motivo"]
-            widths = [22, 42, 175, 35, 80, 60, 40, 42, 40, 200]
+            widths = [22, 42, 320, 35, 80, 60, 40, 42, 40, 110]
             mapper = lambda r: [
-                r["#"], r["Prioridade"], r["Produto"], r["Embalagem"], r["Fabricante"],
-                r["NomeFilialOrigem"], int(r["QtdTransferir"]),
-                int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else "-",
-                int(r["Qtd Ideal"]), r["Motivo"],
+                (r["#"], "C"), (r["Prioridade"], "C"), (r["Produto"], "C"),
+                (r["Embalagem"], "C"), (r["Fabricante"], "C"),
+                (r["NomeFilialOrigem"], "C"),
+                (int(r["QtdTransferir"]), "R"),
+                (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else "-", "R"),
+                (int(r["Qtd Ideal"]), "R"),
+                (r["Motivo"], "C"),
             ]
 
         data = [[Paragraph(h, header_style) for h in heads]]
         for _, row in df_part.iterrows():
             vals = []
-            for v in mapper(row):
+            for v, align in mapper(row):
                 if v is None or (isinstance(v, float) and pd.isna(v)):
                     v = ""
                 elif isinstance(v, float) and v.is_integer():
                     v = int(v)
-                vals.append(Paragraph(str(v), cell_style))
+                stl = cell_right if align == "R" else cell_style
+                vals.append(Paragraph(str(v), stl))
             data.append(vals)
 
-        t = Table(data, colWidths=widths, repeatRows=1)
+        t = Table(data, colWidths=widths, repeatRows=1, hAlign='LEFT')
         t.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E293B')),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -275,36 +283,47 @@ def gerar_pdf_completo(df, modo_env, modo_rec):
         ]))
         return t
 
-    codigos = {"ALECRIM": 1, "VIA DIRETA": 2, "ZONA SUL": 3, "ZONA NORTE": 4, "ATACADO": 5}
-    primeiro = True
+    # Filtra só dessa filial
+    df_env = df[df["CodigoFilialOrigem"] == cod].copy()
+    df_rec = df[df["CodigoFilialDestino"] == cod].copy()
 
-    for nome_filial, cod in codigos.items():
-        df_env = df[df["CodigoFilialOrigem"] == cod].copy()
-        df_rec = df[df["CodigoFilialDestino"] == cod].copy()
+    if df_env.empty and df_rec.empty:
+        elements.append(Paragraph(f"<b>Sem movimentações para {nome_filial.title()}</b>", title_style))
+        doc.build(elements)
+        buffer.seek(0)
+        return buffer
 
-        if df_env.empty and df_rec.empty:
-            continue
+    # Cabeçalho
+    agora = datetime.now()
+    header_data = [[
+        Paragraph(f"<b>Relatorio de Transferencias - {nome_filial.title()}</b>", title_style),
+        Paragraph(f"Gerado em {agora.strftime('%d/%m/%Y %H:%M:%S')}", date_style),
+    ]]
+    header_tbl = Table(header_data, colWidths=[page_w * 0.6, page_w * 0.4], hAlign='LEFT')
+    header_tbl.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'BOTTOM'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+    ]))
+    elements.append(header_tbl)
+    elements.append(Spacer(1, 14))
 
-        if not primeiro:
-            elements.append(PageBreak())
-        primeiro = False
+    # ENVIAR
+    df_env = df_env.reset_index(drop=True)
+    df_env.insert(0, "#", range(1, len(df_env) + 1))
+    df_env["Qtd Ideal"] = df_env["IdealOrigem"] if modo_env == "Origem" else df_env["IdealDestino"]
+    df_env["Prioridade"] = df_env["Prioridade"].map(PRIO_TXT).fillna("-")
+    elements.append(Paragraph("<b>ENVIAR</b>", filial_style))
+    elements.append(_build(df_env, "ENV"))
+    elements.append(Spacer(1, 14))
 
-        elements.append(Paragraph(f"<b>{nome_filial}</b>", filial_style))
-
-        df_env = df_env.reset_index(drop=True)
-        df_env.insert(0, "#", range(1, len(df_env) + 1))
-        df_env["Qtd Ideal"] = df_env["IdealOrigem"] if modo_env == "Origem" else df_env["IdealDestino"]
-        df_env["Prioridade"] = df_env["Prioridade"].map(PRIO_TXT).fillna("-")
-        elements.append(Paragraph("<b>ENVIAR</b>", styles['Heading3']))
-        elements.append(_build(df_env, "ENV"))
-        elements.append(Spacer(1, 12))
-
-        df_rec = df_rec.reset_index(drop=True)
-        df_rec.insert(0, "#", range(1, len(df_rec) + 1))
-        df_rec["Qtd Ideal"] = df_rec["IdealDestino"] if modo_rec == "Destino" else df_rec["IdealOrigem"]
-        df_rec["Prioridade"] = df_rec["Prioridade"].map(PRIO_TXT).fillna("-")
-        elements.append(Paragraph("<b>RECEBER</b>", styles['Heading3']))
-        elements.append(_build(df_rec, "REC"))
+    # RECEBER
+    df_rec = df_rec.reset_index(drop=True)
+    df_rec.insert(0, "#", range(1, len(df_rec) + 1))
+    df_rec["Qtd Ideal"] = df_rec["IdealDestino"] if modo_rec == "Destino" else df_rec["IdealOrigem"]
+    df_rec["Prioridade"] = df_rec["Prioridade"].map(PRIO_TXT).fillna("-")
+    elements.append(Paragraph("<b>RECEBER</b>", filial_style))
+    elements.append(_build(df_rec, "REC"))
 
     doc.build(elements)
     buffer.seek(0)
@@ -352,32 +371,6 @@ if btn_consultar:
 
 
 # ============================================================
-# PDF PLACEHOLDER
-# ============================================================
-if "df_transf" in st.session_state and not st.session_state["df_transf"].empty:
-    with pdf_placeholder.container():
-        try:
-            pdf_bytes = gerar_pdf_completo(
-                st.session_state["df_transf"],
-                st.session_state.get("modo_env_usado", "Origem"),
-                st.session_state.get("modo_rec_usado", "Destino"),
-            )
-            st.download_button(
-                "📄",
-                data=pdf_bytes,
-                file_name=f"transferencias_{date.today().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-                help="Gerar PDF completo",
-            )
-        except Exception as e:
-            st.button("📄", disabled=True, use_container_width=True, help=f"Erro: {e}")
-else:
-    with pdf_placeholder.container():
-        st.button("📄", disabled=True, use_container_width=True, help="Faça uma consulta primeiro")
-
-
-# ============================================================
 # RESULTADO
 # ============================================================
 if "df_transf" in st.session_state:
@@ -398,14 +391,32 @@ if "df_transf" in st.session_state:
                 df_env = df[df["CodigoFilialOrigem"] == cod].copy().reset_index(drop=True)
                 df_rec = df[df["CodigoFilialDestino"] == cod].copy().reset_index(drop=True)
 
-                # Métricas
-                m1, m2, m3, m4 = st.columns(4)
+                # ---- MÉTRICAS + BOTÃO PDF NA MESMA LINHA ----
+                m1, m2, m3, m4, m5 = st.columns([1, 1, 1, 1, 1.2])
                 m1.metric("📤 Enviar (itens)", len(df_env))
                 m2.metric("📤 Enviar (un)", int(df_env["QtdTransferir"].sum()) if not df_env.empty else 0)
                 m3.metric("📥 Receber (itens)", len(df_rec))
                 m4.metric("📥 Receber (un)", int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0)
 
-                # ENVIAR
+                with m5:
+                    st.write("")  # espaçador para alinhar com as métricas
+                    try:
+                        pdf_bytes = gerar_pdf_filial(nome, cod, df, modo_e, modo_r)
+                        agora = datetime.now()
+                        nome_file = nome.title().replace(" ", "")
+                        file_name = f"Transferencia {nome_file} {agora.strftime('%Y%m%d %H%M%S')}.pdf"
+                        st.download_button(
+                            "📄 Gerar PDF",
+                            data=pdf_bytes,
+                            file_name=file_name,
+                            mime="application/pdf",
+                            use_container_width=True,
+                            key=f"pdf_{cod}",
+                        )
+                    except Exception as e:
+                        st.button(f"Erro: {e}", disabled=True, use_container_width=True)
+
+                # ---- ENVIAR ----
                 st.markdown('<div class="secao-titulo">📤 ENVIAR</div>', unsafe_allow_html=True)
                 if df_env.empty:
                     st.caption("Nada a enviar")
@@ -422,7 +433,7 @@ if "df_transf" in st.session_state:
                     h = min(420, max(120, len(dfe) * 36 + 42))
                     st.dataframe(dfe, use_container_width=True, hide_index=True, height=h)
 
-                # RECEBER
+                # ---- RECEBER ----
                 st.markdown('<div class="secao-titulo">📥 RECEBER</div>', unsafe_allow_html=True)
                 if df_rec.empty:
                     st.caption("Nada a receber")
