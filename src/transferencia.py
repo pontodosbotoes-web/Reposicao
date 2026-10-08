@@ -16,10 +16,11 @@ MATRIZ_PROXIMIDADE = {
 def calcular_indicadores(
     df: pd.DataFrame,
     cobertura_alvo: int = 30,
-    lead_time: int = 5,
+    lead_time: int = 10,
     piso_exposicao: int = 0,
     reserva_pct: float = 25,
     atacado_tem_piso: bool = False,
+    atacado_tem_reserva: bool = True,
 ) -> pd.DataFrame:
     df = df.copy()
     dias = cobertura_alvo + lead_time
@@ -29,19 +30,25 @@ def calcular_indicadores(
             return 0
         return piso_exposicao
 
+    def _reserva(cod):
+        if cod == 5 and not atacado_tem_reserva:
+            return 0
+        return reserva_pct
+
     df["Piso"] = df["CodigoFilial"].apply(_piso)
     df["EstoqueIdeal"] = np.maximum(df["Piso"], df["VelocidadePeriodo"] * dias).round(0).astype(int)
     df["Excesso"] = np.maximum(0, df["SaldoProvavel"] - df["EstoqueIdeal"])
     df["Falta"] = np.maximum(0, df["EstoqueIdeal"] - df["SaldoProvavel"])
-    df["ReservaOrigem"] = np.ceil(df["Excesso"] * reserva_pct / 100).astype(int)
+
+    df["PercReserva"] = df["CodigoFilial"].apply(_reserva)
+    df["ReservaOrigem"] = np.ceil(df["Excesso"] * df["PercReserva"] / 100).astype(int)
+
     df["ExcessoTransferivel"] = np.maximum(0, df["Excesso"] - df["ReservaOrigem"])
     df["DiasAteZerar"] = np.where(
         df["VelocidadeAtiva"] > 0,
         df["SaldoProvavel"] / df["VelocidadeAtiva"],
         np.nan,
     )
-    
-    # Anti-gangorra ainda não implementado — usa 0 (sem bloqueio)
     df["QtdRecebidaRecente"] = 0
 
     return df
@@ -148,13 +155,17 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
 def gerar_sugestoes(
     df_base: pd.DataFrame,
     cobertura_alvo: int = 30,
-    lead_time: int = 5,
+    lead_time: int = 10,
     piso_exposicao: int = 0,
     reserva_pct: float = 25,
     atacado_tem_piso: bool = False,
+    atacado_tem_reserva: bool = True,
 ) -> pd.DataFrame:
-    df = calcular_indicadores(df_base, cobertura_alvo, lead_time,
-                               piso_exposicao, reserva_pct, atacado_tem_piso)
+    df = calcular_indicadores(
+        df_base, cobertura_alvo, lead_time,
+        piso_exposicao, reserva_pct,
+        atacado_tem_piso, atacado_tem_reserva,
+    )
     df = excluir_descontinuados(df)
 
     todas = []
