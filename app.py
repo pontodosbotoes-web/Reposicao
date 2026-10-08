@@ -1,12 +1,14 @@
 import streamlit as st
 import pandas as pd
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from io import BytesIO
 
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
+from reportlab.pdfgen import canvas
 
 from src.db import (
     carregar_filiais, carregar_fabricantes,
@@ -101,6 +103,16 @@ st.markdown('<div class="titulo-pagina">PB Transferência</div>', unsafe_allow_h
 
 
 PRIO_TXT = {1: "Crítica", 2: "Alta", 3: "Normal"}
+
+try:
+    TZ_BR = ZoneInfo("America/Sao_Paulo")
+except Exception:
+    from datetime import timezone, timedelta
+    TZ_BR = timezone(timedelta(hours=-3))
+
+
+def agora_br():
+    return datetime.now(TZ_BR)
 
 
 # ============================================================
@@ -204,24 +216,67 @@ if btn_limpar:
 # ============================================================
 # PDF
 # ============================================================
+class HeaderFooterCanvas(canvas.Canvas):
+    """Desenha cabeçalho e rodapé em todas as páginas."""
+
+    def __init__(self, *args, **kwargs):
+        self.titulo = kwargs.pop("titulo", "Relatorio de Transferencias")
+        self.gerado_em = kwargs.pop("gerado_em", "")
+        super().__init__(*args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        num_pages = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_header_footer(num_pages)
+            super().showPage()
+        super().save()
+
+    def draw_header_footer(self, page_count):
+        w, h = landscape(A4)  # largura, altura (842 x 595)
+
+        # ---------- CABEÇALHO ----------
+        self.setFont("Helvetica-Bold", 10)
+        self.setFillColor(colors.HexColor("#1E293B"))
+        self.drawString(15, h - 22, self.titulo)
+
+        # Linha divisória
+        self.setStrokeColor(colors.HexColor("#CBD5E1"))
+        self.setLineWidth(0.5)
+        self.line(15, h - 28, w - 15, h - 28)
+
+        # ---------- RODAPÉ ----------
+        self.setFont("Helvetica", 8)
+        self.setFillColor(colors.HexColor("#64748B"))
+
+        # Esquerda: Gerado em
+        self.drawString(15, 12, f"Gerado em {self.gerado_em}")
+
+        # Centro: Página X de Y
+        self.drawCentredString(w / 2, 12, f"Página {self._pageNumber} de {page_count}")
+
 def gerar_pdf_filial(nome_filial, cod, df, modo_env, modo_rec):
-    """Gera PDF de UMA filial específica."""
+    """Gera PDF de UMA filial com cabeçalho/rodapé em todas as páginas."""
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer, pagesize=landscape(A4),
-        rightMargin=15, leftMargin=15, topMargin=20, bottomMargin=20,
+        rightMargin=15, leftMargin=15,
+        topMargin=35, bottomMargin=25,  # espaço p/ header/footer
     )
     elements = []
     styles = getSampleStyleSheet()
 
-    page_w = landscape(A4)[0] - 30  # 15 esq + 15 dir
+    page_w = landscape(A4)[0] - 30
 
-    title_style = ParagraphStyle('T', parent=styles['Heading1'], fontSize=14, leading=16, alignment=0)
-    date_style = ParagraphStyle('D', parent=styles['Normal'], fontSize=9, leading=16,
-                                alignment=2, textColor=colors.HexColor('#475569'))
-    filial_style = ParagraphStyle('F', parent=styles['Heading2'], fontSize=12, leading=14,
-                                  textColor=colors.HexColor('#1E293B'), spaceBefore=10, spaceAfter=6)
-    cell_style = ParagraphStyle('C', parent=styles['Normal'], fontSize=7, leading=9)
+    filial_style = ParagraphStyle('F', parent=styles['Heading2'], fontSize=11, leading=13,
+                                  textColor=colors.HexColor('#1E293B'), spaceBefore=0, spaceAfter=6)
+    cell_style = ParagraphStyle('C', parent=styles['Normal'], fontSize=7, leading=9, alignment=0)
+    cell_center = ParagraphStyle('CC', parent=styles['Normal'], fontSize=7, leading=9, alignment=1)
     cell_right = ParagraphStyle('CR', parent=styles['Normal'], fontSize=7, leading=9, alignment=2)
     header_style = ParagraphStyle('H', parent=styles['Normal'], fontSize=7, leading=9,
                                   fontName='Helvetica-Bold', textColor=colors.white, alignment=1)
@@ -263,7 +318,12 @@ def gerar_pdf_filial(nome_filial, cod, df, modo_env, modo_rec):
                     v = ""
                 elif isinstance(v, float) and v.is_integer():
                     v = int(v)
-                stl = cell_right if align == "R" else cell_style
+                if align == "R":
+                    stl = cell_right
+                elif align == "C":
+                    stl = cell_center
+                else:
+                    stl = cell_style
                 vals.append(Paragraph(str(v), stl))
             data.append(vals)
 
@@ -280,30 +340,23 @@ def gerar_pdf_filial(nome_filial, cod, df, modo_env, modo_rec):
         ]))
         return t
 
-    # Filtra só dessa filial
+    # Filtra filial
     df_env = df[df["CodigoFilialOrigem"] == cod].copy()
     df_rec = df[df["CodigoFilialDestino"] == cod].copy()
 
     if df_env.empty and df_rec.empty:
-        elements.append(Paragraph(f"<b>Sem movimentações para {nome_filial.title()}</b>", title_style))
-        doc.build(elements)
+        elements.append(Paragraph(f"<b>Sem movimentações para {nome_filial.title()}</b>", filial_style))
+        agora = agora_br()
+        titulo_cab = f"Relatorio de Transferencias - {nome_filial.title()}"
+        doc.build(
+            elements,
+            canvasmaker=lambda *a, **kw: HeaderFooterCanvas(
+                *a, titulo=titulo_cab,
+                gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), **kw
+            ),
+        )
         buffer.seek(0)
-        return buffer
-
-    # Cabeçalho
-    agora = datetime.now()
-    header_data = [[
-        Paragraph(f"<b>Relatorio de Transferencias - {nome_filial.title()}</b>", title_style),
-        Paragraph(f"Gerado em {agora.strftime('%d/%m/%Y %H:%M:%S')}", date_style),
-    ]]
-    header_tbl = Table(header_data, colWidths=[page_w * 0.6, page_w * 0.4], hAlign='LEFT')
-    header_tbl.setStyle(TableStyle([
-        ('VALIGN', (0, 0), (-1, -1), 'BOTTOM'),
-        ('LEFTPADDING', (0, 0), (-1, -1), 0),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-    ]))
-    elements.append(header_tbl)
-    elements.append(Spacer(1, 14))
+        return buffer, agora
 
     # ENVIAR
     df_env = df_env.reset_index(drop=True)
@@ -322,9 +375,18 @@ def gerar_pdf_filial(nome_filial, cod, df, modo_env, modo_rec):
     elements.append(Paragraph("<b>RECEBER</b>", filial_style))
     elements.append(_build(df_rec, "REC"))
 
-    doc.build(elements)
+    # Gera
+    agora = agora_br()
+    titulo_cab = f"Relatorio de Transferencias - {nome_filial.title()}"
+    doc.build(
+        elements,
+        canvasmaker=lambda *a, **kw: HeaderFooterCanvas(
+            *a, titulo=titulo_cab,
+            gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), **kw
+        ),
+    )
     buffer.seek(0)
-    return buffer
+    return buffer, agora
 
 
 # ============================================================
@@ -396,10 +458,20 @@ if "df_transf" in st.session_state:
                 m4.metric("📥 Receber (un)", int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0)
 
                 with m5:
-                    st.write("")  # espaçador para alinhar com as métricas
-                    try:
-                        pdf_bytes = gerar_pdf_filial(nome, cod, df, modo_e, modo_r)
-                        agora = datetime.now()
+                    st.write("")
+                    # Cache do PDF pela chave filial + hash dos dados
+                    cache_key = f"pdf_cache_{cod}_{len(df_env)}_{len(df_rec)}"
+                    
+                    if cache_key not in st.session_state:
+                        try:
+                            pdf_bytes, agora = gerar_pdf_filial(nome, cod, df, modo_e, modo_r)
+                            st.session_state[cache_key] = (pdf_bytes, agora)
+                        except Exception as e:
+                            st.session_state[cache_key] = (None, None)
+                    
+                    pdf_bytes, agora = st.session_state[cache_key]
+                    
+                    if pdf_bytes is not None:
                         nome_file = nome.title().replace(" ", "")
                         file_name = f"Transferencia {nome_file} {agora.strftime('%Y%m%d %H%M%S')}.pdf"
                         st.download_button(
@@ -410,8 +482,8 @@ if "df_transf" in st.session_state:
                             use_container_width=True,
                             key=f"pdf_{cod}",
                         )
-                    except Exception as e:
-                        st.button(f"Erro: {e}", disabled=True, use_container_width=True)
+                    else:
+                        st.button("📄 Gerar PDF", disabled=True, use_container_width=True)
 
                 # ---- ENVIAR ----
                 st.markdown('<div class="secao-titulo">📤 ENVIAR</div>', unsafe_allow_html=True)
