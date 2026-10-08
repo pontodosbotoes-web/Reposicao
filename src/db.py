@@ -1,9 +1,8 @@
-"""Conexão SQL Server + listas para dropdowns."""
+"""Conexão SQL Server + listas para dropdowns (via python-tds)."""
 
 import streamlit as st
 import pandas as pd
 from sqlalchemy import create_engine, text
-from urllib.parse import quote_plus
 
 from .config import get_db_credentials
 
@@ -11,16 +10,10 @@ from .config import get_db_credentials
 @st.cache_resource
 def get_engine():
     cred = get_db_credentials()
-    params = quote_plus(
-        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
-        f"SERVER={cred['server']},{cred['port']};"
-        f"DATABASE={cred['database']};"
-        f"UID={cred['username']};"
-        f"PWD={cred['password']};"
-        f"TrustServerCertificate=yes;"
-        f"Encrypt=no;"
+    url = (
+        f"mssql+pytds://{cred['username']}:{cred['password']}"
+        f"@{cred['server']}:{cred['port']}/{cred['database']}"
     )
-    url = f"mssql+pyodbc:///?odbc_connect={params}"
     return create_engine(url, pool_pre_ping=True)
 
 
