@@ -40,6 +40,10 @@ def calcular_indicadores(
         df["SaldoProvavel"] / df["VelocidadeAtiva"],
         np.nan,
     )
+    
+    # Anti-gangorra ainda não implementado — usa 0 (sem bloqueio)
+    df["QtdRecebidaRecente"] = 0
+
     return df
 
 
