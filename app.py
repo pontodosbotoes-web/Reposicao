@@ -16,15 +16,9 @@ from src.base import carregar_base
 from src.transferencia import gerar_sugestoes
 
 
-# ============================================================
-# CONFIG
-# ============================================================
 st.set_page_config(page_title="PB Transferência", layout="wide", page_icon="📊")
 
 
-# ============================================================
-# CSS
-# ============================================================
 st.markdown("""
     <style>
         .block-container {
@@ -51,7 +45,7 @@ st.markdown("""
             border-bottom: 2px solid #334155;
         }
 
-        /* Centralizar abas */
+        /* Abas centralizadas */
         .stTabs [data-baseweb="tab-list"] {
             justify-content: center;
             gap: 4px;
@@ -61,17 +55,27 @@ st.markdown("""
             padding: 8px 18px;
         }
 
-        /* Centralizar métricas */
+        /* Métricas centralizadas */
         [data-testid="stMetric"] {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             text-align: center;
+        }
+        [data-testid="stMetricLabel"] {
+            display: flex;
+            justify-content: center;
+            text-align: center;
+            width: 100%;
+        }
+        [data-testid="stMetricLabel"] > div {
+            text-align: center;
+            width: 100%;
         }
         [data-testid="stMetricValue"] {
             font-size: 1.3rem;
             text-align: center;
-        }
-        [data-testid="stMetricLabel"] {
-            font-size: 0.82rem;
-            text-align: center;
+            width: 100%;
         }
 
         /* Botões */
@@ -83,19 +87,19 @@ st.markdown("""
             font-size: 1.1rem !important;
             border-radius: 6px !important;
         }
+
+        /* Cabeçalhos das tabelas centralizados */
+        div[data-testid="stDataFrame"] div[role="columnheader"] {
+            justify-content: center !important;
+            text-align: center !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
 
-# ============================================================
-# TÍTULO
-# ============================================================
 st.markdown('<div class="titulo-pagina">PB Transferência</div>', unsafe_allow_html=True)
 
 
-# ============================================================
-# MAPEAMENTO DE PRIORIDADE
-# ============================================================
 PRIO_TXT = {1: "Crítica", 2: "Alta", 3: "Normal"}
 
 
@@ -109,15 +113,12 @@ grupos = carregar_grupos()
 subgrupos = carregar_subgrupos()
 
 
-# ============================================================
-# ESTADO
-# ============================================================
 if "show_params" not in st.session_state:
     st.session_state.show_params = False
 
 
 # ============================================================
-# FILTROS + BOTÕES (alinhados verticalmente pela base)
+# FILTROS + BOTÕES
 # ============================================================
 hoje = date.today()
 
@@ -151,7 +152,6 @@ with c8:
     btn_limpar = st.button("🧹", use_container_width=True, help="Limpar filtros")
 
 with c9:
-    # Placeholder — será preenchido com o botão PDF após o resultado
     pdf_placeholder = st.empty()
 
 with c10:
@@ -159,30 +159,32 @@ with c10:
 
 
 # ============================================================
-# PARÂMETROS (toggle)
+# PARÂMETROS
 # ============================================================
 if btn_params:
     st.session_state.show_params = not st.session_state.show_params
 
 if st.session_state.show_params:
     with st.container(border=True):
-        p1, p2, p3, p4, p5, p6, p7, p8 = st.columns(8)
+        p1, p2, p3, p4, p5, p6, p7, p8, p9 = st.columns(9)
         with p1: anti_gangorra = st.number_input("Anti-gangorra (dias)", 0, 90, 15, key="p_ag")
         with p2: cobertura = st.number_input("Cobertura Alvo (dias)", 1, 120, 30, key="p_cob")
         with p3: piso = st.number_input("Piso Exposição (un)", 0, 50, 0, key="p_piso")
-        with p4: lead_time = st.number_input("Lead Time (dias)", 0, 30, 5, key="p_lead")
+        with p4: lead_time = st.number_input("Lead Time (dias)", 0, 30, 10, key="p_lead")
         with p5: reserva = st.number_input("Reserva Origem (%)", 0, 100, 25, key="p_res")
         with p6: lookback = st.number_input("Máx. Lookback (dias)", 30, 730, 365, key="p_look")
-        with p7: modo_env = st.selectbox("Qtd Ideal ENV", ["Destino", "Origem"], key="p_modo")
-        with p8: atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="p_atac")
+        with p7: modo_env = st.selectbox("Qtd Ideal ENV", ["Origem", "Destino"], key="p_modo_env")
+        with p8: modo_rec = st.selectbox("Qtd Ideal REC", ["Destino", "Origem"], key="p_modo_rec")
+        with p9: atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="p_atac")
 else:
     anti_gangorra = 15
     cobertura = 30
     piso = 0
-    lead_time = 5
+    lead_time = 10
     reserva = 25
     lookback = 365
-    modo_env = "Destino"
+    modo_env = "Origem"
+    modo_rec = "Destino"
     atacado_piso = "Não"
 
 
@@ -190,16 +192,16 @@ else:
 # LIMPAR
 # ============================================================
 if btn_limpar:
-    for k in ["df_base", "df_transf", "df_base_n", "modo_env_usado"]:
+    for k in ["df_base", "df_transf", "df_base_n", "modo_env_usado", "modo_rec_usado"]:
         if k in st.session_state:
             del st.session_state[k]
     st.rerun()
 
 
 # ============================================================
-# PDF (gera todas as filiais)
+# PDF
 # ============================================================
-def gerar_pdf_completo(df, modo):
+def gerar_pdf_completo(df, modo_env, modo_rec):
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer, pagesize=landscape(A4),
@@ -226,19 +228,19 @@ def gerar_pdf_completo(df, modo):
             return Paragraph("<i>Nenhum item.</i>", cell_style)
 
         if tipo == "ENV":
-            heads = ["#", "Pr.", "Produto", "Destino", "Qtd", "Reserva", "Ideal", "Motivo"]
-            widths = [25, 45, 200, 70, 45, 50, 45, 250]
+            heads = ["#", "Pr.", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Reserva", "Ideal", "Motivo"]
+            widths = [22, 42, 175, 35, 80, 60, 40, 42, 40, 200]
             mapper = lambda r: [
-                r["#"], r["Prioridade"], r["Produto"], r["NomeFilialDestino"],
-                int(r["QtdTransferir"]), int(r["ReservaOrigem"]),
-                int(r["Qtd Ideal"]), r["Motivo"],
+                r["#"], r["Prioridade"], r["Produto"], r["Embalagem"], r["Fabricante"],
+                r["NomeFilialDestino"], int(r["QtdTransferir"]),
+                int(r["ReservaOrigem"]), int(r["Qtd Ideal"]), r["Motivo"],
             ]
         else:
-            heads = ["#", "Pr.", "Produto", "Origem", "Qtd", "Dias", "Ideal", "Motivo"]
-            widths = [25, 45, 200, 70, 45, 50, 45, 250]
+            heads = ["#", "Pr.", "Produto", "Emb.", "Fabricante", "Origem", "Qtd", "Dias", "Ideal", "Motivo"]
+            widths = [22, 42, 175, 35, 80, 60, 40, 42, 40, 200]
             mapper = lambda r: [
-                r["#"], r["Prioridade"], r["Produto"], r["NomeFilialOrigem"],
-                int(r["QtdTransferir"]),
+                r["#"], r["Prioridade"], r["Produto"], r["Embalagem"], r["Fabricante"],
+                r["NomeFilialOrigem"], int(r["QtdTransferir"]),
                 int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else "-",
                 int(r["Qtd Ideal"]), r["Motivo"],
             ]
@@ -285,7 +287,7 @@ def gerar_pdf_completo(df, modo):
 
         df_env = df_env.reset_index(drop=True)
         df_env.insert(0, "#", range(1, len(df_env) + 1))
-        df_env["Qtd Ideal"] = df_env["IdealDestino"] if modo == "Destino" else df_env["IdealOrigem"]
+        df_env["Qtd Ideal"] = df_env["IdealOrigem"] if modo_env == "Origem" else df_env["IdealDestino"]
         df_env["Prioridade"] = df_env["Prioridade"].map(PRIO_TXT).fillna("-")
         elements.append(Paragraph("<b>ENVIAR</b>", styles['Heading3']))
         elements.append(_build(df_env, "ENV"))
@@ -293,7 +295,7 @@ def gerar_pdf_completo(df, modo):
 
         df_rec = df_rec.reset_index(drop=True)
         df_rec.insert(0, "#", range(1, len(df_rec) + 1))
-        df_rec["Qtd Ideal"] = df_rec["IdealDestino"] if modo == "Destino" else df_rec["IdealOrigem"]
+        df_rec["Qtd Ideal"] = df_rec["IdealDestino"] if modo_rec == "Destino" else df_rec["IdealOrigem"]
         df_rec["Prioridade"] = df_rec["Prioridade"].map(PRIO_TXT).fillna("-")
         elements.append(Paragraph("<b>RECEBER</b>", styles['Heading3']))
         elements.append(_build(df_rec, "REC"))
@@ -337,19 +339,21 @@ if btn_consultar:
                 st.session_state["df_transf"] = df_transf
                 st.session_state["df_base_n"] = len(df_base)
                 st.session_state["modo_env_usado"] = modo_env
+                st.session_state["modo_rec_usado"] = modo_rec
         except Exception as e:
             st.error(f"❌ Erro: {e}")
 
 
 # ============================================================
-# PREENCHE PDF PLACEHOLDER (após consulta)
+# PDF PLACEHOLDER
 # ============================================================
 if "df_transf" in st.session_state and not st.session_state["df_transf"].empty:
     with pdf_placeholder.container():
         try:
             pdf_bytes = gerar_pdf_completo(
                 st.session_state["df_transf"],
-                st.session_state.get("modo_env_usado", "Destino"),
+                st.session_state.get("modo_env_usado", "Origem"),
+                st.session_state.get("modo_rec_usado", "Destino"),
             )
             st.download_button(
                 "📄",
@@ -367,7 +371,7 @@ else:
 
 
 # ============================================================
-# RESULTADO — ABAS
+# RESULTADO
 # ============================================================
 if "df_transf" in st.session_state:
     df = st.session_state["df_transf"]
@@ -375,7 +379,8 @@ if "df_transf" in st.session_state:
     if df.empty:
         st.info("Nenhuma sugestão encontrada.")
     else:
-        modo = st.session_state.get("modo_env_usado", "Destino")
+        modo_e = st.session_state.get("modo_env_usado", "Origem")
+        modo_r = st.session_state.get("modo_rec_usado", "Destino")
         nomes = ["ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE", "ATACADO"]
         codigos = {"ALECRIM": 1, "VIA DIRETA": 2, "ZONA SUL": 3, "ZONA NORTE": 4, "ATACADO": 5}
 
@@ -386,7 +391,7 @@ if "df_transf" in st.session_state:
                 df_env = df[df["CodigoFilialOrigem"] == cod].copy().reset_index(drop=True)
                 df_rec = df[df["CodigoFilialDestino"] == cod].copy().reset_index(drop=True)
 
-                # MÉTRICAS
+                # Métricas
                 m1, m2, m3, m4 = st.columns(4)
                 m1.metric("📤 Enviar (itens)", len(df_env))
                 m2.metric("📤 Enviar (un)", int(df_env["QtdTransferir"].sum()) if not df_env.empty else 0)
@@ -400,13 +405,13 @@ if "df_transf" in st.session_state:
                 else:
                     dfe = df_env.copy()
                     dfe.insert(0, "#", range(1, len(dfe) + 1))
-                    dfe["Qtd Ideal"] = dfe["IdealDestino"] if modo == "Destino" else dfe["IdealOrigem"]
+                    dfe["Qtd Ideal"] = dfe["IdealOrigem"] if modo_e == "Origem" else dfe["IdealDestino"]
                     dfe["Prioridade"] = dfe["Prioridade"].map(PRIO_TXT).fillna("-")
-                    dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Fabricante",
-                               "Embalagem", "NomeFilialDestino", "QtdTransferir",
+                    dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante",
+                               "NomeFilialDestino", "QtdTransferir",
                                "ReservaOrigem", "Qtd Ideal", "Motivo"]]
-                    dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Fabricante",
-                                   "Emb.", "Destino", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
+                    dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante",
+                                   "Destino", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
                     h = min(420, max(120, len(dfe) * 36 + 42))
                     st.dataframe(dfe, use_container_width=True, hide_index=True, height=h)
 
@@ -417,12 +422,12 @@ if "df_transf" in st.session_state:
                 else:
                     dfr = df_rec.copy()
                     dfr.insert(0, "#", range(1, len(dfr) + 1))
-                    dfr["Qtd Ideal"] = dfr["IdealDestino"] if modo == "Destino" else dfr["IdealOrigem"]
+                    dfr["Qtd Ideal"] = dfr["IdealDestino"] if modo_r == "Destino" else dfr["IdealOrigem"]
                     dfr["Prioridade"] = dfr["Prioridade"].map(PRIO_TXT).fillna("-")
-                    dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Fabricante",
-                               "Embalagem", "NomeFilialOrigem", "QtdTransferir",
+                    dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante",
+                               "NomeFilialOrigem", "QtdTransferir",
                                "DiasAteZerarDestino", "Qtd Ideal", "Motivo"]]
-                    dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Fabricante",
-                                   "Emb.", "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
+                    dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante",
+                                   "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
                     h = min(420, max(120, len(dfr) * 36 + 42))
                     st.dataframe(dfr, use_container_width=True, hide_index=True, height=h)
