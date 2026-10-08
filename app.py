@@ -166,16 +166,21 @@ if btn_params:
 
 if st.session_state.show_params:
     with st.container(border=True):
-        p1, p2, p3, p4, p5, p6, p7, p8, p9 = st.columns(9)
-        with p1: anti_gangorra = st.number_input("Anti-gangorra (dias)", 0, 90, 15, key="p_ag")
-        with p2: cobertura = st.number_input("Cobertura Alvo (dias)", 1, 120, 30, key="p_cob")
-        with p3: piso = st.number_input("Piso Exposição (un)", 0, 50, 0, key="p_piso")
-        with p4: lead_time = st.number_input("Lead Time (dias)", 0, 30, 10, key="p_lead")
-        with p5: reserva = st.number_input("Reserva Origem (%)", 0, 100, 25, key="p_res")
-        with p6: lookback = st.number_input("Máx. Lookback (dias)", 30, 730, 365, key="p_look")
-        with p7: modo_env = st.selectbox("Qtd Ideal ENV", ["Origem", "Destino"], key="p_modo_env")
-        with p8: modo_rec = st.selectbox("Qtd Ideal REC", ["Destino", "Origem"], key="p_modo_rec")
-        with p9: atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="p_atac")
+        # Linha 1
+        r1c1, r1c2, r1c3, r1c4, r1c5 = st.columns(5)
+        with r1c1: anti_gangorra = st.number_input("Anti-gangorra (dias)", 0, 90, 15, key="p_ag")
+        with r1c2: cobertura = st.number_input("Cobertura Alvo (dias)", 1, 120, 30, key="p_cob")
+        with r1c3: piso = st.number_input("Piso Exposição (un)", 0, 50, 0, key="p_piso")
+        with r1c4: lead_time = st.number_input("Lead Time (dias)", 0, 30, 10, key="p_lead")
+        with r1c5: reserva = st.number_input("Reserva Origem (%)", 0, 100, 25, key="p_res")
+
+        # Linha 2
+        r2c1, r2c2, r2c3, r2c4, r2c5 = st.columns(5)
+        with r2c1: lookback = st.number_input("Máx. Lookback (dias)", 30, 730, 365, key="p_look")
+        with r2c2: modo_env = st.selectbox("Qtd Ideal ENV", ["Origem", "Destino"], key="p_modo_env")
+        with r2c3: modo_rec = st.selectbox("Qtd Ideal REC", ["Destino", "Origem"], key="p_modo_rec")
+        with r2c4: atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="p_atac")
+        with r2c5: atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], key="p_atac_res")
 else:
     anti_gangorra = 15
     cobertura = 30
@@ -186,6 +191,7 @@ else:
     modo_env = "Origem"
     modo_rec = "Destino"
     atacado_piso = "Não"
+    atacado_reserva = "Não"
 
 
 # ============================================================
@@ -335,6 +341,7 @@ if btn_consultar:
                     piso_exposicao=piso,
                     reserva_pct=reserva,
                     atacado_tem_piso=(atacado_piso == "Sim"),
+                    atacado_tem_reserva=(atacado_reserva == "Sim"),
                 )
                 st.session_state["df_transf"] = df_transf
                 st.session_state["df_base_n"] = len(df_base)
