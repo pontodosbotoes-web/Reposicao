@@ -11,7 +11,7 @@ from .config import get_db_credentials
 def get_engine():
     cred = get_db_credentials()
     url = (
-        f"mssql+pytds://{cred['username']}:{cred['password']}"
+        f"mssql+pymssql://{cred['username']}:{cred['password']}"
         f"@{cred['server']}:{cred['port']}/{cred['database']}"
     )
     return create_engine(url, pool_pre_ping=True)
