@@ -256,19 +256,18 @@ def gerar_pdf(nome_filial, df_env, df_rec):
     ))
     elements.append(Spacer(1, 12))
 
-    def _build_table(df, cols, header_titles, col_widths):
+    def _build_table(df, rows_builder, header_titles, col_widths):
         if df.empty:
             return Paragraph("<i>Nenhum item.</i>", cell_style)
         data = [[Paragraph(h, header_style) for h in header_titles]]
         for _, row in df.iterrows():
             r = []
-            for col in cols:
-                v = row[col]
-                if pd.isna(v):
-                    v = ""
-                elif isinstance(v, float) and v.is_integer():
-                    v = int(v)
-                r.append(Paragraph(str(v), cell_style))
+            for val in rows_builder(row):
+                if val is None or (isinstance(val, float) and pd.isna(val)):
+                    val = ""
+                elif isinstance(val, float) and val.is_integer():
+                    val = int(val)
+                r.append(Paragraph(str(val), cell_style))
             data.append(r)
         t = Table(data, colWidths=col_widths, repeatRows=1)
         t.setStyle(TableStyle([
@@ -283,21 +282,32 @@ def gerar_pdf(nome_filial, df_env, df_rec):
         ]))
         return t
 
+    # ---------- ENVIAR ----------
     elements.append(Paragraph("<b>ENVIAR</b>", styles['Heading3']))
-    cols_env = ["#", "Prioridade", "Produto", "Destino", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
     elements.append(_build_table(
-        df_env, cols_env,
-        ["#", "Pr.", "Produto", "Destino", "Qtd", "Reserva", "Ideal", "Motivo"],
-        [25, 25, 200, 70, 45, 50, 45, 250]
+        df_env,
+        rows_builder=lambda r: [
+            r["#"], r["Prioridade"], r["Produto"], r["NomeFilialDestino"],
+            int(r["QtdTransferir"]), int(r["ReservaOrigem"]),
+            int(r["Qtd Ideal"]), r["Motivo"],
+        ],
+        header_titles=["#", "Pr.", "Produto", "Destino", "Qtd", "Reserva", "Ideal", "Motivo"],
+        col_widths=[25, 25, 200, 70, 45, 50, 45, 250]
     ))
     elements.append(Spacer(1, 15))
 
+    # ---------- RECEBER ----------
     elements.append(Paragraph("<b>RECEBER</b>", styles['Heading3']))
-    cols_rec = ["#", "Prioridade", "Produto", "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
     elements.append(_build_table(
-        df_rec, cols_rec,
-        ["#", "Pr.", "Produto", "Origem", "Qtd", "Dias", "Ideal", "Motivo"],
-        [25, 25, 200, 70, 45, 50, 45, 250]
+        df_rec,
+        rows_builder=lambda r: [
+            r["#"], r["Prioridade"], r["Produto"], r["NomeFilialOrigem"],
+            int(r["QtdTransferir"]),
+            int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else "-",
+            int(r["Qtd Ideal"]), r["Motivo"],
+        ],
+        header_titles=["#", "Pr.", "Produto", "Origem", "Qtd", "Dias", "Ideal", "Motivo"],
+        col_widths=[25, 25, 200, 70, 45, 50, 45, 250]
     ))
 
     doc.build(elements)
