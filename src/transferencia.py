@@ -99,7 +99,7 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
                 break
 
             if rec["SaldoProvavel"] <= 0:
-                motivo = f"SEM ESTOQUE - repor {abs(int(rec['SaldoProvavel']))} un"
+                motivo = "SEM ESTOQUE"
             elif pd.notna(rec["DiasAteZerar"]) and rec["DiasAteZerar"] < 7:
                 motivo = f"URGENTE - zera em {int(rec['DiasAteZerar'])} dias"
             elif doa["VelocidadePeriodo"] < 0.05 and rec["VelocidadePeriodo"] >= 0.1:
