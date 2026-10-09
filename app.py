@@ -286,26 +286,26 @@ def gerar_pdf_filial(nome_filial, cod, df):
             widths = [22, 42, 50, 240, 35, 130, 60, 40, 42, 40, 110]
             mapper = lambda r: [
                 (r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"),
-                (r["Produto"], "C"),
+                (r["Produto"], "L"),
                 (r["Embalagem"], "C"), (r["Fabricante"], "L"),
                 (r["NomeFilialDestino"], "C"),
                 (int(r["QtdTransferir"]), "R"),
                 (int(r["ReservaOrigem"]), "R"),
                 (int(r["Qtd Ideal"]), "R"),
-                (r["Motivo"], "C"),
+                (r["Motivo"], "L"),
             ]
         else:
             heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd", "Dias", "Ideal", "Motivo"]
             widths = [22, 42, 50, 240, 35, 130, 60, 40, 42, 40, 110]
             mapper = lambda r: [
                 (r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"),
-                (r["Produto"], "C"),
+                (r["Produto"], "L"),
                 (r["Embalagem"], "C"), (r["Fabricante"], "L"),
                 (r["NomeFilialOrigem"], "C"),
                 (int(r["QtdTransferir"]), "R"),
                 (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else "-", "R"),
                 (int(r["Qtd Ideal"]), "R"),
-                (r["Motivo"], "C"),
+                (r["Motivo"], "L"),
             ]
 
         data = [[Paragraph(h, header_style) for h in heads]]
