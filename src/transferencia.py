@@ -44,11 +44,10 @@ def calcular_indicadores(
     df["ReservaOrigem"] = np.ceil(df["Excesso"] * df["PercReserva"] / 100).astype(int)
 
     df["ExcessoTransferivel"] = np.maximum(0, df["Excesso"] - df["ReservaOrigem"])
-    df["DiasAteZerar"] = np.where(
-        (df["VelocidadeAtiva"] > 0) & (df["SaldoProvavel"] > 0),
-        df["SaldoProvavel"] / df["VelocidadeAtiva"],
-        np.where(df["SaldoProvavel"] <= 0, 0, np.nan),
-    )
+    # Dias até zerar — sempre >= 0
+    vel = df["VelocidadeAtiva"].replace(0, np.nan)
+    dias = df["SaldoProvavel"] / vel
+    df["DiasAteZerar"] = dias.clip(lower=0)
     df["QtdRecebidaRecente"] = 0
 
     return df
