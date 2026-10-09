@@ -45,9 +45,9 @@ def calcular_indicadores(
 
     df["ExcessoTransferivel"] = np.maximum(0, df["Excesso"] - df["ReservaOrigem"])
     df["DiasAteZerar"] = np.where(
-        df["VelocidadeAtiva"] > 0,
+        (df["VelocidadeAtiva"] > 0) & (df["SaldoProvavel"] > 0),
         df["SaldoProvavel"] / df["VelocidadeAtiva"],
-        np.nan,
+        np.where(df["SaldoProvavel"] <= 0, 0, np.nan),
     )
     df["QtdRecebidaRecente"] = 0
 
