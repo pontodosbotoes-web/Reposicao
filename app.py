@@ -283,9 +283,9 @@ def gerar_pdf_filial(nome_filial, cod, df):
 
         if tipo == "ENV":
             heads = ["#", "Pr.", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Reserva", "Ideal", "Motivo"]
-            widths = [22, 42, 320, 35, 80, 60, 40, 42, 40, 110]
+            widths = [22, 42, 280, 35, 130, 60, 40, 42, 40, 110]
             mapper = lambda r: [
-                (r["#"], "C"), (r["Prioridade"], "C"), (r["Produto"], "C"),
+                (r["#"], "C"), (r["Prioridade"], "C"), (r["Produto"], "L"),
                 (r["Embalagem"], "C"), (r["Fabricante"], "L"),
                 (r["NomeFilialDestino"], "C"),
                 (int(r["QtdTransferir"]), "R"),
@@ -295,9 +295,9 @@ def gerar_pdf_filial(nome_filial, cod, df):
             ]
         else:
             heads = ["#", "Pr.", "Produto", "Emb.", "Fabricante", "Origem", "Qtd", "Dias", "Ideal", "Motivo"]
-            widths = [22, 42, 320, 35, 80, 60, 40, 42, 40, 110]
+            widths = [22, 42, 280, 35, 130, 60, 40, 42, 40, 110]
             mapper = lambda r: [
-                (r["#"], "C"), (r["Prioridade"], "C"), (r["Produto"], "C"),
+                (r["#"], "C"), (r["Prioridade"], "C"), (r["Produto"], "L"),
                 (r["Embalagem"], "C"), (r["Fabricante"], "L"),
                 (r["NomeFilialOrigem"], "C"),
                 (int(r["QtdTransferir"]), "R"),
