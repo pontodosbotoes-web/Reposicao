@@ -15,6 +15,18 @@ WITH ProdutosBase AS
         AND (:grupo = ''        OR LEFT(g.CodGrupo, 5) LIKE '%' + :grupo + '%')
         AND (:subgrupo = ''     OR g.CodGrupo LIKE '%' + :subgrupo + '%'
                                 OR g.NomeGrupo LIKE '%' + :subgrupo + '%')
+        AND (:produto = ''
+             OR CAST(p.CODPRODUTO AS VARCHAR(100)) LIKE '%' + :produto + '%'
+             OR CAST(p.CodProdutoFabr AS VARCHAR(100)) LIKE '%' + :produto + '%'
+             OR p.NOMEPRODUTO LIKE '%' + :produto + '%'
+             OR EXISTS (
+                 SELECT 1 FROM CodigoBarras cb WITH (NOLOCK)
+                 WHERE cb.IdProduto = p.IdProduto
+                   AND (
+                       CAST(cb.CodigoBarras AS VARCHAR(100)) LIKE '%' + :produto + '%'
+                       OR CAST(cb.GTIN AS VARCHAR(100)) LIKE '%' + :produto + '%'
+                   )
+             ))
 ),
 
 UltimaCompra AS
