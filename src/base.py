@@ -19,6 +19,7 @@ def carregar_base(
     grupo: str = "",
     subgrupo: str = "",
     filial: str = "",
+    produto: str = "",
 ) -> pd.DataFrame:
     params = {
         "data_referencia": data_referencia,
@@ -28,6 +29,7 @@ def carregar_base(
         "grupo": grupo or "",
         "subgrupo": subgrupo or "",
         "filial": filial or "",
+        "produto": produto or "",
     }
     with get_engine().connect() as conn:
         df = pd.read_sql(text(_SQL_BASE), conn, params=params)
