@@ -286,7 +286,7 @@ def gerar_pdf_filial(nome_filial, cod, df):
             widths = [22, 42, 320, 35, 80, 60, 40, 42, 40, 110]
             mapper = lambda r: [
                 (r["#"], "C"), (r["Prioridade"], "C"), (r["Produto"], "C"),
-                (r["Embalagem"], "C"), (r["Fabricante"], "C"),
+                (r["Embalagem"], "C"), (r["Fabricante"], "L"),
                 (r["NomeFilialDestino"], "C"),
                 (int(r["QtdTransferir"]), "R"),
                 (int(r["ReservaOrigem"]), "R"),
@@ -298,7 +298,7 @@ def gerar_pdf_filial(nome_filial, cod, df):
             widths = [22, 42, 320, 35, 80, 60, 40, 42, 40, 110]
             mapper = lambda r: [
                 (r["#"], "C"), (r["Prioridade"], "C"), (r["Produto"], "C"),
-                (r["Embalagem"], "C"), (r["Fabricante"], "C"),
+                (r["Embalagem"], "C"), (r["Fabricante"], "L"),
                 (r["NomeFilialOrigem"], "C"),
                 (int(r["QtdTransferir"]), "R"),
                 (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else "-", "R"),
@@ -434,8 +434,8 @@ if "df_transf" in st.session_state:
     if df.empty:
         st.info("Nenhuma sugestão encontrada.")
     else:
-        nomes = ["ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE", "ATACADO"]
-        codigos = {"ALECRIM": 1, "VIA DIRETA": 2, "ZONA SUL": 3, "ZONA NORTE": 4, "ATACADO": 5}
+        nomes = ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"]
+        codigos = {"ATACADO": 5, "ALECRIM": 1, "VIA DIRETA": 2, "ZONA SUL": 3, "ZONA NORTE": 4}
 
         tabs = st.tabs(nomes)
         for tab, nome in zip(tabs, nomes):
