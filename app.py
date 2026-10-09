@@ -134,8 +134,8 @@ if "show_params" not in st.session_state:
 # ============================================================
 hoje = date.today()
 
-c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 = st.columns(
-    [1.1, 1.1, 1.9, 1.4, 1.4, 1.4, 1.8, 0.5, 0.5, 0.5],
+c1, c2, c3, c4, c5, c6, c7, c8 = st.columns(
+    [1.1, 1.1, 1.9, 1.4, 1.4, 1.4, 1.8, 1.2],
     vertical_alignment="bottom",
 )
 
@@ -165,13 +165,13 @@ with c7:
     )
 
 with c8:
-    btn_consultar = st.button("🔍", type="primary", use_container_width=True, help="Consultar")
-
-with c9:
-    btn_limpar = st.button("🧹", use_container_width=True, help="Limpar filtros")
-
-with c10:
-    btn_params = st.button("⚙️", use_container_width=True, help="Parâmetros")
+    bc1, bc2, bc3 = st.columns(3, gap="small")
+    with bc1:
+        btn_consultar = st.button("🔍", type="primary", use_container_width=True, help="Consultar")
+    with bc2:
+        btn_limpar = st.button("🧹", use_container_width=True, help="Limpar filtros")
+    with bc3:
+        btn_params = st.button("⚙️", use_container_width=True, help="Parâmetros")
 
 
 # ============================================================
@@ -310,7 +310,7 @@ def gerar_pdf_filial(nome_filial, cod, df):
                 (r["Embalagem"], "C"), (r["Fabricante"], "L"),
                 (r["NomeFilialOrigem"], "C"),
                 (int(r["QtdTransferir"]), "R"),
-                (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else "-", "R"),
+                (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"),
                 (int(r["Qtd Ideal"]), "R"),
                 (r["Motivo"], "L"),
             ]
@@ -523,8 +523,8 @@ if "df_transf" in st.session_state:
                     dfr["Prioridade"] = dfr["Prioridade"].map(PRIO_TXT).fillna("-")
                     # Trata None → "-" e converte para inteiro quando houver valor
                     dfr["Dias p/ Zerar"] = dfr["DiasAteZerarDestino"].apply(
-                        lambda x: "-" if pd.isna(x) or x is None else int(x)
-                    )
+                        lambda x: 0 if pd.isna(x) or x is None else int(x)
+                    ).astype(int)
 
                     dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante",
                                "NomeFilialOrigem", "QtdTransferir",
@@ -532,11 +532,5 @@ if "df_transf" in st.session_state:
                     dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante",
                                    "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
 
-                    # Aplica alinhamento à direita em colunas específicas
-                    styler = dfr.style.set_properties(
-                        subset=["Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal"],
-                        **{"text-align": "right"}
-                    )
-
                     h = min(420, max(120, len(dfr) * 36 + 42))
-                    st.dataframe(styler, use_container_width=True, hide_index=True, height=h)
+                    st.dataframe(dfr, use_container_width=True, hide_index=True, height=h)
