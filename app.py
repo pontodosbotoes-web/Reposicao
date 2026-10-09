@@ -507,9 +507,14 @@ if "df_transf" in st.session_state:
                     dfr.insert(0, "#", range(1, len(dfr) + 1))
                     dfr["Qtd Ideal"] = dfr["IdealDestino"]
                     dfr["Prioridade"] = dfr["Prioridade"].map(PRIO_TXT).fillna("-")
+                    # Trata None → "-" e converte para inteiro quando houver valor
+                    dfr["Dias p/ Zerar"] = dfr["DiasAteZerarDestino"].apply(
+                        lambda x: "-" if pd.isna(x) or x is None else int(x)
+                    )
+
                     dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante",
                                "NomeFilialOrigem", "QtdTransferir",
-                               "DiasAteZerarDestino", "Qtd Ideal", "Motivo"]]
+                               "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
                     dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante",
                                    "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
                     h = min(420, max(120, len(dfr) * 36 + 42))
