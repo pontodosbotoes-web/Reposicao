@@ -495,8 +495,14 @@ if "df_transf" in st.session_state:
                                "ReservaOrigem", "Qtd Ideal", "Motivo"]]
                     dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante",
                                    "Destino", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
+
+                    styler_e = dfe.style.set_properties(
+                        subset=["Qtd Transf.", "Reserva", "Qtd Ideal"],
+                        **{"text-align": "right"}
+                    )
+
                     h = min(420, max(120, len(dfe) * 36 + 42))
-                    st.dataframe(dfe, use_container_width=True, hide_index=True, height=h)
+                    st.dataframe(styler_e, use_container_width=True, hide_index=True, height=h)
 
                 # ---- RECEBER ----
                 st.markdown('<div class="secao-titulo">📥 RECEBER</div>', unsafe_allow_html=True)
@@ -517,5 +523,12 @@ if "df_transf" in st.session_state:
                                "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
                     dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante",
                                    "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
+
+                    # Aplica alinhamento à direita em colunas específicas
+                    styler = dfr.style.set_properties(
+                        subset=["Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal"],
+                        **{"text-align": "right"}
+                    )
+
                     h = min(420, max(120, len(dfr) * 36 + 42))
-                    st.dataframe(dfr, use_container_width=True, hide_index=True, height=h)
+                    st.dataframe(styler, use_container_width=True, hide_index=True, height=h)
