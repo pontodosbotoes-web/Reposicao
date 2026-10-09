@@ -134,8 +134,8 @@ if "show_params" not in st.session_state:
 # ============================================================
 hoje = date.today()
 
-c1, c2, c3, c4, c5, c6, c7, c8, c9 = st.columns(
-    [1.1, 1.2, 2.2, 1.6, 1.6, 1.6, 0.5, 0.5, 0.5],
+c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 = st.columns(
+    [1.1, 1.1, 1.9, 1.4, 1.4, 1.4, 1.8, 0.5, 0.5, 0.5],
     vertical_alignment="bottom",
 )
 
@@ -158,12 +158,19 @@ with c6:
     subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel")
 
 with c7:
-    btn_consultar = st.button("🔍", type="primary", use_container_width=True, help="Consultar")
+    produto_busca = st.text_input(
+        "Produto",
+        placeholder="Código, ref, descrição ou cód. barras",
+        key="produto_busca",
+    )
 
 with c8:
-    btn_limpar = st.button("🧹", use_container_width=True, help="Limpar filtros")
+    btn_consultar = st.button("🔍", type="primary", use_container_width=True, help="Consultar")
 
 with c9:
+    btn_limpar = st.button("🧹", use_container_width=True, help="Limpar filtros")
+
+with c10:
     btn_params = st.button("⚙️", use_container_width=True, help="Parâmetros")
 
 
@@ -203,7 +210,7 @@ else:
 # LIMPAR
 # ============================================================
 if btn_limpar:
-    for k in ["df_base", "df_transf", "df_base_n"]:
+    for k in ["df_base", "df_transf", "df_base_n", "produto_busca"]:
         if k in st.session_state:
             del st.session_state[k]
     st.rerun()
@@ -377,7 +384,7 @@ def gerar_pdf_filial(nome_filial, cod, df):
 
     # Gera
     agora = agora_br()
-    titulo_cab = f"Relatorio de Transferencias - {nome_filial.title()}"
+    titulo_cab = f"Relatorio de Reposicao - {nome_filial.title()}"
     doc.build(
         elements,
         canvasmaker=lambda *a, **kw: HeaderFooterCanvas(
@@ -395,7 +402,7 @@ def gerar_pdf_filial(nome_filial, cod, df):
 if btn_consultar:
     if (filial_sel == "(todas)" and fabricante_sel == "(todos)"
         and depto_sel == "(todos)" and grupo_sel == "(todos)"
-        and subgrupo_sel == "(todos)"):
+        and subgrupo_sel == "(todos)" and not produto_busca):
         st.warning("⚠️ Escolha pelo menos 1 filtro.")
     else:
         try:
@@ -408,6 +415,7 @@ if btn_consultar:
                     grupo="" if grupo_sel == "(todos)" else grupos[grupo_sel],
                     subgrupo="" if subgrupo_sel == "(todos)" else subgrupos[subgrupo_sel],
                     filial="" if filial_sel == "(todas)" else filiais[filial_sel],
+                    produto=produto_busca,      # ✅
                 )
                 st.session_state["df_base"] = df_base
 
