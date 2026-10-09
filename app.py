@@ -176,20 +176,18 @@ if btn_params:
 if st.session_state.show_params:
     with st.container(border=True):
         # Linha 1
-        r1c1, r1c2, r1c3, r1c4, r1c5 = st.columns(5)
+        r1c1, r1c2, r1c3, r1c4 = st.columns(4)
         with r1c1: anti_gangorra = st.number_input("Anti-gangorra (dias)", 0, 90, 15, key="p_ag")
         with r1c2: cobertura = st.number_input("Cobertura Alvo (dias)", 1, 120, 30, key="p_cob")
         with r1c3: piso = st.number_input("Piso Exposição (un)", 0, 50, 0, key="p_piso")
         with r1c4: lead_time = st.number_input("Lead Time (dias)", 0, 30, 10, key="p_lead")
-        with r1c5: reserva = st.number_input("Reserva Origem (%)", 0, 100, 25, key="p_res")
 
         # Linha 2
-        r2c1, r2c2, r2c3, r2c4, r2c5 = st.columns(5)
-        with r2c1: lookback = st.number_input("Máx. Lookback (dias)", 30, 730, 365, key="p_look")
-        with r2c2: modo_env = st.selectbox("Qtd Ideal ENV", ["Origem", "Destino"], key="p_modo_env")
-        with r2c3: modo_rec = st.selectbox("Qtd Ideal REC", ["Destino", "Origem"], key="p_modo_rec")
-        with r2c4: atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="p_atac")
-        with r2c5: atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], key="p_atac_res")
+        r2c1, r2c2, r2c3, r2c4 = st.columns(4)
+        with r2c1: reserva = st.number_input("Reserva Origem (%)", 0, 100, 25, key="p_res")
+        with r2c2: lookback = st.number_input("Máx. Lookback (dias)", 30, 730, 365, key="p_look")
+        with r2c3: atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="p_atac")
+        with r2c4: atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], key="p_atac_res")
 else:
     anti_gangorra = 15
     cobertura = 30
@@ -197,8 +195,6 @@ else:
     lead_time = 10
     reserva = 25
     lookback = 365
-    modo_env = "Origem"
-    modo_rec = "Destino"
     atacado_piso = "Não"
     atacado_reserva = "Não"
 
@@ -207,7 +203,7 @@ else:
 # LIMPAR
 # ============================================================
 if btn_limpar:
-    for k in ["df_base", "df_transf", "df_base_n", "modo_env_usado", "modo_rec_usado"]:
+    for k in ["df_base", "df_transf", "df_base_n"]:
         if k in st.session_state:
             del st.session_state[k]
     st.rerun()
@@ -260,7 +256,7 @@ class HeaderFooterCanvas(canvas.Canvas):
         # Centro: Página X de Y
         self.drawCentredString(w / 2, 12, f"Página {self._pageNumber} de {page_count}")
 
-def gerar_pdf_filial(nome_filial, cod, df, modo_env, modo_rec):
+def gerar_pdf_filial(nome_filial, cod, df):
     """Gera PDF de UMA filial com cabeçalho/rodapé em todas as páginas."""
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -361,7 +357,8 @@ def gerar_pdf_filial(nome_filial, cod, df, modo_env, modo_rec):
     # ENVIAR
     df_env = df_env.reset_index(drop=True)
     df_env.insert(0, "#", range(1, len(df_env) + 1))
-    df_env["Qtd Ideal"] = df_env["IdealOrigem"] if modo_env == "Origem" else df_env["IdealDestino"]
+    # Regra: Atacado mostra IdealDestino; Lojas mostram IdealOrigem
+    df_env["Qtd Ideal"] = df_env["IdealDestino"] if cod == 5 else df_env["IdealOrigem"]
     df_env["Prioridade"] = df_env["Prioridade"].map(PRIO_TXT).fillna("-")
     elements.append(Paragraph("<b>ENVIAR</b>", filial_style))
     elements.append(_build(df_env, "ENV"))
@@ -370,7 +367,8 @@ def gerar_pdf_filial(nome_filial, cod, df, modo_env, modo_rec):
     # RECEBER
     df_rec = df_rec.reset_index(drop=True)
     df_rec.insert(0, "#", range(1, len(df_rec) + 1))
-    df_rec["Qtd Ideal"] = df_rec["IdealDestino"] if modo_rec == "Destino" else df_rec["IdealOrigem"]
+    # Sempre IdealDestino (a loja é o destino)
+    df_rec["Qtd Ideal"] = df_rec["IdealDestino"]
     df_rec["Prioridade"] = df_rec["Prioridade"].map(PRIO_TXT).fillna("-")
     elements.append(Paragraph("<b>RECEBER</b>", filial_style))
     elements.append(_build(df_rec, "REC"))
@@ -423,8 +421,6 @@ if btn_consultar:
                 )
                 st.session_state["df_transf"] = df_transf
                 st.session_state["df_base_n"] = len(df_base)
-                st.session_state["modo_env_usado"] = modo_env
-                st.session_state["modo_rec_usado"] = modo_rec
         except Exception as e:
             st.error(f"❌ Erro: {e}")
 
@@ -438,8 +434,6 @@ if "df_transf" in st.session_state:
     if df.empty:
         st.info("Nenhuma sugestão encontrada.")
     else:
-        modo_e = st.session_state.get("modo_env_usado", "Origem")
-        modo_r = st.session_state.get("modo_rec_usado", "Destino")
         nomes = ["ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE", "ATACADO"]
         codigos = {"ALECRIM": 1, "VIA DIRETA": 2, "ZONA SUL": 3, "ZONA NORTE": 4, "ATACADO": 5}
 
@@ -464,7 +458,7 @@ if "df_transf" in st.session_state:
                     
                     if cache_key not in st.session_state:
                         try:
-                            pdf_bytes, agora = gerar_pdf_filial(nome, cod, df, modo_e, modo_r)
+                            pdf_bytes, agora = gerar_pdf_filial(nome, cod, df)
                             st.session_state[cache_key] = (pdf_bytes, agora)
                         except Exception as e:
                             st.session_state[cache_key] = (None, None)
@@ -492,7 +486,7 @@ if "df_transf" in st.session_state:
                 else:
                     dfe = df_env.copy()
                     dfe.insert(0, "#", range(1, len(dfe) + 1))
-                    dfe["Qtd Ideal"] = dfe["IdealOrigem"] if modo_e == "Origem" else dfe["IdealDestino"]
+                    dfe["Qtd Ideal"] = dfe["IdealDestino"] if cod == 5 else dfe["IdealOrigem"]
                     dfe["Prioridade"] = dfe["Prioridade"].map(PRIO_TXT).fillna("-")
                     dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante",
                                "NomeFilialDestino", "QtdTransferir",
@@ -509,7 +503,7 @@ if "df_transf" in st.session_state:
                 else:
                     dfr = df_rec.copy()
                     dfr.insert(0, "#", range(1, len(dfr) + 1))
-                    dfr["Qtd Ideal"] = dfr["IdealDestino"] if modo_r == "Destino" else dfr["IdealOrigem"]
+                    dfr["Qtd Ideal"] = dfr["IdealDestino"]
                     dfr["Prioridade"] = dfr["Prioridade"].map(PRIO_TXT).fillna("-")
                     dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante",
                                "NomeFilialOrigem", "QtdTransferir",
