@@ -18,7 +18,7 @@ from src.base import carregar_base
 from src.transferencia import gerar_sugestoes
 
 
-st.set_page_config(page_title="PB Transferência", layout="wide", page_icon="📊")
+st.set_page_config(page_title="Reposição de Produtos", layout="wide", page_icon="📊")
 
 
 st.markdown("""
@@ -99,7 +99,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-st.markdown('<div class="titulo-pagina">PB Transferência</div>', unsafe_allow_html=True)
+st.markdown('<div class="titulo-pagina">Reposição de Produtos</div>', unsafe_allow_html=True)
 
 
 PRIO_TXT = {1: "Crítica", 2: "Alta", 3: "Normal"}
@@ -345,7 +345,7 @@ def gerar_pdf_filial(nome_filial, cod, df):
     if df_env.empty and df_rec.empty:
         elements.append(Paragraph(f"<b>Sem movimentações para {nome_filial.title()}</b>", filial_style))
         agora = agora_br()
-        titulo_cab = f"Relatorio de Transferencias - {nome_filial.title()}"
+        titulo_cab = f"Relatorio de Reposicao - {nome_filial.title()}"
         doc.build(
             elements,
             canvasmaker=lambda *a, **kw: HeaderFooterCanvas(
@@ -469,7 +469,7 @@ if "df_transf" in st.session_state:
                     
                     if pdf_bytes is not None:
                         nome_file = nome.title().replace(" ", "")
-                        file_name = f"Transferencia {nome_file} {agora.strftime('%Y%m%d %H%M%S')}.pdf"
+                        file_name = f"Reposicao {nome_file} {agora.strftime('%Y%m%d %H%M%S')}.pdf"
                         st.download_button(
                             "📄 Gerar PDF",
                             data=pdf_bytes,
