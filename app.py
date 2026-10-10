@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 from io import BytesIO
 
@@ -113,6 +113,23 @@ except Exception:
 
 def agora_br():
     return datetime.now(TZ_BR)
+    
+def calcular_data_referencia(opcao: str) -> date:
+    """Retorna a data de referência baseada na opção escolhida."""
+    hoje = date.today()
+
+    mapa_dias = {
+        "1 ano atrás":   365,
+        "6 meses atrás": 180,
+        "3 meses atrás":  90,
+        "2 meses atrás":  60,
+        "30 dias atrás":  30,
+        "15 dias atrás":  15,
+        "7 dias atrás":    7,
+    }
+
+    dias = mapa_dias.get(opcao, 365)
+    return hoje - timedelta(days=dias)
 
 
 # ============================================================
@@ -140,7 +157,21 @@ c1, c2, c3, c4, c5, c6, c7, c8 = st.columns(
 )
 
 with c1:
-    data_ref = st.date_input("Data de Referência", value=hoje, format="DD/MM/YYYY", key="data_ref")
+    opcao_data = st.selectbox(
+        "Período",
+        [
+            "1 ano atrás",
+            "6 meses atrás",
+            "3 meses atrás",
+            "2 meses atrás",
+            "30 dias atrás",
+            "15 dias atrás",
+            "7 dias atrás",
+        ],
+        index=0,      # padrão = "1 ano atrás"
+        key="opcao_data",
+    )
+    data_ref = calcular_data_referencia(opcao_data)
 
 with c2:
     filial_sel = st.selectbox("Filial", ["(todas)"] + list(filiais.keys()), key="filial_sel")
@@ -212,7 +243,7 @@ else:
 # LIMPAR
 # ============================================================
 if btn_limpar:
-    for k in ["df_base", "df_transf", "df_base_n", "produto_busca"]:
+    for k in ["df_base", "df_transf", "df_base_n", "produto_busca", "opcao_data"]:
         if k in st.session_state:
             del st.session_state[k]
     st.rerun()
