@@ -10,6 +10,9 @@ from .db import get_engine
 _SQL_PATH = Path(__file__).parent.parent / "sql" / "base.sql"
 _SQL_BASE = _SQL_PATH.read_text(encoding="utf-8")
 
+_SQL_TRANSITO_PATH = Path(__file__).parent.parent / "sql" / "transf_em_transito.sql"
+_SQL_TRANSITO = _SQL_TRANSITO_PATH.read_text(encoding="utf-8") if _SQL_TRANSITO_PATH.exists() else ""
+
 
 def carregar_base(
     data_referencia: str,
@@ -34,7 +37,6 @@ def carregar_base(
     with get_engine().connect() as conn:
         df = pd.read_sql(text(_SQL_BASE), conn, params=params)
 
-    # Tipagem numérica
     for col in ["VelocidadeAtiva", "VelocidadePeriodo", "DiasAtivo", "DiasInativo",
                 "QtdComprada", "QtdRecebida", "QtdEnviada", "QtdVendida",
                 "SaldoProvavel", "DiasDesdeCompra"]:
@@ -42,9 +44,6 @@ def carregar_base(
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
     return df
-    
-_SQL_TRANSITO_PATH = Path(__file__).parent.parent / "sql" / "transf_em_transito.sql"
-_SQL_TRANSITO = _SQL_TRANSITO_PATH.read_text(encoding="utf-8")
 
 
 def carregar_transf_em_transito(
@@ -52,6 +51,9 @@ def carregar_transf_em_transito(
     dias_transito: int = 10,
 ) -> pd.DataFrame:
     """Retorna transferências em trânsito: IdProduto, CodFilialDestino, QtdEmTransito."""
+    if not _SQL_TRANSITO:
+        return pd.DataFrame(columns=["IdProduto", "CodFilialDestino", "QtdEmTransito"])
+
     params = {
         "data_referencia": data_referencia,
         "dias_transito": dias_transito,
