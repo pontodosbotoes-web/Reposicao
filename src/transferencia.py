@@ -169,8 +169,15 @@ def gerar_sugestoes(
 
     # === Aplica em-trânsito no saldo do destino ===
     if df_transito is not None and not df_transito.empty:
+        # Agrupa para somar duplicatas do mesmo (IdProduto, FilialDestino)
+        df_tr = (
+            df_transito
+            .groupby(["IdProduto", "CodFilialDestino"], as_index=False)["QtdEmTransito"]
+            .sum()
+        )
+
         df = df.merge(
-            df_transito[["IdProduto", "CodFilialDestino", "QtdEmTransito"]],
+            df_tr,
             left_on=["IdProduto", "CodigoFilial"],
             right_on=["IdProduto", "CodFilialDestino"],
             how="left",
@@ -179,6 +186,10 @@ def gerar_sugestoes(
         df.drop(columns=["CodFilialDestino"], inplace=True)
     else:
         df["QtdEmTransito"] = 0
+
+    # Garante tipos numéricos
+    df["QtdEmTransito"] = pd.to_numeric(df["QtdEmTransito"], errors="coerce").fillna(0)
+    df["SaldoProvavel"] = pd.to_numeric(df["SaldoProvavel"], errors="coerce").fillna(0)
 
     # Saldo ajustado = saldo atual + o que está a caminho
     df["SaldoAjustado"] = df["SaldoProvavel"] + df["QtdEmTransito"]
