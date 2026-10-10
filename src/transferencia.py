@@ -37,17 +37,19 @@ def calcular_indicadores(
 
     df["Piso"] = df["CodigoFilial"].apply(_piso)
     df["EstoqueIdeal"] = np.maximum(df["Piso"], df["VelocidadePeriodo"] * dias).round(0).astype(int)
-    df["Excesso"] = np.maximum(0, df["SaldoProvavel"] - df["EstoqueIdeal"])
-    df["Falta"] = np.maximum(0, df["EstoqueIdeal"] - df["SaldoProvavel"])
+    df["Excesso"] = np.maximum(0, df["SaldoAjustado"] - df["EstoqueIdeal"])
+    df["Falta"] = np.maximum(0, df["EstoqueIdeal"] - df["SaldoAjustado"])
 
     df["PercReserva"] = df["CodigoFilial"].apply(_reserva)
     df["ReservaOrigem"] = np.ceil(df["Excesso"] * df["PercReserva"] / 100).astype(int)
 
     df["ExcessoTransferivel"] = np.maximum(0, df["Excesso"] - df["ReservaOrigem"])
     # Dias até zerar — sempre >= 0
-    vel = df["VelocidadeAtiva"].replace(0, np.nan)
-    dias = df["SaldoProvavel"] / vel
-    df["DiasAteZerar"] = dias.clip(lower=0)
+    df["DiasAteZerar"] = np.where(
+        (df["VelocidadeAtiva"] > 0) & (df["SaldoAjustado"] > 0),
+        df["SaldoAjustado"] / df["VelocidadeAtiva"],
+        np.where(df["SaldoAjustado"] <= 0, 0, np.nan),
+    )
     df["QtdRecebidaRecente"] = 0
 
     return df
@@ -104,8 +106,10 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
             if qtd < 5:
                 break
 
-            if rec["SaldoProvavel"] <= 0:
+            if rec["SaldoAjustado"] <= 0:
                 motivo = "SEM ESTOQUE"
+            elif rec["SaldoProvavel"] <= 0 and rec["QtdEmTransito"] > 0:
+                motivo = "AGUARDANDO TRANSFERENCIA"
             elif pd.notna(rec["DiasAteZerar"]) and rec["DiasAteZerar"] < 7:
                 motivo = f"URGENTE - zera em {int(rec['DiasAteZerar'])} dias"
             elif doa["VelocidadePeriodo"] < 0.05 and rec["VelocidadePeriodo"] >= 0.1:
@@ -153,6 +157,7 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
 
 def gerar_sugestoes(
     df_base: pd.DataFrame,
+    df_transito: pd.DataFrame | None = None,
     cobertura_alvo: int = 30,
     lead_time: int = 10,
     piso_exposicao: int = 0,
@@ -160,8 +165,26 @@ def gerar_sugestoes(
     atacado_tem_piso: bool = False,
     atacado_tem_reserva: bool = False,
 ) -> pd.DataFrame:
+    df = df_base.copy()
+
+    # === Aplica em-trânsito no saldo do destino ===
+    if df_transito is not None and not df_transito.empty:
+        df = df.merge(
+            df_transito[["IdProduto", "CodFilialDestino", "QtdEmTransito"]],
+            left_on=["IdProduto", "CodigoFilial"],
+            right_on=["IdProduto", "CodFilialDestino"],
+            how="left",
+        )
+        df["QtdEmTransito"] = df["QtdEmTransito"].fillna(0)
+        df.drop(columns=["CodFilialDestino"], inplace=True)
+    else:
+        df["QtdEmTransito"] = 0
+
+    # Saldo ajustado = saldo atual + o que está a caminho
+    df["SaldoAjustado"] = df["SaldoProvavel"] + df["QtdEmTransito"]
+
     df = calcular_indicadores(
-        df_base,
+        df,
         cobertura_alvo=cobertura_alvo,
         lead_time=lead_time,
         piso_exposicao=piso_exposicao,
