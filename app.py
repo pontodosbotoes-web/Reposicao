@@ -14,7 +14,7 @@ from src.db import (
     carregar_filiais, carregar_fabricantes,
     carregar_departamentos, carregar_grupos, carregar_subgrupos,
 )
-from src.base import carregar_base
+from src.base import carregar_base, carregar_transf_em_transito
 from src.transferencia import gerar_sugestoes
 
 
@@ -190,13 +190,15 @@ if st.session_state.show_params:
         with r1c4: lead_time = st.number_input("Lead Time (dias)", 0, 30, 10, key="p_lead")
 
         # Linha 2
-        r2c1, r2c2, r2c3, r2c4 = st.columns(4)
+        r2c1, r2c2, r2c3, r2c4, r2c5 = st.columns(5)
         with r2c1: reserva = st.number_input("Reserva Origem (%)", 0, 100, 25, key="p_res")
         with r2c2: lookback = st.number_input("Máx. Lookback (dias)", 30, 730, 365, key="p_look")
         with r2c3: atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="p_atac")
         with r2c4: atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], key="p_atac_res")
+        with r2c5: dias_transito = st.number_input("Dias em Trânsito", 1, 60, 10, key="p_transito")
 else:
     anti_gangorra = 15
+    dias_transito = 10
     cobertura = 30
     piso = 0
     lead_time = 10
@@ -420,8 +422,14 @@ if btn_consultar:
                 st.session_state["df_base"] = df_base
 
             with st.spinner("⏳ Calculando sugestões..."):
+                df_transito = carregar_transf_em_transito(
+                    data_referencia=data_ref.strftime("%Y-%m-%d"),
+                    dias_transito=dias_transito,
+                )
+
                 df_transf = gerar_sugestoes(
                     df_base,
+                    df_transito=df_transito,
                     cobertura_alvo=cobertura,
                     lead_time=lead_time,
                     piso_exposicao=piso,
