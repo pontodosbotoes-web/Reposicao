@@ -470,7 +470,11 @@ if "df_transf" in st.session_state:
                 m4.metric("📥 Receber (un)", int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0)
 
                 with m5:
-                    st.write("")
+                    st.write(f"**DEBUG** Base: {len(df_base)} linhas")
+                    st.write(f"**DEBUG** Trânsito: {len(df_transito)} linhas")
+                    
+                    df_transf = gerar_sugestoes(...)
+                    st.write(f"**DEBUG** Sugestões: {len(df_transf)} linhas")
                     # Cache do PDF pela chave filial + hash dos dados
                     cache_key = f"pdf_cache_{cod}_{len(df_env)}_{len(df_rec)}"
                     
