@@ -470,20 +470,7 @@ if "df_transf" in st.session_state:
                 m4.metric("📥 Receber (un)", int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0)
 
                 with m5:
-                    st.write(f"**DEBUG** Base: {len(df_base)} linhas")
-                    st.write(f"**DEBUG** Trânsito: {len(df_transito)} linhas")
-                    
-                    df_transf = gerar_sugestoes(
-                        df_base,
-                        df_transito=df_transito,
-                        cobertura_alvo=cobertura,
-                        lead_time=lead_time,
-                        piso_exposicao=piso,
-                        reserva_pct=reserva,
-                        atacado_tem_piso=(atacado_piso == "Sim"),
-                        atacado_tem_reserva=(atacado_reserva == "Sim"),
-                    )
-                    st.write(f"**DEBUG** Sugestões: {len(df_transf)} linhas")
+                    st.write("")
                     # Cache do PDF pela chave filial + hash dos dados
                     cache_key = f"pdf_cache_{cod}_{len(df_env)}_{len(df_rec)}"
                     
