@@ -184,7 +184,7 @@ if st.session_state.show_params:
     with st.container(border=True):
         # Linha 1
         r1c1, r1c2, r1c3, r1c4 = st.columns(4)
-        with r1c1: anti_gangorra = st.number_input("Anti-gangorra (dias)", 0, 90, 15, key="p_ag")
+        with r1c1: anti_gangorra = st.number_input("Reposição Recente (dias)", 0, 90, 15, key="p_ag")
         with r1c2: cobertura = st.number_input("Cobertura Alvo (dias)", 1, 120, 30, key="p_cob")
         with r1c3: piso = st.number_input("Piso Exposição (un)", 0, 50, 0, key="p_piso")
         with r1c4: lead_time = st.number_input("Lead Time (dias)", 0, 30, 10, key="p_lead")
