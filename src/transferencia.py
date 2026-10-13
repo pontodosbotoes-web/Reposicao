@@ -44,25 +44,29 @@ def calcular_indicadores(
     df["ReservaOrigem"] = np.ceil(df["Excesso"] * df["PercReserva"] / 100).astype(int)
 
     df["ExcessoTransferivel"] = np.maximum(0, df["Excesso"] - df["ReservaOrigem"])
+
     # Dias até zerar — sempre >= 0
     df["DiasAteZerar"] = np.where(
         (df["VelocidadeAtiva"] > 0) & (df["SaldoAjustado"] > 0),
         df["SaldoAjustado"] / df["VelocidadeAtiva"],
         np.where(df["SaldoAjustado"] <= 0, 0, np.nan),
     )
-    df["QtdRecebidaRecente"] = 0
 
     return df
 
 
 def filtrar_recentes(df: pd.DataFrame, df_recentes: pd.DataFrame | None) -> pd.DataFrame:
+    """Marca QtdRecebidaRecente para cada (produto, filial)."""
     if df_recentes is None or df_recentes.empty:
         df["QtdRecebidaRecente"] = 0
         return df
+
     chave = df["IdProduto"].astype(str) + "-" + df["CodigoFilial"].astype(str)
     chave_rec = df_recentes["IdProduto"].astype(str) + "-" + df_recentes["CodFilial"].astype(str)
     mapa = dict(zip(chave_rec, df_recentes["QtdRecebidaRecente"]))
+
     df["QtdRecebidaRecente"] = chave.map(mapa).fillna(0)
+    df["QtdRecebidaRecente"] = pd.to_numeric(df["QtdRecebidaRecente"], errors="coerce").fillna(0)
     return df
 
 
@@ -110,6 +114,8 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
                 motivo = "SEM ESTOQUE"
             elif rec["SaldoProvavel"] <= 0 and rec["QtdEmTransito"] > 0:
                 motivo = "AGUARDANDO TRANSFERENCIA"
+            elif rec["QtdRecebidaRecente"] > 0:
+                motivo = f"RECEBIDO RECENTEMENTE ({int(rec['QtdRecebidaRecente'])} un)"
             elif pd.notna(rec["DiasAteZerar"]) and rec["DiasAteZerar"] < 7:
                 motivo = f"URGENTE - zera em {int(rec['DiasAteZerar'])} dias"
             elif doa["VelocidadePeriodo"] < 0.05 and rec["VelocidadePeriodo"] >= 0.1:
@@ -158,6 +164,7 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
 def gerar_sugestoes(
     df_base: pd.DataFrame,
     df_transito: pd.DataFrame | None = None,
+    df_recebidas_recentes: pd.DataFrame | None = None,
     cobertura_alvo: int = 30,
     lead_time: int = 10,
     piso_exposicao: int = 0,
@@ -169,7 +176,6 @@ def gerar_sugestoes(
 
     # === Aplica em-trânsito no saldo do destino ===
     if df_transito is not None and not df_transito.empty:
-        # Agrupa para somar duplicatas do mesmo (IdProduto, FilialDestino)
         df_tr = (
             df_transito
             .groupby(["IdProduto", "CodFilialDestino"], as_index=False)["QtdEmTransito"]
@@ -187,13 +193,11 @@ def gerar_sugestoes(
     else:
         df["QtdEmTransito"] = 0
 
-    # Garante tipos numéricos
     df["QtdEmTransito"] = pd.to_numeric(df["QtdEmTransito"], errors="coerce").fillna(0)
     df["SaldoProvavel"] = pd.to_numeric(df["SaldoProvavel"], errors="coerce").fillna(0)
-
-    # Saldo ajustado = saldo atual + o que está a caminho
     df["SaldoAjustado"] = df["SaldoProvavel"] + df["QtdEmTransito"]
 
+    # === Calcula indicadores ===
     df = calcular_indicadores(
         df,
         cobertura_alvo=cobertura_alvo,
@@ -203,6 +207,10 @@ def gerar_sugestoes(
         atacado_tem_piso=atacado_tem_piso,
         atacado_tem_reserva=atacado_tem_reserva,
     )
+
+    # === Aplica Reposição Recente (anti-gangorra pós-recebimento) ===
+    df = filtrar_recentes(df, df_recebidas_recentes)
+
     df = excluir_descontinuados(df)
 
     todas = []
