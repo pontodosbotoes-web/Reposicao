@@ -14,7 +14,7 @@ from src.db import (
     carregar_filiais, carregar_fabricantes,
     carregar_departamentos, carregar_grupos, carregar_subgrupos,
 )
-from src.base import carregar_base, carregar_transf_em_transito
+from src.base import carregar_base, carregar_transf_em_transito, carregar_transf_recebidas_recentes
 from src.transferencia import gerar_sugestoes
 
 
@@ -149,7 +149,6 @@ if "show_params" not in st.session_state:
 # ============================================================
 # FILTROS + BOTÕES
 # ============================================================
-hoje = date.today()
 
 c1, c2, c3, c4, c5, c6, c7, c8 = st.columns(
     [1.1, 1.1, 1.9, 1.4, 1.4, 1.4, 1.8, 1.2],
@@ -458,9 +457,15 @@ if btn_consultar:
                     dias_transito=dias_transito,
                 )
 
+                df_recebidas = carregar_transf_recebidas_recentes(
+                    data_referencia=data_ref.strftime("%Y-%m-%d"),
+                    dias_reposicao=anti_gangorra,
+                )
+
                 df_transf = gerar_sugestoes(
                     df_base,
                     df_transito=df_transito,
+                    df_recebidas_recentes=df_recebidas,
                     cobertura_alvo=cobertura,
                     lead_time=lead_time,
                     piso_exposicao=piso,
