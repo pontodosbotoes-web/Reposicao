@@ -152,54 +152,47 @@ if "show_params" not in st.session_state:
 
 
 # ============================================================
-# FILTROS + BOTÕES
+# MAPA DE COBERTURA DE VENDAS (opções → dias)
 # ============================================================
+COBERTURA_MAP = {
+    "Para 7 dias":   7,
+    "Para 15 dias": 15,
+    "Para 30 dias": 30,
+    "Para 2 meses": 60,
+    "Para 3 meses": 90,
+    "Para 6 meses": 180,
+    "Para 1 ano":   365,
+}
 
-c1, c2, c3, c4, c5, c6, c7, c8 = st.columns(
-    [1.1, 1.1, 1.9, 1.4, 1.4, 1.4, 1.8, 1.2],
+
+# ============================================================
+# FILTROS + BOTÕES (apenas produto)
+# ============================================================
+f1, f2, f3, f4, f5, f6 = st.columns(
+    [2.2, 1.6, 1.6, 1.6, 1.8, 1.2],
     vertical_alignment="bottom",
 )
 
-with c1:
-    opcao_data = st.selectbox(
-        "Período de Análise",
-        [
-            "1 ano atrás",
-            "6 meses atrás",
-            "3 meses atrás",
-            "2 meses atrás",
-            "30 dias atrás",
-            "15 dias atrás",
-            "7 dias atrás",
-        ],
-        index=0,
-        key="opcao_data",
-    )
-    data_ref, lookback = calcular_janela_analise(opcao_data)
-
-with c2:
-    filial_sel = st.selectbox("Filial", ["(todas)"] + list(filiais.keys()), key="filial_sel")
-
-with c3:
+with f1:
     fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel")
 
-with c4:
+with f2:
     depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel")
 
-with c5:
+with f3:
     grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()), key="grupo_sel")
 
-with c6:
+with f4:
     subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel")
 
-with c7:
+with f5:
     produto_busca = st.text_input(
         "Produto",
         placeholder="Código, ref, descrição ou cód. barras",
         key="produto_busca",
     )
 
-with c8:
+with f6:
     bc1, bc2, bc3 = st.columns(3, gap="small")
     with bc1:
         btn_consultar = st.button("🔍", type="primary", use_container_width=True, help="Consultar")
@@ -217,35 +210,88 @@ if btn_params:
 
 if st.session_state.show_params:
     with st.container(border=True):
-        # Linha 1
+        # Linha 1 — JANELA DE ANÁLISE
         r1c1, r1c2, r1c3, r1c4 = st.columns(4)
-        with r1c1: anti_gangorra = st.number_input("Reposição Recente (dias)", 0, 90, 15, key="p_ag")
-        with r1c2: cobertura = st.number_input("Cobertura Alvo (dias)", 1, 120, 30, key="p_cob")
-        with r1c3: piso = st.number_input("Piso Exposição (un)", 0, 50, 0, key="p_piso")
-        with r1c4: lead_time = st.number_input("Lead Time (dias)", 0, 30, 10, key="p_lead")
+        with r1c1:
+            opcao_data = st.selectbox(
+                "Período de Análise",
+                ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás",
+                 "30 dias atrás", "15 dias atrás", "7 dias atrás"],
+                index=0,
+                key="opcao_data",
+            )
+        with r1c2:
+            filial_sel = st.selectbox(
+                "Filial",
+                ["(todas)"] + list(filiais.keys()),
+                index=0,
+                key="filial_param",
+            )
+        with r1c3:
+            cobertura_opcao = st.selectbox(
+                "Cobertura de Vendas",
+                ["Para 7 dias", "Para 15 dias", "Para 30 dias",
+                 "Para 2 meses", "Para 3 meses", "Para 6 meses", "Para 1 ano"],
+                index=2,   # padrão = "Para 30 dias"
+                key="cobertura_opcao",
+            )
+        with r1c4:
+            lead_time = st.number_input(
+                "Tempo de Transporte (dias)",
+                0, 30, 10, key="lead_time",
+            )
 
-        # Linha 2
+        # Linha 2 — PROTEÇÃO DAS ORIGENS
         r2c1, r2c2, r2c3, r2c4 = st.columns(4)
-        with r2c1: reserva = st.number_input("Reserva Origem (%)", 0, 100, 25, key="p_res")
-        with r2c2: atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="p_atac")
-        with r2c3: atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], key="p_atac_res")
-        with r2c4: dias_transito = st.number_input("Dias em Trânsito", 1, 60, 10, key="p_transito")
+        with r2c1:
+            piso = st.number_input("Piso Exposição (un)", 0, 50, 0, key="piso")
+        with r2c2:
+            reserva = st.number_input("Reserva Origem (%)", 0, 100, 25, key="reserva")
+        with r2c3:
+            atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], index=0, key="atacado_piso")
+        with r2c4:
+            atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], index=0, key="atacado_reserva")
+
+        # Linha 3 — TRAVAS DE SEGURANÇA
+        r3c1, r3c2 = st.columns(2)
+        with r3c1:
+            anti_gangorra = st.number_input("Reposição Recente (dias)", 0, 90, 15, key="anti_gangorra")
+        with r3c2:
+            dias_transito = st.number_input("Dias em Trânsito", 1, 60, 10, key="dias_transito")
 else:
-    anti_gangorra = 15
-    dias_transito = 10
-    cobertura = 30
-    piso = 0
-    lead_time = 10
-    reserva = 25
-    atacado_piso = "Não"
-    atacado_reserva = "Não"
+    # Valores padrão quando o painel está fechado
+    opcao_data = st.session_state.get("opcao_data", "1 ano atrás")
+    filial_sel = st.session_state.get("filial_param", "(todas)")
+    cobertura_opcao = st.session_state.get("cobertura_opcao", "Para 30 dias")
+    lead_time = st.session_state.get("lead_time", 10)
+    piso = st.session_state.get("piso", 0)
+    reserva = st.session_state.get("reserva", 25)
+    atacado_piso = st.session_state.get("atacado_piso", "Não")
+    atacado_reserva = st.session_state.get("atacado_reserva", "Não")
+    anti_gangorra = st.session_state.get("anti_gangorra", 15)
+    dias_transito = st.session_state.get("dias_transito", 10)
+
+
+# ============================================================
+# DERIVAÇÕES (com base nos parâmetros)
+# ============================================================
+cobertura = COBERTURA_MAP.get(cobertura_opcao, 30)
+data_ref, lookback = calcular_janela_analise(opcao_data)
 
 
 # ============================================================
 # LIMPAR
 # ============================================================
 if btn_limpar:
-    for k in ["df_base", "df_transf", "df_base_n", "produto_busca", "opcao_data"]:
+    for k in [
+        "df_base", "df_transf", "df_base_n", "produto_busca",
+        "opcao_data", "filial_param", "cobertura_opcao",
+        "lead_time", "piso", "reserva",
+        "atacado_piso", "atacado_reserva",
+        "anti_gangorra", "dias_transito",
+        # filtros do produto
+        "fabricante_sel", "depto_sel", "grupo_sel", "subgrupo_sel",
+    ]:
         if k in st.session_state:
             del st.session_state[k]
     st.rerun()
