@@ -149,6 +149,10 @@ subgrupos = carregar_subgrupos()
 
 if "show_params" not in st.session_state:
     st.session_state.show_params = False
+    
+    
+if "view" not in st.session_state:
+    st.session_state["view"] = "calculadora"
 
 
 # ============================================================
@@ -169,7 +173,7 @@ COBERTURA_MAP = {
 # FILTROS + BOTÕES (apenas produto)
 # ============================================================
 f1, f2, f3, f4, f5, f6 = st.columns(
-    [2.2, 1.6, 1.6, 1.6, 1.8, 1.2],
+    [2.2, 1.6, 1.6, 1.6, 1.8, 1.6],
     vertical_alignment="bottom",
 )
 
@@ -193,13 +197,15 @@ with f5:
     )
 
 with f6:
-    bc1, bc2, bc3 = st.columns(3, gap="small")
+    bc1, bc2, bc3, bc4 = st.columns(4, gap="small")
     with bc1:
         btn_consultar = st.button("🔍", type="primary", use_container_width=True, help="Consultar")
     with bc2:
         btn_limpar = st.button("🧹", use_container_width=True, help="Limpar filtros")
     with bc3:
         btn_params = st.button("⚙️", use_container_width=True, help="Parâmetros")
+    with bc4:
+        btn_manual = st.button("📖", use_container_width=True, help="Manual do Gestor")
 
 
 # ============================================================
@@ -476,6 +482,286 @@ def gerar_pdf_filial(nome_filial, cod, df):
     buffer.seek(0)
     return buffer, agora
 
+# ============================================================
+# MANUAL DO GESTOR
+# ============================================================
+def render_manual():
+    """Renderiza o manual completo dentro do próprio app."""
+
+    # Botão voltar
+    col_voltar, _ = st.columns([1, 5])
+    with col_voltar:
+        if st.button("← Voltar", use_container_width=True, key="btn_voltar_manual"):
+            st.session_state["view"] = "calculadora"
+            st.rerun()
+
+    st.markdown("# 📖 Manual do Gestor")
+    st.markdown("**Reposição de Produtos** — Sistema de sugestão de transferências entre filiais")
+    st.markdown("---")
+
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+        "🏁 Introdução",
+        "🧠 Como Pensa",
+        "🚀 Primeiro Acesso",
+        "🎛️ Filtros & Parâmetros",
+        "📊 Resultado",
+        "📅 Rotina Semanal",
+        "🔧 Ajustes Finos",
+        "❓ FAQ",
+    ])
+
+    # ---------- ABA 1 — INTRODUÇÃO ----------
+    with tab1:
+        st.header("Por que este sistema existe")
+        st.markdown("""
+        Imagine o dia a dia de uma rede com **5 filiais** e **milhares de produtos**. 
+        Todos os dias você precisa responder:
+        """)
+        st.markdown("""
+        - ❓ **Quanto** mandar de cada produto para cada loja?
+        - ❓ **Quando** mandar?
+        - ❓ Se uma loja tem **excesso** e outra tem **falta**, como fazer essa troca?
+        - ❓ Como evitar que o Atacado mande produto demais para uma loja e de menos para outra?
+        - ❓ Como não deixar prateleiras vazias sem inflar o estoque?
+        """)
+
+        st.info(
+            "**Antes deste sistema**: as decisões eram tomadas por telefone, planilhas manuais "
+            "e intuição. Levava horas por semana e gerava erros frequentes.\n\n"
+            "**Com este sistema**: o motor faz essas perguntas para TODOS os produtos em segundos, "
+            "e ainda prioriza os mais urgentes."
+        )
+
+        st.subheader("O que o sistema faz")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("""
+            ✅ **1. Analisa** histórico de vendas e movimentações
+            
+            ✅ **2. Calcula** o estoque ideal de cada filial
+            
+            ✅ **3. Identifica** excesso (doador) e falta (receptor)
+            """)
+        with col2:
+            st.markdown("""
+            ✅ **4. Sugere** qual filial envia, para quem, e quanto
+            
+            ✅ **5. Prioriza** por urgência (o que zera primeiro no topo)
+            
+            ✅ **6. Gera** relatórios em PDF por filial
+            """)
+
+        st.subheader("O que o sistema NÃO faz")
+        st.markdown("""
+        - ❌ **Não substitui sua decisão** — ele sugere, você aprova
+        - ❌ **Não executa transferências** — você cria a ordem no ERP
+        - ❌ **Não altera dados** no banco — é somente leitura
+        - ❌ **Não substitui o bom senso** — sempre confira o Motivo antes de aprovar
+        """)
+
+        st.subheader("Em 1 parágrafo")
+        st.success(
+            "O sistema olha os últimos **365 dias** de cada produto, calcula o **ritmo de venda** "
+            "de cada filial, define **quanto cada uma precisa ter em estoque** para cobrir **30 dias** "
+            "de venda + **10 dias** de transporte, e cruza tudo: quem tem demais é sugerido como "
+            "**doador**, quem tem de menos é sugerido como **receptor**. O **Atacado** entra como hub "
+            "principal, e as **lojas próximas** se ajudam quando faz sentido."
+        )
+
+        st.subheader("De onde vem a inteligência")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown("### 🏛️ DRP")
+            st.caption("**Distribution Requirements Planning**")
+            st.markdown("Planejamento baseado no **consumo real**.")
+            st.caption("*Walmart, Carrefour, Pão de Açúcar*")
+        with col2:
+            st.markdown("### 🔄 IST")
+            st.caption("**Inter-Store Transfers**")
+            st.markdown("Transferências entre lojas para corrigir desequilíbrio.")
+            st.caption("*Zara, H&M, Best Buy*")
+        with col3:
+            st.markdown("### 🌐 MEIO")
+            st.caption("**Multi-Echelon Optimization**")
+            st.markdown("Otimização com **hub central** (risk pooling).")
+            st.caption("*Amazon, Coca-Cola, P&G*")
+
+    # ---------- ABA 2 — COMO PENSA ----------
+    with tab2:
+        st.header("Como o sistema pensa")
+
+        st.subheader("A metáfora da caixa d'água")
+        st.markdown("""
+        Imagine que cada filial é uma **caixa d'água**. O sistema tenta manter cada caixa no nível ideal:
+        """)
+        st.markdown("""
+        | Nível | Estado |
+        |-------|--------|
+        | **100% (Ideal)** | Tudo perfeito |
+        | **80%** | Atenção |
+        | **40%** | Crítico |
+        | **0% (Ruptura)** | Urgente |
+        """)
+
+        st.subheader("Cálculo do tamanho da caixa (Estoque Ideal)")
+        st.markdown("**Fórmula:**")
+        st.code("Estoque Ideal = Velocidade × (Cobertura de Vendas + Tempo de Transporte)", language="text")
+
+        st.markdown("**Exemplo prático — Fita Adesiva 3M**")
+        st.markdown("""
+        | Variável | Valor |
+        |----------|-------|
+        | Vendas nos últimos 365 dias | 1.825 unidades |
+        | Velocidade Período | 1.825 ÷ 365 = **5 un/dia** |
+        | Cobertura de Vendas | **30 dias** |
+        | Tempo de Transporte | **10 dias** |
+        | Soma | **40 dias** |
+        | **Estoque Ideal** | **5 × 40 = 200 unidades** |
+        """)
+
+        st.info(
+            "A loja deveria ter **200 unidades** para cobrir 30 dias de venda + 10 dias de transporte. "
+            "Se tem menos, precisa receber. Se tem mais, pode doar."
+        )
+
+        st.subheader("Excesso e Falta")
+        st.code("""
+Excesso = Saldo Provável − Estoque Ideal   (quando positivo)
+Falta   = Estoque Ideal − Saldo Provável   (quando positivo)
+        """, language="text")
+
+        st.markdown("**Exemplo com 5 filiais**")
+        st.markdown("""
+        | Filial | Saldo | Ideal | Excesso | Falta |
+        |--------|-------|-------|---------|-------|
+        | Atacado | 500 | 100 | **400** | 0 |
+        | Alecrim | 30 | 50 | 0 | **20** |
+        | Via Direta | 80 | 40 | **40** | 0 |
+        | Zona Sul | 15 | 60 | 0 | **45** |
+        | Zona Norte | 70 | 55 | **15** | 0 |
+        """)
+
+        st.markdown("""
+        **Leitura:**
+        - 🔵 **Atacado** tem 400 un de excesso → doador principal
+        - 🟠 **Zona Sul** tem 45 un de falta → receptor urgente
+        - 🟠 **Alecrim** tem 20 un de falta → receptor
+        - 🔵 **Via Direta** tem 40 un de excesso → doador secundário
+        """)
+
+        st.subheader("Matriz de proximidade")
+        st.markdown("""
+        | Destino | Ordem de prioridade dos doadores |
+        |---------|----------------------------------|
+        | **Alecrim** | 1º Atacado, 2º Via Direta, 3º Zona Sul, 4º Zona Norte |
+        | **Via Direta** | 1º Atacado, 2º Zona Sul |
+        | **Zona Sul** | 1º Atacado, 2º Via Direta |
+        | **Zona Norte** | 1º Atacado, 2º Alecrim |
+        | **Atacado** | 🚫 Nunca recebe |
+        """)
+
+    # ---------- ABA 3 — PRIMEIRO ACESSO ----------
+    with tab3:
+        st.header("Primeiro acesso")
+
+        st.subheader("Como abrir")
+        st.markdown("""
+        1. Abra o navegador (Chrome, Edge ou Firefox)
+        2. Digite na barra de endereço:
+        """)
+        st.code("https://pb-reposicao.streamlit.app", language="text")
+        st.markdown("3. Pressione **Enter**")
+
+        st.warning(
+            "**Primeira vez do dia**: se o app estiver 'dormindo', você verá um botão "
+            "**'Yes, get this app back up!'**. Clique e aguarde ~30 segundos."
+        )
+
+        st.subheader("Problemas comuns")
+        st.markdown("""
+        | Problema | Solução |
+        |----------|---------|
+        | App "dormindo" | Clicar em "Yes, get this app back up!" |
+        | Tela em branco | Atualizar navegador (Ctrl+F5) |
+        | Erro de conexão | Testar em outra rede |
+        | Consulta não retorna | Aguardar 5 min e tentar novamente |
+        """)
+
+    # ---------- ABA 4 — FILTROS E PARÂMETROS ----------
+    with tab4:
+        st.header("Filtros e Parâmetros")
+
+        st.subheader("Filtros do topo — 'O que analisar'")
+        st.markdown("""
+        | Filtro | O que faz |
+        |--------|-----------|
+        | **Fabricante** | Nome do fabricante |
+        | **Departamento** | Categoria macro |
+        | **Grupo** | Subdivisão da categoria |
+        | **Subgrupo** | Nível mais específico |
+        | **Produto** | Busca por código, referência, nome ou código de barras |
+        """)
+        st.info("Escolha pelo menos 1 filtro antes de consultar.")
+
+        st.subheader("Parâmetros")
+
+        st.markdown("### 🟦 Linha 1 — Janela de Análise")
+        st.markdown("""
+        | Parâmetro | O que é | Padrão |
+        |-----------|---------|--------|
+        | **Período de Análise** | Janela histórica | 1 ano atrás |
+        | **Filial** | Filtrar uma filial | (todas) |
+        | **Cobertura de Vendas** | Dias de estoque | Para 30 dias |
+        | **Tempo de Transporte** | Dias entre envio e entrega | 10 dias |
+        """)
+
+        st.markdown("### 🟦 Linha 2 — Proteção das Origens")
+        st.markdown("""
+        | Parâmetro | O que é | Padrão |
+        |-----------|---------|--------|
+        | **Piso Exposição (un)** | Mínimo na prateleira | 0 |
+        | **Reserva Origem (%)** | % que fica na origem | 25% |
+        | **Atacado tem Piso?** | Atacado respeita piso | Não |
+        | **Atacado tem Reserva?** | Atacado guarda reserva | Não |
+        """)
+
+        st.markdown("### 🟦 Linha 3 — Travas de Segurança")
+        st.markdown("""
+        | Parâmetro | O que é | Padrão |
+        |-----------|---------|--------|
+        | **Reposição Recente (dias)** | Quarentena pós-recebimento | 15 |
+        | **Dias em Trânsito** | Janela de envio a caminho | 10 |
+        """)
+
+        with st.expander("📚 Detalhamento — Cobertura de Vendas"):
+            st.markdown("""
+            | Opção | Dias | Quando usar |
+            |-------|------|-------------|
+            | Para 7 dias | 7 | Produtos perecíveis |
+            | Para 15 dias | 15 | Alto giro |
+            | **Para 30 dias** | **30** | **Padrão — maioria** |
+            | Para 2 meses | 60 | Giro médio |
+            | Para 3 meses | 90 | Giro baixo |
+            | Para 6 meses | 180 | Sazonais |
+            | Para 1 ano | 365 | Produtos específicos |
+            """)
+
+        with st.expander("📚 Detalhamento — Reserva Origem"):
+            st.code("""
+Exemplo com Reserva = 25%:
+
+Excesso = 400 un
+Reserva = 25% × 400 = 100 un
+Disponível para doar = 300 un
+            """, language="text")
+
+        with st.expander("📚 Detalhamento — Reposição Recente"):
+            st.markdown("""
+            **O que é**: quantos dias uma filial fica bloqueada para receber depois de uma transferência.
+            
+            **Por que existe**: para evitar o efeito **gangorra** (recebe, pede mais, recebe de novo).
+            
+            **Exemplo**:
 
 # ============================================================
 # CONSULTAR
@@ -627,3 +913,16 @@ if "df_transf" in st.session_state:
 
                     h = min(420, max(120, len(dfr) * 36 + 42))
                     st.dataframe(dfr, use_container_width=True, hide_index=True, height=h)
+                    
+
+
+# ============================================================
+# ALTERNÂNCIA ENTRE CALCULADORA E MANUAL
+# ============================================================
+if btn_manual:
+    st.session_state["view"] = "manual"
+    st.rerun()
+
+if st.session_state["view"] == "manual":
+    render_manual()
+    st.stop()
