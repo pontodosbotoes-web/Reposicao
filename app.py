@@ -114,8 +114,13 @@ except Exception:
 def agora_br():
     return datetime.now(TZ_BR)
     
-def calcular_data_referencia(opcao: str) -> date:
-    """Retorna a data de referência baseada na opção escolhida."""
+def calcular_janela_analise(opcao: str) -> tuple[date, int]:
+    """
+    Retorna (data_referencia, max_lookback).
+    
+    - data_referencia = HOJE (fim da análise)
+    - max_lookback = dias para trás a analisar
+    """
     hoje = date.today()
 
     mapa_dias = {
@@ -129,7 +134,7 @@ def calcular_data_referencia(opcao: str) -> date:
     }
 
     dias = mapa_dias.get(opcao, 365)
-    return hoje - timedelta(days=dias)
+    return hoje, dias
 
 
 # ============================================================
@@ -157,7 +162,7 @@ c1, c2, c3, c4, c5, c6, c7, c8 = st.columns(
 
 with c1:
     opcao_data = st.selectbox(
-        "Período",
+        "Período de Análise",
         [
             "1 ano atrás",
             "6 meses atrás",
@@ -167,10 +172,10 @@ with c1:
             "15 dias atrás",
             "7 dias atrás",
         ],
-        index=0,      # padrão = "1 ano atrás"
+        index=0,
         key="opcao_data",
     )
-    data_ref = calcular_data_referencia(opcao_data)
+    data_ref, lookback = calcular_janela_analise(opcao_data)
 
 with c2:
     filial_sel = st.selectbox("Filial", ["(todas)"] + list(filiais.keys()), key="filial_sel")
@@ -220,12 +225,11 @@ if st.session_state.show_params:
         with r1c4: lead_time = st.number_input("Lead Time (dias)", 0, 30, 10, key="p_lead")
 
         # Linha 2
-        r2c1, r2c2, r2c3, r2c4, r2c5 = st.columns(5)
+        r2c1, r2c2, r2c3, r2c4 = st.columns(4)
         with r2c1: reserva = st.number_input("Reserva Origem (%)", 0, 100, 25, key="p_res")
-        with r2c2: lookback = st.number_input("Máx. Lookback (dias)", 30, 730, 365, key="p_look")
-        with r2c3: atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="p_atac")
-        with r2c4: atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], key="p_atac_res")
-        with r2c5: dias_transito = st.number_input("Dias em Trânsito", 1, 60, 10, key="p_transito")
+        with r2c2: atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="p_atac")
+        with r2c3: atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], key="p_atac_res")
+        with r2c4: dias_transito = st.number_input("Dias em Trânsito", 1, 60, 10, key="p_transito")
 else:
     anti_gangorra = 15
     dias_transito = 10
@@ -233,7 +237,6 @@ else:
     piso = 0
     lead_time = 10
     reserva = 25
-    lookback = 365
     atacado_piso = "Não"
     atacado_reserva = "Não"
 
