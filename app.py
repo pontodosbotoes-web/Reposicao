@@ -239,6 +239,19 @@ COBERTURA_MAP = {
 
 
 # ============================================================
+# FUNÇÃO QUE APLICA O PERFIL (chamada automaticamente ao mudar)
+# ============================================================
+def _aplicar_perfil_do_session():
+    """Aplica os parâmetros do perfil escolhido no session_state."""
+    perfil = st.session_state.get("perfil_sel", "Padrão")
+    if perfil in PERFIS:
+        for chave, valor in PERFIS[perfil].items():
+            st.session_state[chave] = valor
+        st.session_state["_ultimo_perfil_aplicado"] = perfil
+
+
+
+# ============================================================
 # FILTROS (dentro do form) + BOTÕES (fora do form)
 # ============================================================
 # Linha única: 6 filtros à esquerda + 4 botões-ícone à direita
@@ -254,6 +267,7 @@ with f0:
         index=0,
         key="perfil_sel",
         help="Escolha um perfil para ajustar os parâmetros automaticamente.",
+        on_change=_aplicar_perfil_do_session,
     )
 
 with f1:
