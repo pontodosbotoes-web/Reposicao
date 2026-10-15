@@ -1,0 +1,1 @@
+"""Pacote do Manual do Gestor (renderização Streamlit + PDF)."""
