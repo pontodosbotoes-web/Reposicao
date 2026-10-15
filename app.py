@@ -147,6 +147,78 @@ grupos = carregar_grupos()
 subgrupos = carregar_subgrupos()
 
 
+# ============================================================
+# PERFIS PRÉ-DEFINIDOS
+# ============================================================
+PERFIS = {
+    "Padrão": {
+        "opcao_data":       "1 ano atrás",
+        "cobertura_opcao":  "Para 30 dias",
+        "lead_time":        10,
+        "piso":             0,
+        "reserva":          25,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    15,
+        "dias_transito":    10,
+    },
+    "Sazonal (Halloween/Natal/Páscoa)": {
+        "opcao_data":       "30 dias atrás",
+        "cobertura_opcao":  "Para 30 dias",
+        "lead_time":        10,
+        "piso":             3,
+        "reserva":          10,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    7,
+        "dias_transito":    10,
+    },
+    "Alto Giro": {
+        "opcao_data":       "3 meses atrás",
+        "cobertura_opcao":  "Para 15 dias",
+        "lead_time":        7,
+        "piso":             5,
+        "reserva":          15,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    7,
+        "dias_transito":    7,
+    },
+    "Baixo Giro": {
+        "opcao_data":       "1 ano atrás",
+        "cobertura_opcao":  "Para 30 dias",
+        "lead_time":        10,
+        "piso":             3,
+        "reserva":          30,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    20,
+        "dias_transito":    10,
+    },
+    "Liquidação": {
+        "opcao_data":       "6 meses atrás",
+        "cobertura_opcao":  "Para 7 dias",
+        "lead_time":        10,
+        "piso":             0,
+        "reserva":          0,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    30,
+        "dias_transito":    10,
+    },
+}
+
+
+def aplicar_perfil():
+    """Callback: quando o perfil muda, aplica todos os parâmetros."""
+    perfil = st.session_state.get("perfil_sel", "Padrão")
+    if perfil in PERFIS:
+        for chave, valor in PERFIS[perfil].items():
+            st.session_state[chave] = valor
+
+
+
+
 if "show_params" not in st.session_state:
     st.session_state.show_params = False
     
@@ -499,76 +571,6 @@ def gerar_pdf_filial(nome_filial, cod, df):
     )
     buffer.seek(0)
     return buffer, agora
-
-
-# ============================================================
-# PERFIS PRÉ-DEFINIDOS
-# ============================================================
-PERFIS = {
-    "Padrão": {
-        "opcao_data":       "1 ano atrás",
-        "cobertura_opcao":  "Para 30 dias",
-        "lead_time":        10,
-        "piso":             0,
-        "reserva":          25,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    15,
-        "dias_transito":    10,
-    },
-    "Sazonal (Halloween/Natal/Páscoa)": {
-        "opcao_data":       "30 dias atrás",
-        "cobertura_opcao":  "Para 30 dias",
-        "lead_time":        10,
-        "piso":             3,
-        "reserva":          10,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    7,
-        "dias_transito":    10,
-    },
-    "Alto Giro": {
-        "opcao_data":       "3 meses atrás",
-        "cobertura_opcao":  "Para 15 dias",
-        "lead_time":        7,
-        "piso":             5,
-        "reserva":          15,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    7,
-        "dias_transito":    7,
-    },
-    "Baixo Giro": {
-        "opcao_data":       "1 ano atrás",
-        "cobertura_opcao":  "Para 30 dias",
-        "lead_time":        10,
-        "piso":             3,
-        "reserva":          30,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    20,
-        "dias_transito":    10,
-    },
-    "Liquidação": {
-        "opcao_data":       "6 meses atrás",
-        "cobertura_opcao":  "Para 7 dias",
-        "lead_time":        10,
-        "piso":             0,
-        "reserva":          0,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    30,
-        "dias_transito":    10,
-    },
-}
-
-
-def aplicar_perfil():
-    """Callback: quando o perfil muda, aplica todos os parâmetros."""
-    perfil = st.session_state.get("perfil_sel", "Padrão")
-    if perfil in PERFIS:
-        for chave, valor in PERFIS[perfil].items():
-            st.session_state[chave] = valor
 
 # ============================================================
 # MANUAL DO GESTOR (versão enxuta)
