@@ -334,6 +334,7 @@ if st.session_state.show_params:
                 ["(todas)"] + list(filiais.keys()),
                 index=0,
                 key="filial_param",
+                help="Apenas visual: o motor sempre analisa todas as filiais.",
             )
         with r1c3:
             cobertura_opcao = st.selectbox(
@@ -590,9 +591,9 @@ def gerar_pdf_filial(nome_filial, cod, df):
 # CONSULTAR
 # ============================================================
 if btn_consultar:
-    # Regra: se o campo Produto estiver preenchido, ele é EXCLUSIVO.
-    # Todos os filtros (Fabricante, Departamento, Grupo, Subgrupo e Filial)
-    # são ignorados. Apenas o Perfil de Análise continua sendo aplicado.
+    # Regra 1: se o campo Produto estiver preenchido, ele é EXCLUSIVO.
+    # Regra 2: o campo Filial é apenas visual — o motor sempre analisa todas
+    #          as filiais para poder decidir quem doa e quem recebe.
     produto_preenchido = bool(produto_busca and produto_busca.strip())
 
     if produto_preenchido:
@@ -600,18 +601,22 @@ if btn_consultar:
         departamento_filtro = ""
         grupo_filtro        = ""
         subgrupo_filtro     = ""
-        filial_filtro       = ""
     else:
         fabricante_filtro   = "" if fabricante_sel == "(todos)" else fabricantes[fabricante_sel]
         departamento_filtro = "" if depto_sel == "(todos)" else departamentos[depto_sel]
         grupo_filtro        = "" if grupo_sel == "(todos)" else grupos[grupo_sel]
         subgrupo_filtro     = "" if subgrupo_sel == "(todos)" else subgrupos[subgrupo_sel]
-        filial_filtro       = "" if filial_sel == "(todas)" else filiais[filial_sel]
 
-    # Validação: precisa ter produto digitado OU pelo menos 1 filtro
-    if (not produto_preenchido and not fabricante_filtro
-        and not departamento_filtro and not grupo_filtro
-        and not subgrupo_filtro and not filial_filtro):
+    # Validação: Filial NÃO conta como filtro obrigatório (é só visual).
+    nenhum_filtro = (
+        not produto_preenchido
+        and not fabricante_filtro
+        and not departamento_filtro
+        and not grupo_filtro
+        and not subgrupo_filtro
+    )
+
+    if nenhum_filtro:
         st.warning("⚠️ Digite um produto ou escolha pelo menos 1 filtro.")
     else:
         try:
@@ -623,7 +628,7 @@ if btn_consultar:
                     departamento=departamento_filtro,
                     grupo=grupo_filtro,
                     subgrupo=subgrupo_filtro,
-                    filial=filial_filtro,
+                    filial="",   # sempre todas as filiais (Filial é só visual)
                     produto=produto_busca,
                 )
                 st.session_state["df_base"] = df_base
@@ -665,8 +670,15 @@ if "df_transf" in st.session_state:
     if df.empty:
         st.info("Nenhuma sugestão encontrada.")
     else:
-        nomes = ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"]
+        nomes_todos = ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"]
         codigos = {"ATACADO": 5, "ALECRIM": 1, "VIA DIRETA": 2, "ZONA SUL": 3, "ZONA NORTE": 4}
+
+        # Filial é apenas visual: filtra quais abas serão exibidas
+        if filial_sel != "(todas)":
+            cod_sel = int(filiais[filial_sel])
+            nomes = [n for n in nomes_todos if codigos[n] == cod_sel]
+        else:
+            nomes = nomes_todos
 
         tabs = st.tabs(nomes)
         for tab, nome in zip(tabs, nomes):
