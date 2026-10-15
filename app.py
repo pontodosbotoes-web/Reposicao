@@ -232,11 +232,12 @@ COBERTURA_MAP = {
 
 
 # ============================================================
-# FILTROS + BOTÕES (protegidos por st.form)
+# FILTROS (dentro do form) + BOTÕES (fora do form)
 # ============================================================
+# Linha 1: 6 filtros
 with st.form("filtros_form", clear_on_submit=False):
     f0, f1, f2, f3, f4, f5 = st.columns(
-        [1.8, 2.0, 1.4, 1.4, 1.4, 1.8],
+        [1.6, 1.9, 1.3, 1.3, 1.3, 1.8],
         vertical_alignment="bottom",
     )
 
@@ -268,13 +269,20 @@ with st.form("filtros_form", clear_on_submit=False):
             key="produto_busca",
         )
 
-    # ⚠️ ÚNICO botão de submit (capturado em btn_consultar)
-    btn_consultar = st.form_submit_button(
-        "🔍 Consultar", type="primary", use_container_width=True
-    )
+    # Linha 2: 4 botões na mesma largura das colunas de filtro
+    # Como estamos dentro do form, o único botão SUBMIT é o Consultar
+    # Os outros são só placeholders visuais
+    b1, b2, b3, b4, _ = st.columns([1, 1, 1, 1, 3.3], gap="small")
 
-# Botões fora do form (não precisam estar protegidos)
-col_b1, col_b2, col_b3, _ = st.columns([1, 1, 1, 5], gap="small")
+    with b1:
+        btn_consultar = st.form_submit_button(
+            "🔍 Consultar", type="primary", use_container_width=True
+        )
+
+# ⚠️ Botões fora do form (mas alinhados na mesma linha visual)
+# Hack: usamos st.columns com 1 coluna fantasma pra alinhar
+col_b1, col_b2, col_b3, _ = st.columns([1, 1, 1, 7.3], gap="small")
+
 with col_b1:
     btn_limpar = st.button("🧹 Limpar", use_container_width=True, help="Limpar filtros")
 with col_b2:
