@@ -266,10 +266,23 @@ with f0:
         list(PERFIS.keys()),
         index=0,
         key="perfil_sel",
-        help="Escolha um perfil para ajustar os parâmetros automaticamente.",
+        help=(
+            "**Perfil de Análise**\n\n"
+            "Escolha um perfil para ajustar automaticamente os 9 parâmetros. "
+            "Depois, se quiser, refine individualmente no painel ⚙️ Parâmetros.\n\n"
+            "**🔹 Padrão** — Uso geral. *1 ano de histórico, cobertura 30d, "
+            "lead 10d, reserva 25%, quarentena 15d.*\n\n"
+            "**🔹 Sazonal** — Produtos com pico (Halloween, Natal, Páscoa). "
+            "*30 dias de histórico, piso 3, reserva 10%, quarentena 7d.*\n\n"
+            "**🔹 Alto Giro** — Produtos que vendem muito rápido. "
+            "*3 meses de histórico, cobertura 15d, lead 7d, piso 5, quarentena 7d.*\n\n"
+            "**🔹 Baixo Giro** — Produtos lentos, pouca saída. "
+            "*1 ano de histórico, piso 3, reserva 30%, quarentena 20d.*\n\n"
+            "**🔹 Liquidação** — Fim de ciclo / queima de estoque. "
+            "*6 meses de histórico, cobertura 7d, reserva 0%, quarentena 30d.*"
+        ),
         on_change=_aplicar_perfil_do_session,
     )
-
 with f1:
     fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel")
 
