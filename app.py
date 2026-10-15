@@ -216,6 +216,22 @@ if btn_params:
 
 if st.session_state.show_params:
     with st.container(border=True):
+        # ⭐ Linha 0 — PERFIL (novo)
+        r0c1, r0c2 = st.columns([1, 3])
+        with r0c1:
+            st.selectbox(
+                "Perfil de Análise",
+                list(PERFIS.keys()),
+                index=0,
+                key="perfil_sel",
+                on_change=aplicar_perfil,
+                help="Escolha um perfil para configurar automaticamente os parâmetros abaixo.",
+            )
+        with r0c2:
+            st.caption(
+                "💡 **Escolha um perfil** para o sistema ajustar todos os parâmetros automaticamente. "
+                "Depois você pode refinar individualmente se quiser."
+            )
         # Linha 1 — JANELA DE ANÁLISE
         r1c1, r1c2, r1c3, r1c4 = st.columns(4)
         with r1c1:
@@ -266,6 +282,7 @@ if st.session_state.show_params:
             dias_transito = st.number_input("Dias em Trânsito", 1, 60, 10, key="dias_transito")
 else:
     # Valores padrão quando o painel está fechado
+    perfil_sel = st.session_state.get("perfil_sel", "Padrão")
     opcao_data = st.session_state.get("opcao_data", "1 ano atrás")
     filial_sel = st.session_state.get("filial_param", "(todas)")
     cobertura_opcao = st.session_state.get("cobertura_opcao", "Para 30 dias")
@@ -291,6 +308,7 @@ data_ref, lookback = calcular_janela_analise(opcao_data)
 if btn_limpar:
     for k in [
         "df_base", "df_transf", "df_base_n", "produto_busca",
+        "perfil_sel",                      # ⭐ novo
         "opcao_data", "filial_param", "cobertura_opcao",
         "lead_time", "piso", "reserva",
         "atacado_piso", "atacado_reserva",
@@ -482,6 +500,76 @@ def gerar_pdf_filial(nome_filial, cod, df):
     buffer.seek(0)
     return buffer, agora
 
+
+# ============================================================
+# PERFIS PRÉ-DEFINIDOS
+# ============================================================
+PERFIS = {
+    "Padrão": {
+        "opcao_data":       "1 ano atrás",
+        "cobertura_opcao":  "Para 30 dias",
+        "lead_time":        10,
+        "piso":             0,
+        "reserva":          25,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    15,
+        "dias_transito":    10,
+    },
+    "Sazonal (Halloween/Natal/Páscoa)": {
+        "opcao_data":       "30 dias atrás",
+        "cobertura_opcao":  "Para 30 dias",
+        "lead_time":        10,
+        "piso":             3,
+        "reserva":          10,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    7,
+        "dias_transito":    10,
+    },
+    "Alto Giro": {
+        "opcao_data":       "3 meses atrás",
+        "cobertura_opcao":  "Para 15 dias",
+        "lead_time":        7,
+        "piso":             5,
+        "reserva":          15,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    7,
+        "dias_transito":    7,
+    },
+    "Baixo Giro": {
+        "opcao_data":       "1 ano atrás",
+        "cobertura_opcao":  "Para 30 dias",
+        "lead_time":        10,
+        "piso":             3,
+        "reserva":          30,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    20,
+        "dias_transito":    10,
+    },
+    "Liquidação": {
+        "opcao_data":       "6 meses atrás",
+        "cobertura_opcao":  "Para 7 dias",
+        "lead_time":        10,
+        "piso":             0,
+        "reserva":          0,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    30,
+        "dias_transito":    10,
+    },
+}
+
+
+def aplicar_perfil():
+    """Callback: quando o perfil muda, aplica todos os parâmetros."""
+    perfil = st.session_state.get("perfil_sel", "Padrão")
+    if perfil in PERFIS:
+        for chave, valor in PERFIS[perfil].items():
+            st.session_state[chave] = valor
+
 # ============================================================
 # MANUAL DO GESTOR (versão enxuta)
 # ============================================================
@@ -642,18 +730,40 @@ def render_manual():
 
         st.subheader("Matriz de proximidade")
         st.markdown(
-            "| Destino | Doadores (em ordem) |\n"
-            "|---------|---------------------|\n"
-            "| **Alecrim** | Atacado, Via Direta, Zona Sul, Zona Norte |\n"
-            "| **Via Direta** | Atacado, Zona Sul |\n"
-            "| **Zona Sul** | Atacado, Via Direta |\n"
-            "| **Zona Norte** | Atacado, Alecrim |\n"
+            "| Destino | Doadores em ordem de prioridade |\n"
+            "|---------|--------------------------------|\n"
+            "| **Alecrim** | Atacado → Via Direta → Zona Sul → Zona Norte |\n"
+            "| **Via Direta** | Atacado → Alecrim → Zona Sul |\n"
+            "| **Zona Sul** | Atacado → Alecrim → Via Direta |\n"
+            "| **Zona Norte** | Atacado → Alecrim |\n"
             "| **Atacado** | Nunca recebe |"
         )
 
     # ---------------- ABA 3 ----------------
     with tab3:
         st.header("Filtros e Parâmetros")
+        
+        st.subheader("⭐ Perfil de Análise (novidade)")
+
+        st.info(
+            "**Escolha um perfil** para o sistema ajustar automaticamente os 9 parâmetros. "
+            "Depois, se quiser, refine individualmente."
+        )
+
+        st.markdown(
+            "| Perfil | Quando usar | Principais diferenças |\n"
+            "|--------|-------------|----------------------|\n"
+            "| **Padrão** | Uso geral | 1 ano, 30 dias, reserva 25% |\n"
+            "| **Sazonal** | Halloween, Natal, Páscoa | 30 dias de análise, reserva 10%, piso 3 |\n"
+            "| **Alto Giro** | Produtos que vendem muito | Cobertura 15 dias, lead 7 |\n"
+            "| **Baixo Giro** | Produtos lentos | Reserva 30%, quarentena 20 |\n"
+            "| **Liquidação** | Fim de ciclo | Reserva 0%, cobertura 7 dias |"
+        )
+
+        st.markdown(
+            "**Como usar**: abra ⚙️ Parâmetros → escolha o perfil no topo → "
+            "todos os parâmetros abaixo são ajustados automaticamente."
+        )
 
         st.subheader("Filtros do topo")
         st.markdown(
@@ -789,10 +899,11 @@ def render_manual():
         st.markdown(
             "1. Abra o app\n"
             "2. Clique em ⚙️ Parâmetros\n"
-            "3. Confira os padrões (Período = 1 ano, Cobertura = 30 dias)\n"
-            "4. Escolha um Fabricante no topo\n"
-            "5. Clique em 🔍\n"
-            "6. Filtre por Prioridade = Crítica"
+            "3. **Escolha o Perfil de Análise** (Padrão, Sazonal, Alto Giro, Baixo Giro ou Liquidação)\n"
+            "4. Confira os parâmetros ajustados automaticamente\n"
+            "5. Escolha um Fabricante no topo\n"
+            "6. Clique em 🔍\n"
+            "7. Filtre por Prioridade = Crítica"
         )
 
         st.subheader("Terça a Quinta (ação)")
