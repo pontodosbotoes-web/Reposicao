@@ -242,59 +242,51 @@ COBERTURA_MAP = {
 # FILTROS (dentro do form) + BOTÕES (fora do form)
 # ============================================================
 # Linha 1: 6 filtros
-with st.form("filtros_form", clear_on_submit=False):
-    f0, f1, f2, f3, f4, f5 = st.columns(
-        [1.6, 1.9, 1.3, 1.3, 1.3, 1.8],
-        vertical_alignment="bottom",
+f0, f1, f2, f3, f4, f5 = st.columns(
+    [1.6, 1.9, 1.3, 1.3, 1.3, 1.8],
+    vertical_alignment="bottom",
+)
+
+with f0:
+    st.selectbox(
+        "Perfil de Análise",
+        list(PERFIS.keys()),
+        index=0,
+        key="perfil_sel",
+        help="Escolha um perfil para ajustar os parâmetros automaticamente.",
     )
 
-    with f0:
-        st.selectbox(
-            "Perfil de Análise",
-            list(PERFIS.keys()),
-            index=0,
-            key="perfil_sel",
-            help="Escolha um perfil para ajustar os parâmetros automaticamente.",
-        )
+with f1:
+    fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel")
 
-    with f1:
-        fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel")
+with f2:
+    depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel")
 
-    with f2:
-        depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel")
+with f3:
+    grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()), key="grupo_sel")
 
-    with f3:
-        grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()), key="grupo_sel")
+with f4:
+    subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel")
 
-    with f4:
-        subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel")
+with f5:
+    produto_busca = st.text_input(
+        "Produto",
+        placeholder="Código, ref, descrição ou cód. barras",
+        key="produto_busca",
+    )
 
-    with f5:
-        produto_busca = st.text_input(
-            "Produto",
-            placeholder="Código, ref, descrição ou cód. barras",
-            key="produto_busca",
-        )
+# Linha 2: 4 botões na mesma linha
+b1, b2, b3, b4, _ = st.columns([1, 1, 1, 1, 3.3], gap="small")
 
-    # Linha 2: 4 botões na mesma largura das colunas de filtro
-    # Como estamos dentro do form, o único botão SUBMIT é o Consultar
-    # Os outros são só placeholders visuais
-    b1, b2, b3, b4, _ = st.columns([1, 1, 1, 1, 3.3], gap="small")
-
-    with b1:
-        btn_consultar = st.form_submit_button(
-            "🔍 Consultar", type="primary", use_container_width=True
-        )
-
-# ⚠️ Botões fora do form (mas alinhados na mesma linha visual)
-# Hack: usamos st.columns com 1 coluna fantasma pra alinhar
-col_b1, col_b2, col_b3, _ = st.columns([1, 1, 1, 7.3], gap="small")
-
-with col_b1:
+with b1:
+    btn_consultar = st.button(
+        "🔍 Consultar", type="primary", use_container_width=True
+    )
+with b2:
     btn_limpar = st.button("🧹 Limpar", use_container_width=True, help="Limpar filtros")
-with col_b2:
+with b3:
     btn_params = st.button("⚙️ Parâmetros", use_container_width=True, help="Parâmetros")
-with col_b3:
+with b4:
     btn_manual = st.button("📖 Manual", use_container_width=True, help="Manual do Gestor")
 
 # ============================================================
