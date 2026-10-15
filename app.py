@@ -272,7 +272,7 @@ with f0:
             "Depois, se quiser, refine individualmente no painel ⚙️ Parâmetros.\n\n"
             "**🔹 Padrão** — Uso geral. *1 ano de histórico, cobertura 30d, "
             "lead 10d, reserva 25%, quarentena 15d.*\n\n"
-            "**🔹 Sazonal** — Produtos com pico (Halloween, Natal, Páscoa). "
+            "**🔹 Sazonal** — Produtos com pico (Carnava, São João, Natal). "
             "*30 dias de histórico, piso 3, reserva 10%, quarentena 7d.*\n\n"
             "**🔹 Alto Giro** — Produtos que vendem muito rápido. "
             "*3 meses de histórico, cobertura 15d, lead 7d, piso 5, quarentena 7d.*\n\n"
