@@ -673,8 +673,11 @@ if "df_transf" in st.session_state:
         nomes_todos = ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"]
         codigos = {"ATACADO": 5, "ALECRIM": 1, "VIA DIRETA": 2, "ZONA SUL": 3, "ZONA NORTE": 4}
 
-        # Filial é apenas visual: filtra quais abas serão exibidas
-        if filial_sel != "(todas)":
+        # Filial é apenas visual: filtra quais abas serão exibidas.
+        # Exceção: quando o Produto está preenchido, Filial também é ignorado
+        # (mostra todas as 5 abas).
+        produto_preenchido = bool(produto_busca and produto_busca.strip())
+        if filial_sel != "(todas)" and not produto_preenchido:
             cod_sel = int(filiais[filial_sel])
             nomes = [n for n in nomes_todos if codigos[n] == cod_sel]
         else:
