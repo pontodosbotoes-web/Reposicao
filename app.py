@@ -162,7 +162,7 @@ PERFIS = {
         "anti_gangorra":    15,
         "dias_transito":    10,
     },
-    "Sazonal (Halloween/Natal/Páscoa)": {
+    "Sazonal": {
         "opcao_data":       "30 dias atrás",
         "cobertura_opcao":  "Para 30 dias",
         "lead_time":        10,
@@ -242,12 +242,22 @@ COBERTURA_MAP = {
 
 
 # ============================================================
-# FILTROS + BOTÕES (apenas produto)
+# FILTROS + BOTÕES
 # ============================================================
-f1, f2, f3, f4, f5, f6 = st.columns(
-    [2.2, 1.6, 1.6, 1.6, 1.8, 1.6],
+f0, f1, f2, f3, f4, f5, f6 = st.columns(
+    [1.8, 2.0, 1.4, 1.4, 1.4, 1.8, 1.6],
     vertical_alignment="bottom",
 )
+
+with f0:
+    st.selectbox(
+        "Perfil de Análise",
+        list(PERFIS.keys()),
+        index=0,
+        key="perfil_sel",
+        on_change=aplicar_perfil,
+        help="Escolha um perfil para ajustar os parâmetros automaticamente.",
+    )
 
 with f1:
     fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel")
@@ -288,22 +298,6 @@ if btn_params:
 
 if st.session_state.show_params:
     with st.container(border=True):
-        # ⭐ Linha 0 — PERFIL (novo)
-        r0c1, r0c2 = st.columns([1, 3])
-        with r0c1:
-            st.selectbox(
-                "Perfil de Análise",
-                list(PERFIS.keys()),
-                index=0,
-                key="perfil_sel",
-                on_change=aplicar_perfil,
-                help="Escolha um perfil para configurar automaticamente os parâmetros abaixo.",
-            )
-        with r0c2:
-            st.caption(
-                "💡 **Escolha um perfil** para o sistema ajustar todos os parâmetros automaticamente. "
-                "Depois você pode refinar individualmente se quiser."
-            )
         # Linha 1 — JANELA DE ANÁLISE
         r1c1, r1c2, r1c3, r1c4 = st.columns(4)
         with r1c1:
@@ -763,8 +757,8 @@ def render_manual():
         )
 
         st.markdown(
-            "**Como usar**: abra ⚙️ Parâmetros → escolha o perfil no topo → "
-            "todos os parâmetros abaixo são ajustados automaticamente."
+            "**Como usar**: no topo da página, escolha o perfil ao lado "
+            "do campo Fabricante → os parâmetros são ajustados automaticamente."
         )
 
         st.subheader("Filtros do topo")
@@ -900,12 +894,11 @@ def render_manual():
         st.subheader("Segunda-feira (10 min)")
         st.markdown(
             "1. Abra o app\n"
-            "2. Clique em ⚙️ Parâmetros\n"
-            "3. **Escolha o Perfil de Análise** (Padrão, Sazonal, Alto Giro, Baixo Giro ou Liquidação)\n"
-            "4. Confira os parâmetros ajustados automaticamente\n"
-            "5. Escolha um Fabricante no topo\n"
-            "6. Clique em 🔍\n"
-            "7. Filtre por Prioridade = Crítica"
+            "2. **Escolha o Perfil de Análise** no topo (Padrão, Sazonal, Alto Giro, Baixo Giro ou Liquidação)\n"
+            "3. Escolha um Fabricante no topo\n"
+            "4. Clique em 🔍\n"
+            "5. Filtre por Prioridade = Crítica\n"
+            "6. Se quiser refinar, clique em ⚙️ Parâmetros"
         )
 
         st.subheader("Terça a Quinta (ação)")
