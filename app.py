@@ -285,8 +285,16 @@ with f4:
 with f5:
     produto_busca = st.text_input(
         "Produto",
-        placeholder="Código, ref, descrição ou cód. barras",
+        placeholder="Ex: CAIXA QUADRADA (E), CAPA, CAPUZ (OU)",
         key="produto_busca",
+        help=(
+            "Busca por produto com E / OU:\n\n"
+            "• Espaço = E (AND): 'CAIXA QUADRADA' acha produtos que tenham "
+            "as DUAS palavras.\n\n"
+            "• Vírgula = OU (OR): 'CAPA, CAPUZ' acha produtos com UMA ou "
+            "OUTRA.\n\n"
+            "• Combine: 'CAIXA QUADRADA, CAPA' = (CAIXA E QUADRADA) OU CAPA."
+        ),
     )
 
 with b1:
