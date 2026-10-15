@@ -590,51 +590,43 @@ def gerar_pdf_filial(nome_filial, cod, df):
 # CONSULTAR
 # ============================================================
 if btn_consultar:
-    if (filial_sel == "(todas)" and fabricante_sel == "(todos)"
-        and depto_sel == "(todos)" and grupo_sel == "(todos)"
-        and subgrupo_sel == "(todos)" and not produto_busca):
-        st.warning("⚠️ Escolha pelo menos 1 filtro.")
+    # Regra: se o campo Produto estiver preenchido, ele é EXCLUSIVO.
+    # Todos os filtros (Fabricante, Departamento, Grupo, Subgrupo e Filial)
+    # são ignorados. Apenas o Perfil de Análise continua sendo aplicado.
+    produto_preenchido = bool(produto_busca and produto_busca.strip())
+
+    if produto_preenchido:
+        fabricante_filtro   = ""
+        departamento_filtro = ""
+        grupo_filtro        = ""
+        subgrupo_filtro     = ""
+        filial_filtro       = ""
+    else:
+        fabricante_filtro   = "" if fabricante_sel == "(todos)" else fabricantes[fabricante_sel]
+        departamento_filtro = "" if depto_sel == "(todos)" else departamentos[depto_sel]
+        grupo_filtro        = "" if grupo_sel == "(todos)" else grupos[grupo_sel]
+        subgrupo_filtro     = "" if subgrupo_sel == "(todos)" else subgrupos[subgrupo_sel]
+        filial_filtro       = "" if filial_sel == "(todas)" else filiais[filial_sel]
+
+    # Validação: precisa ter produto digitado OU pelo menos 1 filtro
+    if (not produto_preenchido and not fabricante_filtro
+        and not departamento_filtro and not grupo_filtro
+        and not subgrupo_filtro and not filial_filtro):
+        st.warning("⚠️ Digite um produto ou escolha pelo menos 1 filtro.")
     else:
         try:
             with st.spinner("⏳ Construindo Base..."):
                 df_base = carregar_base(
                     data_referencia=data_ref.strftime("%Y-%m-%d"),
                     max_lookback=lookback,
-                    fabricante="" if fabricante_sel == "(todos)" else fabricantes[fabricante_sel],
-                    departamento="" if depto_sel == "(todos)" else departamentos[depto_sel],
-                    grupo="" if grupo_sel == "(todos)" else grupos[grupo_sel],
-                    subgrupo="" if subgrupo_sel == "(todos)" else subgrupos[subgrupo_sel],
-                    filial="" if filial_sel == "(todas)" else filiais[filial_sel],
-                    produto=produto_busca,      # ✅
+                    fabricante=fabricante_filtro,
+                    departamento=departamento_filtro,
+                    grupo=grupo_filtro,
+                    subgrupo=subgrupo_filtro,
+                    filial=filial_filtro,
+                    produto=produto_busca,
                 )
                 st.session_state["df_base"] = df_base
-
-            with st.spinner("⏳ Calculando sugestões..."):
-                df_transito = carregar_transf_em_transito(
-                    data_referencia=data_ref.strftime("%Y-%m-%d"),
-                    dias_transito=dias_transito,
-                )
-
-                df_recebidas = carregar_transf_recebidas_recentes(
-                    data_referencia=data_ref.strftime("%Y-%m-%d"),
-                    dias_reposicao=anti_gangorra,
-                )
-
-                df_transf = gerar_sugestoes(
-                    df_base,
-                    df_transito=df_transito,
-                    df_recebidas_recentes=df_recebidas,
-                    cobertura_alvo=cobertura,
-                    lead_time=lead_time,
-                    piso_exposicao=piso,
-                    reserva_pct=reserva,
-                    atacado_tem_piso=(atacado_piso == "Sim"),
-                    atacado_tem_reserva=(atacado_reserva == "Sim"),
-                )
-                st.session_state["df_transf"] = df_transf
-                st.session_state["df_base_n"] = len(df_base)
-        except Exception as e:
-            st.error(f"❌ Erro: {e}")
 
 
 # ============================================================
