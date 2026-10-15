@@ -243,7 +243,7 @@ COBERTURA_MAP = {
 # ============================================================
 # Linha única: 6 filtros à esquerda + 4 botões-ícone à direita
 f0, f1, f2, f3, f4, f5, b1, b2, b3, b4 = st.columns(
-    [1.6, 1.9, 1.3, 1.3, 1.3, 1.8, 0.45, 0.45, 0.45, 0.45],
+        [1.6, 1.9, 1.3, 1.3, 1.3, 1.8, 0.6, 0.6, 0.6, 0.6],
     vertical_alignment="bottom",
 )
 
