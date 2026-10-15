@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import hashlib
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 from io import BytesIO
@@ -9,6 +10,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
+from manual.render_streamlit import render_manual
 
 from src.db import (
     carregar_filiais, carregar_fabricantes,
@@ -215,6 +217,11 @@ if "show_params" not in st.session_state:
     
 if "view" not in st.session_state:
     st.session_state["view"] = "calculadora"
+
+# 👇 NOVO — roteamento ANTES de renderizar a calculadora
+if st.session_state["view"] == "manual":
+    render_manual()
+    st.stop()
 
 
 # ============================================================
@@ -1065,14 +1072,17 @@ if "df_transf" in st.session_state:
 
                 with m5:
                     st.write("")
-                    # Cache do PDF pela chave filial + hash dos dados
-                    cache_key = f"pdf_cache_{cod}_{len(df_env)}_{len(df_rec)}"
-                    
+                    # Chave estável: filial + impressão digital do conteúdo real
+                    _h = hashlib.md5(
+                        pd.util.hash_pandas_object(df, index=True).values.tobytes()
+                    ).hexdigest()[:10]
+                    cache_key = f"pdf_cache_{cod}_{_h}"
+
                     if cache_key not in st.session_state:
                         try:
                             pdf_bytes, agora = gerar_pdf_filial(nome, cod, df)
                             st.session_state[cache_key] = (pdf_bytes, agora)
-                        except Exception as e:
+                        except Exception:
                             st.session_state[cache_key] = (None, None)
                     
                     pdf_bytes, agora = st.session_state[cache_key]
@@ -1139,13 +1149,6 @@ if "df_transf" in st.session_state:
                     
 
 
-# ============================================================
-# ALTERNÂNCIA ENTRE CALCULADORA E MANUAL
-# ============================================================
 if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
-
-if st.session_state["view"] == "manual":
-    render_manual()
-    st.stop()
