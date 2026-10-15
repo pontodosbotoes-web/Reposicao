@@ -209,16 +209,6 @@ PERFIS = {
 }
 
 
-def aplicar_perfil():
-    """Callback: quando o perfil muda, aplica todos os parâmetros."""
-    perfil = st.session_state.get("perfil_sel", "Padrão")
-    if perfil in PERFIS:
-        for chave, valor in PERFIS[perfil].items():
-            st.session_state[chave] = valor
-
-
-
-
 if "show_params" not in st.session_state:
     st.session_state.show_params = False
     
@@ -242,53 +232,67 @@ COBERTURA_MAP = {
 
 
 # ============================================================
-# FILTROS + BOTÕES
+# FILTROS + BOTÕES (protegidos por st.form)
 # ============================================================
-f0, f1, f2, f3, f4, f5, f6 = st.columns(
-    [1.8, 2.0, 1.4, 1.4, 1.4, 1.8, 1.6],
-    vertical_alignment="bottom",
-)
-
-with f0:
-    st.selectbox(
-        "Perfil de Análise",
-        list(PERFIS.keys()),
-        index=0,
-        key="perfil_sel",
-        on_change=aplicar_perfil,
-        help="Escolha um perfil para ajustar os parâmetros automaticamente.",
+with st.form("filtros_form", clear_on_submit=False):
+    f0, f1, f2, f3, f4, f5 = st.columns(
+        [1.8, 2.0, 1.4, 1.4, 1.4, 1.8],
+        vertical_alignment="bottom",
     )
 
-with f1:
-    fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel")
+    with f0:
+        st.selectbox(
+            "Perfil de Análise",
+            list(PERFIS.keys()),
+            index=0,
+            key="perfil_sel",
+            help="Escolha um perfil para ajustar os parâmetros automaticamente.",
+        )
 
-with f2:
-    depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel")
+    with f1:
+        fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel")
 
-with f3:
-    grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()), key="grupo_sel")
+    with f2:
+        depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel")
 
-with f4:
-    subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel")
+    with f3:
+        grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()), key="grupo_sel")
 
-with f5:
-    produto_busca = st.text_input(
-        "Produto",
-        placeholder="Código, ref, descrição ou cód. barras",
-        key="produto_busca",
+    with f4:
+        subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel")
+
+    with f5:
+        produto_busca = st.text_input(
+            "Produto",
+            placeholder="Código, ref, descrição ou cód. barras",
+            key="produto_busca",
+        )
+
+    # ⚠️ ÚNICO botão de submit (capturado em btn_consultar)
+    btn_consultar = st.form_submit_button(
+        "🔍 Consultar", type="primary", use_container_width=True
     )
 
-with f6:
-    bc1, bc2, bc3, bc4 = st.columns(4, gap="small")
-    with bc1:
-        btn_consultar = st.button("🔍", type="primary", use_container_width=True, help="Consultar")
-    with bc2:
-        btn_limpar = st.button("🧹", use_container_width=True, help="Limpar filtros")
-    with bc3:
-        btn_params = st.button("⚙️", use_container_width=True, help="Parâmetros")
-    with bc4:
-        btn_manual = st.button("📖", use_container_width=True, help="Manual do Gestor")
+# Botões fora do form (não precisam estar protegidos)
+col_b1, col_b2, col_b3, _ = st.columns([1, 1, 1, 5], gap="small")
+with col_b1:
+    btn_limpar = st.button("🧹 Limpar", use_container_width=True, help="Limpar filtros")
+with col_b2:
+    btn_params = st.button("⚙️ Parâmetros", use_container_width=True, help="Parâmetros")
+with col_b3:
+    btn_manual = st.button("📖 Manual", use_container_width=True, help="Manual do Gestor")
 
+# ============================================================
+# APLICA O PERFIL QUANDO MUDA (independente do painel aberto/fechado)
+# ============================================================
+perfil_atual = st.session_state.get("perfil_sel", "Padrão")
+ultimo_perfil_aplicado = st.session_state.get("_ultimo_perfil_aplicado", None)
+
+if perfil_atual != ultimo_perfil_aplicado:
+    if perfil_atual in PERFIS:
+        for chave, valor in PERFIS[perfil_atual].items():
+            st.session_state[chave] = valor
+        st.session_state["_ultimo_perfil_aplicado"] = perfil_atual
 
 # ============================================================
 # PARÂMETROS
@@ -374,12 +378,12 @@ data_ref, lookback = calcular_janela_analise(opcao_data)
 if btn_limpar:
     for k in [
         "df_base", "df_transf", "df_base_n", "produto_busca",
-        "perfil_sel",                      # ⭐ novo
+        "perfil_sel",
+        "_ultimo_perfil_aplicado",       # ← nova
         "opcao_data", "filial_param", "cobertura_opcao",
         "lead_time", "piso", "reserva",
         "atacado_piso", "atacado_reserva",
         "anti_gangorra", "dias_transito",
-        # filtros do produto
         "fabricante_sel", "depto_sel", "grupo_sel", "subgrupo_sel",
     ]:
         if k in st.session_state:
