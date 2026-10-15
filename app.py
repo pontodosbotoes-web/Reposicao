@@ -276,7 +276,7 @@ with f5:
     )
 
 # Linha 2: 4 botões na mesma linha
-b1, b2, b3, b4, _ = st.columns([1, 1, 1, 1, 4], gap="small")
+_, _, _, _, b1, b2, b3, b4 = st.columns([1, 1, 1, 1, 1, 1, 1, 1], gap="small")
 
 with b1:
     btn_consultar = st.button(
