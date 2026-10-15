@@ -628,6 +628,33 @@ if btn_consultar:
                 )
                 st.session_state["df_base"] = df_base
 
+            with st.spinner("⏳ Calculando sugestões..."):
+                df_transito = carregar_transf_em_transito(
+                    data_referencia=data_ref.strftime("%Y-%m-%d"),
+                    dias_transito=dias_transito,
+                )
+
+                df_recebidas = carregar_transf_recebidas_recentes(
+                    data_referencia=data_ref.strftime("%Y-%m-%d"),
+                    dias_reposicao=anti_gangorra,
+                )
+
+                df_transf = gerar_sugestoes(
+                    df_base,
+                    df_transito=df_transito,
+                    df_recebidas_recentes=df_recebidas,
+                    cobertura_alvo=cobertura,
+                    lead_time=lead_time,
+                    piso_exposicao=piso,
+                    reserva_pct=reserva,
+                    atacado_tem_piso=(atacado_piso == "Sim"),
+                    atacado_tem_reserva=(atacado_reserva == "Sim"),
+                )
+                st.session_state["df_transf"] = df_transf
+                st.session_state["df_base_n"] = len(df_base)
+        except Exception as e:
+            st.error(f"❌ Erro: {e}")
+
 
 # ============================================================
 # RESULTADO
