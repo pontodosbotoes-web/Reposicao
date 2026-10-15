@@ -241,9 +241,9 @@ COBERTURA_MAP = {
 # ============================================================
 # FILTROS (dentro do form) + BOTÕES (fora do form)
 # ============================================================
-# Linha 1: 6 filtros
-f0, f1, f2, f3, f4, f5 = st.columns(
-    [1.6, 1.9, 1.3, 1.3, 1.3, 1.8],
+# Linha única: 6 filtros à esquerda + 4 botões-ícone à direita
+f0, f1, f2, f3, f4, f5, b1, b2, b3, b4 = st.columns(
+    [1.6, 1.9, 1.3, 1.3, 1.3, 1.8, 0.45, 0.45, 0.45, 0.45],
     vertical_alignment="bottom",
 )
 
@@ -275,19 +275,14 @@ with f5:
         key="produto_busca",
     )
 
-# Linha 2: 4 botões na mesma linha
-_, _, _, _, b1, b2, b3, b4 = st.columns([1, 1, 1, 1, 1, 1, 1, 1], gap="small")
-
 with b1:
-    btn_consultar = st.button(
-        "🔍 Consultar", type="primary", use_container_width=True
-    )
+    btn_consultar = st.button("🔍", type="primary", use_container_width=True, help="Consultar")
 with b2:
-    btn_limpar = st.button("🧹 Limpar", use_container_width=True, help="Limpar filtros")
+    btn_limpar = st.button("🧹", use_container_width=True, help="Limpar filtros")
 with b3:
-    btn_params = st.button("⚙️ Parâmetros", use_container_width=True, help="Parâmetros")
+    btn_params = st.button("⚙️", use_container_width=True, help="Parâmetros")
 with b4:
-    btn_manual = st.button("📖 Manual", use_container_width=True, help="Manual do Gestor")
+    btn_manual = st.button("📖", use_container_width=True, help="Manual do Gestor")
 
 # ============================================================
 # APLICA O PERFIL QUANDO MUDA (independente do painel aberto/fechado)
