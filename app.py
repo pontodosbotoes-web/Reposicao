@@ -285,7 +285,7 @@ with f4:
 with f5:
     produto_busca = st.text_input(
         "Produto",
-        placeholder="Ex: CAIXA QUADRADA (E), CAPA, CAPUZ (OU)",
+        placeholder='Ex: CAIXA QUADRADA (E) | CAPA, CAPUZ (OU)',
         key="produto_busca",
         help=(
             "Busca por produto com E / OU:\n\n"
