@@ -184,7 +184,7 @@ def render_manual() -> None:
             "| Perfil | Quando usar | Principais diferenças |\n"
             "|--------|-------------|----------------------|\n"
             "| **Padrão** | Uso geral | 1 ano, 30 dias, reserva 25% |\n"
-            "| **Sazonal** | Halloween, Natal, Páscoa | 30 dias de análise, reserva 10%, piso 3 |\n"
+            "| **Sazonal** | Carnaval, São João, Natal | 30 dias de análise, reserva 10%, piso 3 |\n"
             "| **Alto Giro** | Produtos que vendem muito | Cobertura 15 dias, lead 7 |\n"
             "| **Baixo Giro** | Produtos lentos | Reserva 30%, quarentena 20 |\n"
             "| **Liquidação** | Fim de ciclo | Reserva 0%, cobertura 7 dias |"
@@ -206,6 +206,36 @@ def render_manual() -> None:
             "| **Produto** | Busca por código, ref, nome ou cód. barras |"
         )
         st.info("Escolha pelo menos 1 filtro antes de consultar.")
+
+        st.markdown("### 🔍 Busca Avançada (novidade)")
+
+        st.info(
+            "O campo **Produto** aceita buscas mais espertas com **E** e **OU** — "
+            "e ainda pode ignorar os outros filtros quando você quer focar num produto específico."
+        )
+
+        st.markdown(
+            "**Sintaxe de busca**\n\n"
+            "| Você digita | O que o sistema faz |\n"
+            "|-------------|---------------------|\n"
+            "| `CAIXA QUADRADA` | Acha produtos que tenham **CAIXA E QUADRADA** |\n"
+            "| `CAPA, CAPUZ` | Acha produtos com **CAPA OU CAPUZ** |\n"
+            "| `CAIXA QUADRADA, CAPA` | Acha **(CAIXA E QUADRADA) OU CAPA** |"
+        )
+
+        st.markdown(
+            "**Regra especial — Produto é exclusivo**\n\n"
+            "Quando você digita algo em **Produto**, o sistema **ignora** "
+            "Fabricante, Departamento, Grupo, Subgrupo e **Filial**. "
+            "Ele busca o produto em **toda a rede** — todas as 5 filiais, todos os fabricantes.\n\n"
+            "Um **aviso azul** aparece abaixo dos filtros avisando que isso está ativo."
+        )
+
+        st.warning(
+            "**Cuidado**: essa regra vale para a busca por **Produto**. "
+            "Se você quer filtrar por Fabricante e ver o resultado em todas as filiais, "
+            "**deixe o campo Produto em branco**."
+        )
 
         st.subheader("Parâmetros")
 
