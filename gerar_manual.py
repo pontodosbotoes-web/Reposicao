@@ -209,9 +209,10 @@ def tabela(data, col_widths=None):
 # ============================================================
 # CONSTRUÇÃO DO PDF
 # ============================================================
-def gerar():
+def gerar(buffer=None):
+    destino = buffer if buffer is not None else "Manual_Reposicao_Gestor.pdf"
     doc = SimpleDocTemplate(
-        "Manual_Reposicao_Gestor.pdf",
+        destino,
         pagesize=A4,
         rightMargin=2 * cm,
         leftMargin=2 * cm,
@@ -823,7 +824,10 @@ def gerar():
     # GERAR
     # ============================================================
     doc.build(conteudo, canvasmaker=ManualCanvas)
-    print("✅ PDF gerado com sucesso: Manual_Reposicao_Gestor.pdf")
+    if buffer is None:
+        print("✅ PDF gerado com sucesso: Manual_Reposicao_Gestor.pdf")
+    else:
+        buffer.seek(0)
 
 
 if __name__ == "__main__":
