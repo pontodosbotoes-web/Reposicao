@@ -1,16 +1,45 @@
 """Renderiza o Manual do Gestor dentro do Streamlit."""
 
 import streamlit as st
+from io import BytesIO
+
+from gerar_manual import gerar as gerar_pdf_manual
+
+
+@st.cache_data
+def _gerar_manual_pdf_cached() -> bytes | None:
+    """Gera o PDF do manual em memória (cacheado)."""
+    try:
+        buffer = BytesIO()
+        gerar_pdf_manual(buffer=buffer)
+        return buffer.getvalue()
+    except Exception:
+        return None
+
 
 
 def render_manual() -> None:
     """Renderiza o manual do gestor."""
 
-    col_voltar, _ = st.columns([1, 5])
+    col_voltar, col_download, _ = st.columns([1, 1.3, 4])
+
     with col_voltar:
         if st.button("← Voltar", use_container_width=True, key="btn_voltar_manual"):
             st.session_state["view"] = "calculadora"
             st.rerun()
+
+    with col_download:
+        pdf_bytes = _gerar_manual_pdf_cached()
+        if pdf_bytes is not None:
+            st.download_button(
+                "⬇️ Baixar PDF",
+                data=pdf_bytes,
+                file_name="Manual_Reposicao_Gestor.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+            )
+        else:
+            st.button("⬇️ Baixar PDF", disabled=True, use_container_width=True)
 
     st.markdown("# 📖 Manual do Gestor")
     st.markdown("**Reposição de Produtos** — Sistema de sugestão de transferências entre filiais")
