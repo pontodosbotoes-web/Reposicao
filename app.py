@@ -320,6 +320,25 @@ with b4:
     btn_manual = st.button("📖", use_container_width=True, help="Manual do Gestor")
 
 # ============================================================
+# AVISO — Busca por Produto ignora os outros filtros
+# ============================================================
+if produto_busca and produto_busca.strip():
+    st.markdown(
+        '<div style="'
+        'background-color: rgba(59,130,246,0.12); '
+        'border-left: 3px solid #3B82F6; '
+        'padding: 6px 12px; '
+        'margin-top: 8px; '
+        'border-radius: 4px; '
+        'font-size: 0.85rem; '
+        'color: #93C5FD;">'
+        'ℹ️ <b>Busca por produto:</b> '
+        'Fabricante, Departamento, Grupo, Subgrupo e Filial serão ignorados.'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+# ============================================================
 # APLICA O PERFIL QUANDO MUDA (independente do painel aberto/fechado)
 # ============================================================
 perfil_atual = st.session_state.get("perfil_sel", "Padrão")
