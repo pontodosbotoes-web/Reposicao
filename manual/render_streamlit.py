@@ -203,7 +203,7 @@ def render_manual() -> None:
             "| **Departamento** | Categoria macro |\n"
             "| **Grupo** | Subdivisão da categoria |\n"
             "| **Subgrupo** | Nível mais específico |\n"
-            "| **Produto** | Busca por código, ref, nome ou cód. barras |"
+            "| **Produto** | Busca por código, ref, nome ou cód. barras. **Aceita E / OU** — veja a seção *Busca Avançada* abaixo |"
         )
         st.info("Escolha pelo menos 1 filtro antes de consultar.")
 
