@@ -223,6 +223,30 @@ if st.session_state["view"] == "manual":
     render_manual()
     st.stop()
 
+# ============================================================
+# VALORES PADRÃO DOS WIDGETS (controlados via session_state)
+# ============================================================
+_DEFAULTS = {
+    "perfil_sel":       "Padrão",
+    "fabricante_sel":   "(todos)",
+    "depto_sel":        "(todos)",
+    "grupo_sel":        "(todos)",
+    "subgrupo_sel":     "(todos)",
+    "produto_busca":    "",
+    "opcao_data":       "1 ano atrás",
+    "filial_param":     "(todas)",
+    "cobertura_opcao":  "Para 30 dias",
+    "lead_time":        10,
+    "piso":             0,
+    "reserva":          25,
+    "atacado_piso":     "Não",
+    "atacado_reserva":  "Não",
+    "anti_gangorra":    15,
+    "dias_transito":    10,
+}
+for _k, _v in _DEFAULTS.items():
+    if _k not in st.session_state:
+        st.session_state[_k] = _v
 
 # ============================================================
 # MAPA DE COBERTURA DE VENDAS (opções → dias)
@@ -251,35 +275,17 @@ def _aplicar_perfil_do_session():
 
 def _limpar_filtros():
     """Limpa filtros, parâmetros e resultados — chamado ANTES do rerun."""
-    chaves = [
-        # Filtros do topo
-        "produto_busca",
-        "perfil_sel",
-        "fabricante_sel",
-        "depto_sel",
-        "grupo_sel",
-        "subgrupo_sel",
-        # Parâmetros
-        "opcao_data",
-        "filial_param",
-        "cobertura_opcao",
-        "lead_time",
-        "piso",
-        "reserva",
-        "atacado_piso",
-        "atacado_reserva",
-        "anti_gangorra",
-        "dias_transito",
-        # Controle de perfil
-        "_ultimo_perfil_aplicado",
-        # Resultados em memória
-        "df_base",
-        "df_transf",
-        "df_base_n",
-    ]
-    for k in chaves:
-        if k in st.session_state:
-            del st.session_state[k]
+    # Seta valores padrão (não deleta — deletar não reseta widgets no Streamlit)
+    for _k, _v in _DEFAULTS.items():
+        st.session_state[_k] = _v
+
+    # Marca como se o Perfil "Padrão" já estivesse aplicado
+    st.session_state["_ultimo_perfil_aplicado"] = "Padrão"
+
+    # Limpa resultados em memória
+    for _k in ("df_base", "df_transf", "df_base_n"):
+        if _k in st.session_state:
+            del st.session_state[_k]
 
 # ============================================================
 # FILTROS (dentro do form) + BOTÕES (fora do form)
@@ -294,7 +300,6 @@ with f0:
     st.selectbox(
         "Perfil de Análise",
         list(PERFIS.keys()),
-        index=0,
         key="perfil_sel",
         help=(
             "**Perfil de Análise**\n\n"
@@ -369,16 +374,14 @@ if produto_busca and produto_busca.strip():
     )
 
 # ============================================================
-# APLICA O PERFIL QUANDO MUDA (independente do painel aberto/fechado)
+# APLICA O PERFIL NA PRIMEIRA CARGA
 # ============================================================
-perfil_atual = st.session_state.get("perfil_sel", "Padrão")
-ultimo_perfil_aplicado = st.session_state.get("_ultimo_perfil_aplicado", None)
-
-if perfil_atual != ultimo_perfil_aplicado:
-    if perfil_atual in PERFIS:
-        for chave, valor in PERFIS[perfil_atual].items():
-            st.session_state[chave] = valor
-        st.session_state["_ultimo_perfil_aplicado"] = perfil_atual
+if "_ultimo_perfil_aplicado" not in st.session_state:
+    _perfil = st.session_state.get("perfil_sel", "Padrão")
+    if _perfil in PERFIS:
+        for _chave, _valor in PERFIS[_perfil].items():
+            st.session_state[_chave] = _valor
+    st.session_state["_ultimo_perfil_aplicado"] = _perfil
 
 # ============================================================
 # PARÂMETROS
@@ -395,14 +398,12 @@ if st.session_state.show_params:
                 "Período de Análise",
                 ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás",
                  "30 dias atrás", "15 dias atrás", "7 dias atrás"],
-                index=0,
                 key="opcao_data",
             )
         with r1c2:
             filial_sel = st.selectbox(
                 "Filial",
                 ["(todas)"] + list(filiais.keys()),
-                index=0,
                 key="filial_param",
                 help="Apenas visual: o motor sempre analisa todas as filiais.",
             )
@@ -411,7 +412,6 @@ if st.session_state.show_params:
                 "Cobertura de Vendas",
                 ["Para 7 dias", "Para 15 dias", "Para 30 dias",
                  "Para 2 meses", "Para 3 meses", "Para 6 meses", "Para 1 ano"],
-                index=2,   # padrão = "Para 30 dias"
                 key="cobertura_opcao",
             )
         with r1c4:
@@ -427,9 +427,9 @@ if st.session_state.show_params:
         with r2c2:
             reserva = st.number_input("Reserva Origem (%)", 0, 100, 25, key="reserva")
         with r2c3:
-            atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], index=0, key="atacado_piso")
+            atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="atacado_piso")
         with r2c4:
-            atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], index=0, key="atacado_reserva")
+            atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], key="atacado_reserva")
 
         # Linha 3 — TRAVAS DE SEGURANÇA
         r3c1, r3c2 = st.columns(2)
