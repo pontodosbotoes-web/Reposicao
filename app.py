@@ -249,7 +249,37 @@ def _aplicar_perfil_do_session():
             st.session_state[chave] = valor
         st.session_state["_ultimo_perfil_aplicado"] = perfil
 
-
+def _limpar_filtros():
+    """Limpa filtros, parâmetros e resultados — chamado ANTES do rerun."""
+    chaves = [
+        # Filtros do topo
+        "produto_busca",
+        "perfil_sel",
+        "fabricante_sel",
+        "depto_sel",
+        "grupo_sel",
+        "subgrupo_sel",
+        # Parâmetros
+        "opcao_data",
+        "filial_param",
+        "cobertura_opcao",
+        "lead_time",
+        "piso",
+        "reserva",
+        "atacado_piso",
+        "atacado_reserva",
+        "anti_gangorra",
+        "dias_transito",
+        # Controle de perfil
+        "_ultimo_perfil_aplicado",
+        # Resultados em memória
+        "df_base",
+        "df_transf",
+        "df_base_n",
+    ]
+    for k in chaves:
+        if k in st.session_state:
+            del st.session_state[k]
 
 # ============================================================
 # FILTROS (dentro do form) + BOTÕES (fora do form)
@@ -313,7 +343,7 @@ with f5:
 with b1:
     btn_consultar = st.button("🔍", type="primary", use_container_width=True, help="Consultar")
 with b2:
-    btn_limpar = st.button("🧹", use_container_width=True, help="Limpar filtros")
+    st.button("🧹", use_container_width=True, help="Limpar filtros", on_click=_limpar_filtros)
 with b3:
     btn_params = st.button("⚙️", use_container_width=True, help="Parâmetros")
 with b4:
@@ -427,26 +457,6 @@ else:
 # ============================================================
 cobertura = COBERTURA_MAP.get(cobertura_opcao, 30)
 data_ref, lookback = calcular_janela_analise(opcao_data)
-
-
-# ============================================================
-# LIMPAR
-# ============================================================
-if btn_limpar:
-    for k in [
-        "df_base", "df_transf", "df_base_n", "produto_busca",
-        "perfil_sel",
-        "_ultimo_perfil_aplicado",       # ← nova
-        "opcao_data", "filial_param", "cobertura_opcao",
-        "lead_time", "piso", "reserva",
-        "atacado_piso", "atacado_reserva",
-        "anti_gangorra", "dias_transito",
-        "fabricante_sel", "depto_sel", "grupo_sel", "subgrupo_sel",
-    ]:
-        if k in st.session_state:
-            del st.session_state[k]
-    st.rerun()
-
 
 # ============================================================
 # PDF
