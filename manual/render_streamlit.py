@@ -242,7 +242,7 @@ def render_manual() -> None:
 
         st.subheader("4.2 Filtros do topo")
 
-        st.markdown("### 🔍 Busca Avançada (novidade)")
+        st.markdown("### 🔍 Busca Avançada")
 
         st.info(
             "O campo **Produto** aceita buscas mais espertas com **E** e **OU** — "
