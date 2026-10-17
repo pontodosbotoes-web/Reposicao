@@ -186,7 +186,7 @@ def bullet(texto):
 
 
 def nota(texto):
-    return Paragraph(f"💡 <b>Nota:</b> {texto}", ESTILO_NOTA)
+    return Paragraph(f"<b>Nota:</b> {texto}", ESTILO_NOTA)
 
 
 def tabela(data, col_widths=None):
@@ -293,10 +293,10 @@ def gerar(buffer=None):
 
     conteudo.append(h2("1.3 O que o sistema NÃO faz"))
     conteudo.append(p("Para evitar confusão desde o início:"))
-    conteudo.append(bullet("❌ <b>Não substitui sua decisão</b> — ele sugere, você aprova"))
-    conteudo.append(bullet("❌ <b>Não executa transferências</b> — você cria a ordem no ERP"))
-    conteudo.append(bullet("❌ <b>Não altera dados</b> no banco — é somente leitura"))
-    conteudo.append(bullet("❌ <b>Não substitui o bom senso</b> — sempre confira o motivo antes de aprovar"))
+    conteudo.append(bullet("[X] <b>Não substitui sua decisão</b> — ele sugere, você aprova"))
+    conteudo.append(bullet("[X] <b>Não executa transferências</b> — você cria a ordem no ERP"))
+    conteudo.append(bullet("[X] <b>Não altera dados</b> no banco — é somente leitura"))
+    conteudo.append(bullet("[X] <b>Não substitui o bom senso</b> — sempre confira o motivo antes de aprovar"))
 
     conteudo.append(h2("1.4 Em 1 parágrafo"))
     conteudo.append(nota(
@@ -310,15 +310,15 @@ def gerar(buffer=None):
     conteudo.append(h2("1.5 De onde vem a inteligência"))
     conteudo.append(p("O motor foi construído com base em 3 práticas consolidadas no varejo mundial:"))
 
-    conteudo.append(h3("🏛️ DRP — Distribution Requirements Planning"))
+    conteudo.append(h3("[DRP] DRP — Distribution Requirements Planning"))
     conteudo.append(p("Planejamento de reposição baseado no <b>consumo real</b> de cada ponto de venda."))
     conteudo.append(p("<i>Empresas que usam: Walmart, Carrefour, Pão de Açúcar.</i>"))
 
-    conteudo.append(h3("🔄 IST — Inter-Store Transfers"))
+    conteudo.append(h3("[IST] IST — Inter-Store Transfers"))
     conteudo.append(p("Transferências entre lojas para corrigir desequilíbrio enquanto a janela de venda está aberta."))
     conteudo.append(p("<i>Empresas que usam: Zara, H&M, Best Buy.</i>"))
 
-    conteudo.append(h3("🌐 MEIO — Multi-Echelon Inventory Optimization"))
+    conteudo.append(h3("[MEIO] MEIO — Multi-Echelon Inventory Optimization"))
     conteudo.append(p("Otimização de inventário em toda a rede, com <b>hub central</b> para consolidar estoque."))
     conteudo.append(p("<i>Empresas que usam: Amazon, Coca-Cola, P&G.</i>"))
 
@@ -396,13 +396,13 @@ def gerar(buffer=None):
 
     conteudo.append(h2("2.4 Os 3 tipos de transferência que o motor faz"))
 
-    conteudo.append(h3("🥇 Tipo 1 — Atacado → Loja (a mais comum)"))
+    conteudo.append(h3("[1] Tipo 1 — Atacado → Loja (a mais comum)"))
     conteudo.append(p("O Atacado é o <b>hub central</b>. Ele sempre aparece como primeiro doador."))
 
-    conteudo.append(h3("🥈 Tipo 2 — Loja → Loja (proximidade)"))
+    conteudo.append(h3("[2] Tipo 2 — Loja → Loja (proximidade)"))
     conteudo.append(p("Quando o Atacado não tem excesso suficiente, as lojas próximas se ajudam."))
 
-    conteudo.append(h3("🥉 Tipo 3 — Múltiplas origens"))
+    conteudo.append(h3("[3] Tipo 3 — Múltiplas origens"))
     conteudo.append(p("O motor combina origens para cobrir a falta total de uma filial."))
 
     conteudo.append(h2("2.5 A matriz de proximidade"))
@@ -415,7 +415,7 @@ def gerar(buffer=None):
         ["Via Direta", "1º Atacado, 2º Alecrim, 3º Zona Sul"],
         ["Zona Sul", "1º Atacado, 2º Alecrim, 3º Via Direta"],
         ["Zona Norte", "1º Atacado, 2º Alecrim"],
-        ["Atacado", "🚫 Nunca recebe"],
+        ["Atacado", "[Nunca] Nunca recebe"],
     ]
     conteudo.append(tabela(matriz, col_widths=[4 * cm, 10 * cm]))
 
@@ -446,9 +446,9 @@ def gerar(buffer=None):
         ["Área", "O que tem"],
         ["Topo", "Título 'Reposição de Produtos'"],
         ["Linha 1", "6 filtros: Perfil, Fabricante, Departamento, Grupo, Subgrupo e Produto"],
-        ["Botões", "🔍 Consultar · 🧹 Limpar · ⚙️ Parâmetros · 📖 Manual"],
+        ["Botões", "Consultar, Limpar, Parâmetros e Manual"],
         ["Aviso", "Faixa azul aparece quando o Produto está preenchido"],
-        ["Parâmetros", "Aparece ao clicar em ⚙️ (3 linhas agrupadas)"],
+        ["Parâmetros", "Aparece ao clicar em Parâmetros (3 linhas agrupadas)"],
         ["Resultados", "Aparece após consultar (5 abas por filial)"],
     ]
     conteudo.append(tabela(layout, col_widths=[3.5 * cm, 10.5 * cm]))
@@ -542,7 +542,7 @@ def gerar(buffer=None):
 
     conteudo.append(h2("4.4 Parâmetros"))
 
-    conteudo.append(h3("🟦 Linha 1 — Janela de Análise"))
+    conteudo.append(h3(" Linha 1 — Janela de Análise"))
     param1 = [
         ["Parâmetro", "O que é", "Padrão"],
         ["Período de Análise", "Janela histórica", "1 ano atrás"],
@@ -552,7 +552,7 @@ def gerar(buffer=None):
     ]
     conteudo.append(tabela(param1, col_widths=[4 * cm, 6 * cm, 4 * cm]))
 
-    conteudo.append(h3("🟦 Linha 2 — Proteção das Origens"))
+    conteudo.append(h3(" Linha 2 — Proteção das Origens"))
     param2 = [
         ["Parâmetro", "O que é", "Padrão"],
         ["Piso Exposição (un)", "Mínimo na prateleira", "0"],
@@ -562,7 +562,7 @@ def gerar(buffer=None):
     ]
     conteudo.append(tabela(param2, col_widths=[4 * cm, 6 * cm, 4 * cm]))
 
-    conteudo.append(h3("🟦 Linha 3 — Travas de Segurança"))
+    conteudo.append(h3(" Linha 3 — Travas de Segurança"))
     param3 = [
         ["Parâmetro", "O que é", "Padrão"],
         ["Reposição Recente (dias)", "Quarentena pós-recebimento", "15"],
@@ -579,13 +579,13 @@ def gerar(buffer=None):
 
     conteudo.append(h2("5.1 Abas por filial"))
     conteudo.append(p("Após consultar, você verá 5 abas: ATACADO, ALECRIM, VIA DIRETA, ZONA SUL, ZONA NORTE."))
-    conteudo.append(bullet("<b>📤 ENVIAR</b> — o que essa filial precisa mandar"))
-    conteudo.append(bullet("<b>📥 RECEBER</b> — o que essa filial precisa receber"))
+    conteudo.append(bullet("<b> ENVIAR</b> — o que essa filial precisa mandar"))
+    conteudo.append(bullet("<b> RECEBER</b> — o que essa filial precisa receber"))
 
     conteudo.append(h2("5.2 As colunas essenciais"))
     colunas = [
         ["Coluna", "Significado"],
-        ["Prioridade", "🔴 Crítica / 🟠 Alta / 🟡 Normal"],
+        ["Prioridade", " Crítica /  Alta /  Normal"],
         ["Cod", "Código interno do produto"],
         ["Produto", "Descrição do produto"],
         ["Destino / Origem", "Filial parceira"],
@@ -600,9 +600,9 @@ def gerar(buffer=None):
     conteudo.append(h2("5.3 Prioridades"))
     prioridades = [
         ["Prioridade", "Critério", "Ação"],
-        ["🔴 Crítica", "Zera em menos de 7 dias", "Transferir hoje"],
-        ["🟠 Alta", "Zera entre 7 e 15 dias", "Esta semana"],
-        ["🟡 Normal", "Zera em mais de 15 dias", "Fluxo regular"],
+        [" Crítica", "Zera em menos de 7 dias", "Transferir hoje"],
+        [" Alta", "Zera entre 7 e 15 dias", "Esta semana"],
+        [" Normal", "Zera em mais de 15 dias", "Fluxo regular"],
     ]
     conteudo.append(tabela(prioridades, col_widths=[3 * cm, 6 * cm, 5 * cm]))
 
@@ -629,13 +629,13 @@ def gerar(buffer=None):
 
     conteudo.append(h2("6.1 Segunda-feira (10 min)"))
     conteudo.append(p("1. Abra o app"))
-    conteudo.append(p("2. Clique em ⚙️ Parâmetros"))
+    conteudo.append(p("2. Clique em Parâmetros"))
     conteudo.append(p("3. Confira os padrões:"))
     conteudo.append(bullet("Período = '1 ano atrás'"))
     conteudo.append(bullet("Cobertura = 'Para 30 dias'"))
     conteudo.append(bullet("Tempo de Transporte = 10"))
     conteudo.append(p("4. Escolha um Fabricante no topo"))
-    conteudo.append(p("5. Clique em 🔍"))
+    conteudo.append(p("5. Clique em Consultar"))
     conteudo.append(p("6. Filtre por Prioridade = Crítica"))
 
     conteudo.append(h2("6.2 Terça a Quinta (ação)"))
@@ -643,7 +643,7 @@ def gerar(buffer=None):
     conteudo.append(p("1. Veja o <b>Motivo</b>"))
     conteudo.append(p("2. Confirme a <b>Qtd Transf.</b>"))
     conteudo.append(p("3. Verifique a <b>Origem</b>"))
-    conteudo.append(p("4. Clique em <b>📄 Gerar PDF</b>"))
+    conteudo.append(p("4. Clique em <b> Gerar PDF</b>"))
     conteudo.append(p("5. Crie a ordem no ERP"))
 
     conteudo.append(h2("6.3 Sexta-feira (10 min)"))
