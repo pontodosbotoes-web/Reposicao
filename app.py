@@ -532,7 +532,7 @@ def gerar_pdf_filial(nome_filial, cod, df):
 
         if tipo == "ENV":
             heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Reserva", "Ideal", "Motivo"]
-            widths = [22, 38, 45, 310, 30, 100, 50, 38, 38, 38, 102]
+            widths = [28, 34, 45, 280, 30, 80, 55, 36, 36, 36, 152]
             mapper = lambda r: [
                 (r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"),
                 (r["Produto"], "L"),
@@ -545,7 +545,7 @@ def gerar_pdf_filial(nome_filial, cod, df):
             ]
         else:
             heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd", "Dias", "Ideal", "Motivo"]
-            widths = [22, 38, 45, 310, 30, 100, 50, 38, 38, 38, 102]
+            widths = [28, 34, 45, 280, 30, 80, 55, 36, 36, 36, 152]
             mapper = lambda r: [
                 (r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"),
                 (r["Produto"], "L"),
