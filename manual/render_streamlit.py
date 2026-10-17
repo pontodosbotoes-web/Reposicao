@@ -203,39 +203,44 @@ def render_manual() -> None:
     with tab3:
         st.header("Filtros e Parâmetros")
 
-        st.subheader("⭐ Perfil de Análise (novidade)")
+        st.subheader("⭐ 4.1 Perfil de Análise")
 
         st.info(
-            "**Escolha um perfil** para o sistema ajustar automaticamente os 9 parâmetros. "
-            "Depois, se quiser, refine individualmente."
+            "O **Perfil de Análise** é o primeiro campo no topo da tela. Ele é a ferramenta "
+            "de produtividade mais importante para o gestor, pois configura **9 parâmetros de uma só vez**."
+        )
+
+        st.markdown("**Onde se aplica e qual a sua importância:**")
+        st.markdown(
+            "- Evita erros manuais ao configurar 9 campos separadamente todos os dias.\n"
+            "- Padroniza a análise: toda a equipe usa a mesma régua para o mesmo tipo de produto.\n"
+            "- Agiliza a rotina: em 1 clique você muda a estratégia de 'Padrão' para 'Sazonal', por exemplo."
+        )
+
+        st.markdown("**Como ele interage com os Parâmetros?**")
+        st.markdown(
+            "Ao trocar o Perfil, o sistema sobrescreve os 9 parâmetros no painel de Parâmetros. "
+            "Se você mudar manualmente um parâmetro (ex: mudar a Cobertura de 30 para 45 dias), "
+            "o sistema respeitará a sua alteração manual e o nome do perfil continuará o mesmo. "
+            "Se quiser voltar tudo ao padrão do sistema, basta clicar no botão **Limpar (🧹)**."
         )
 
         st.markdown(
             "| Perfil | Quando usar | Principais diferenças |\n"
             "|--------|-------------|----------------------|\n"
-            "| **Padrão** | Uso geral | 1 ano, 30 dias, reserva 25% |\n"
-            "| **Sazonal** | Carnaval, São João, Natal | 30 dias de análise, reserva 10%, piso 3 |\n"
-            "| **Alto Giro** | Produtos que vendem muito | Cobertura 15 dias, lead 7 |\n"
-            "| **Baixo Giro** | Produtos lentos | Reserva 30%, quarentena 20 |\n"
-            "| **Liquidação** | Fim de ciclo | Reserva 0%, cobertura 7 dias |"
+            "| **Padrão** | Uso geral | 1 ano de histórico, cobertura 30d, reserva 25%, quarentena 15d |\n"
+            "| **Sazonal** | Carnaval, São João, Natal | 30 dias de histórico, piso 3, reserva 10%, quarentena 7d |\n"
+            "| **Alto Giro** | Produtos que vendem muito rápido | 3 meses de histórico, cobertura 15d, lead 7d, piso 5 |\n"
+            "| **Baixo Giro** | Produtos lentos, pouca saída | 1 ano de histórico, piso 3, reserva 30%, quarentena 20d |\n"
+            "| **Liquidação** | Fim de ciclo / queima de estoque | 6 meses de histórico, cobertura 7d, reserva 0% |"
         )
 
-        st.markdown(
-            "**Como usar**: no topo da página, escolha o perfil ao lado "
-            "do campo Fabricante → os parâmetros são ajustados automaticamente."
+        st.info(
+            "💡 **Nota:** Cada perfil sobrescreve todos os 9 parâmetros. Se você alterar um deles manualmente, "
+            "o perfil continua aplicado nos demais."
         )
 
-        st.subheader("Filtros do topo")
-        st.markdown(
-            "| Filtro | O que faz |\n"
-            "|--------|-----------|\n"
-            "| **Fabricante** | Nome do fabricante |\n"
-            "| **Departamento** | Categoria macro |\n"
-            "| **Grupo** | Subdivisão da categoria |\n"
-            "| **Subgrupo** | Nível mais específico |\n"
-            "| **Produto** | Busca por código, ref, nome ou cód. barras. **Aceita E / OU** — veja a seção *Busca Avançada* abaixo |"
-        )
-        st.info("Escolha pelo menos 1 filtro antes de consultar.")
+        st.subheader("4.2 Filtros do topo")
 
         st.markdown("### 🔍 Busca Avançada (novidade)")
 
@@ -339,8 +344,8 @@ def render_manual() -> None:
             "Após consultar, você verá 5 abas: "
             "**ATACADO, ALECRIM, VIA DIRETA, ZONA SUL, ZONA NORTE**.\n\n"
             "Cada uma mostra:\n\n"
-            "- 📤 **ENVIAR** — o que essa filial precisa mandar\n"
-            "- 📥 **RECEBER** — o que essa filial precisa receber"
+            "- **ENVIAR** — o que essa filial precisa mandar\n"
+            "- **RECEBER** — o que essa filial precisa receber"
         )
 
         st.subheader("Colunas essenciais")
@@ -361,11 +366,11 @@ def render_manual() -> None:
         st.subheader("Prioridades")
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.error("🔴 **Crítica**\n\nZera em < 7 dias\n\nTransferir HOJE")
+            st.error("**Crítica**\n\nZera em < 7 dias\n\nTransferir HOJE")
         with col2:
-            st.warning("🟠 **Alta**\n\nZera entre 7 e 15 dias\n\nEsta semana")
+            st.warning("**Alta**\n\nZera entre 7 e 15 dias\n\nEsta semana")
         with col3:
-            st.info("🟡 **Normal**\n\nZera em > 15 dias\n\nFluxo regular")
+            st.info("**Normal**\n\nZera em > 15 dias\n\nFluxo regular")
 
         st.subheader("Motivos possíveis")
         st.markdown(
