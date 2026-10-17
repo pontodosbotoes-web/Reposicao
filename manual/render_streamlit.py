@@ -13,7 +13,8 @@ def _gerar_manual_pdf_cached() -> bytes | None:
         buffer = BytesIO()
         gerar_pdf_manual(buffer=buffer)
         return buffer.getvalue()
-    except Exception:
+    except Exception as e:
+        st.error(f"⚠️ Erro ao gerar PDF: {e}")
         return None
 
 
