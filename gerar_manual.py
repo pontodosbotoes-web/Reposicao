@@ -190,12 +190,21 @@ def nota(texto):
 
 
 def tabela(data, col_widths=None):
-    t = Table(data, colWidths=col_widths, repeatRows=1)
+    # Converte todas as células para Paragraph para que o texto quebre linha
+    est_header = ParagraphStyle('TableHeader', parent=styles['Normal'], fontSize=9, leading=11, fontName='Helvetica-Bold', textColor=colors.white)
+    est_cell = ParagraphStyle('TableCell', parent=styles['Normal'], fontSize=9, leading=11)
+    
+    data_fmt = []
+    for i, row in enumerate(data):
+        row_fmt = []
+        for cell in row:
+            st = est_header if i == 0 else est_cell
+            row_fmt.append(Paragraph(str(cell), st))
+        data_fmt.append(row_fmt)
+        
+    t = Table(data_fmt, colWidths=col_widths, repeatRows=1)
     t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1E293B")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("ALIGN", (0, 0), (-1, -1), "LEFT"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
@@ -310,15 +319,15 @@ def gerar(buffer=None):
     conteudo.append(h2("1.5 De onde vem a inteligência"))
     conteudo.append(p("O motor foi construído com base em 3 práticas consolidadas no varejo mundial:"))
 
-    conteudo.append(h3("[DRP] DRP — Distribution Requirements Planning"))
+    conteudo.append(h3("DRP — Distribution Requirements Planning"))
     conteudo.append(p("Planejamento de reposição baseado no <b>consumo real</b> de cada ponto de venda."))
     conteudo.append(p("<i>Empresas que usam: Walmart, Carrefour, Pão de Açúcar.</i>"))
 
-    conteudo.append(h3("[IST] IST — Inter-Store Transfers"))
+    conteudo.append(h3("IST — Inter-Store Transfers"))
     conteudo.append(p("Transferências entre lojas para corrigir desequilíbrio enquanto a janela de venda está aberta."))
     conteudo.append(p("<i>Empresas que usam: Zara, H&M, Best Buy.</i>"))
 
-    conteudo.append(h3("[MEIO] MEIO — Multi-Echelon Inventory Optimization"))
+    conteudo.append(h3("MEIO — Multi-Echelon Inventory Optimization"))
     conteudo.append(p("Otimização de inventário em toda a rede, com <b>hub central</b> para consolidar estoque."))
     conteudo.append(p("<i>Empresas que usam: Amazon, Coca-Cola, P&G.</i>"))
 
@@ -396,13 +405,13 @@ def gerar(buffer=None):
 
     conteudo.append(h2("2.4 Os 3 tipos de transferência que o motor faz"))
 
-    conteudo.append(h3("[1] Tipo 1 — Atacado → Loja (a mais comum)"))
+    conteudo.append(h3("Tipo 1 — Atacado → Loja (a mais comum)"))
     conteudo.append(p("O Atacado é o <b>hub central</b>. Ele sempre aparece como primeiro doador."))
 
-    conteudo.append(h3("[2] Tipo 2 — Loja → Loja (proximidade)"))
+    conteudo.append(h3("Tipo 2 — Loja → Loja (proximidade)"))
     conteudo.append(p("Quando o Atacado não tem excesso suficiente, as lojas próximas se ajudam."))
 
-    conteudo.append(h3("[3] Tipo 3 — Múltiplas origens"))
+    conteudo.append(h3("Tipo 3 — Múltiplas origens"))
     conteudo.append(p("O motor combina origens para cobrir a falta total de uma filial."))
 
     conteudo.append(h2("2.5 A matriz de proximidade"))
@@ -415,7 +424,7 @@ def gerar(buffer=None):
         ["Via Direta", "1º Atacado, 2º Alecrim, 3º Zona Sul"],
         ["Zona Sul", "1º Atacado, 2º Alecrim, 3º Via Direta"],
         ["Zona Norte", "1º Atacado, 2º Alecrim"],
-        ["Atacado", "[Nunca] Nunca recebe"],
+        ["Atacado", "Nunca recebe"],
     ]
     conteudo.append(tabela(matriz, col_widths=[4 * cm, 10 * cm]))
 
@@ -473,9 +482,21 @@ def gerar(buffer=None):
     conteudo.append(h2("4.1 Perfil de Análise"))
 
     conteudo.append(p(
-        "O <b>Perfil de Análise</b> ajusta automaticamente os 9 parâmetros do motor. "
-        "Escolha um perfil no topo da tela e o sistema preenche tudo — depois você "
-        "pode refinar individualmente no painel ⚙️ Parâmetros."
+        "O <b>Perfil de Análise</b> é o primeiro campo no topo da tela. Ele é a ferramenta "
+        "de produtividade mais importante para o gestor, pois configura <b>9 parâmetros de uma só vez</b>."
+    ))
+
+    conteudo.append(h3("Onde se aplica e qual a sua importância:"))
+    conteudo.append(bullet("Evita erros manuais ao configurar 9 campos separadamente todos os dias."))
+    conteudo.append(bullet("Padroniza a análise: toda a equipe usa a mesma régua para o mesmo tipo de produto."))
+    conteudo.append(bullet("Agiliza a rotina: em 1 clique você muda a estratégia de 'Padrão' para 'Sazonal', por exemplo."))
+
+    conteudo.append(h3("Como ele interage com os Parâmetros?"))
+    conteudo.append(p(
+        "Ao trocar o Perfil, o sistema sobrescreve os 9 parâmetros no painel de Parâmetros. "
+        "Se você mudar manualmente um parâmetro (ex: mudar a Cobertura de 30 para 45 dias), "
+        "o sistema respeitará a sua alteração manual e o nome do perfil continuará o mesmo. "
+        "Se quiser voltar tudo ao padrão do sistema, basta clicar no botão <b>Limpar (🧹)</b>."
     ))
 
     perfis = [
@@ -542,7 +563,7 @@ def gerar(buffer=None):
 
     conteudo.append(h2("4.4 Parâmetros"))
 
-    conteudo.append(h3(" Linha 1 — Janela de Análise"))
+    conteudo.append(h3("Linha 1 — Janela de Análise"))
     param1 = [
         ["Parâmetro", "O que é", "Padrão"],
         ["Período de Análise", "Janela histórica", "1 ano atrás"],
@@ -552,7 +573,7 @@ def gerar(buffer=None):
     ]
     conteudo.append(tabela(param1, col_widths=[4 * cm, 6 * cm, 4 * cm]))
 
-    conteudo.append(h3(" Linha 2 — Proteção das Origens"))
+    conteudo.append(h3("Linha 2 — Proteção das Origens"))
     param2 = [
         ["Parâmetro", "O que é", "Padrão"],
         ["Piso Exposição (un)", "Mínimo na prateleira", "0"],
@@ -562,7 +583,7 @@ def gerar(buffer=None):
     ]
     conteudo.append(tabela(param2, col_widths=[4 * cm, 6 * cm, 4 * cm]))
 
-    conteudo.append(h3(" Linha 3 — Travas de Segurança"))
+    conteudo.append(h3("Linha 3 — Travas de Segurança"))
     param3 = [
         ["Parâmetro", "O que é", "Padrão"],
         ["Reposição Recente (dias)", "Quarentena pós-recebimento", "15"],
@@ -579,13 +600,13 @@ def gerar(buffer=None):
 
     conteudo.append(h2("5.1 Abas por filial"))
     conteudo.append(p("Após consultar, você verá 5 abas: ATACADO, ALECRIM, VIA DIRETA, ZONA SUL, ZONA NORTE."))
-    conteudo.append(bullet("<b> ENVIAR</b> — o que essa filial precisa mandar"))
-    conteudo.append(bullet("<b> RECEBER</b> — o que essa filial precisa receber"))
+    conteudo.append(bullet("<b>ENVIAR</b> — o que essa filial precisa mandar"))
+    conteudo.append(bullet("<b>RECEBER</b> — o que essa filial precisa receber"))
 
     conteudo.append(h2("5.2 As colunas essenciais"))
     colunas = [
         ["Coluna", "Significado"],
-        ["Prioridade", " Crítica /  Alta /  Normal"],
+        ["Prioridade", "Crítica /  Alta /  Normal"],
         ["Cod", "Código interno do produto"],
         ["Produto", "Descrição do produto"],
         ["Destino / Origem", "Filial parceira"],
@@ -600,9 +621,9 @@ def gerar(buffer=None):
     conteudo.append(h2("5.3 Prioridades"))
     prioridades = [
         ["Prioridade", "Critério", "Ação"],
-        [" Crítica", "Zera em menos de 7 dias", "Transferir hoje"],
-        [" Alta", "Zera entre 7 e 15 dias", "Esta semana"],
-        [" Normal", "Zera em mais de 15 dias", "Fluxo regular"],
+        ["Crítica", "Zera em menos de 7 dias", "Transferir hoje"],
+        ["Alta", "Zera entre 7 e 15 dias", "Esta semana"],
+        ["Normal", "Zera em mais de 15 dias", "Fluxo regular"],
     ]
     conteudo.append(tabela(prioridades, col_widths=[3 * cm, 6 * cm, 5 * cm]))
 
@@ -643,7 +664,7 @@ def gerar(buffer=None):
     conteudo.append(p("1. Veja o <b>Motivo</b>"))
     conteudo.append(p("2. Confirme a <b>Qtd Transf.</b>"))
     conteudo.append(p("3. Verifique a <b>Origem</b>"))
-    conteudo.append(p("4. Clique em <b> Gerar PDF</b>"))
+    conteudo.append(p("4. Clique em <b>Gerar PDF</b>"))
     conteudo.append(p("5. Crie a ordem no ERP"))
 
     conteudo.append(h2("6.3 Sexta-feira (10 min)"))
