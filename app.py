@@ -520,10 +520,10 @@ def gerar_pdf_filial(nome_filial, cod, df):
 
     filial_style = ParagraphStyle('F', parent=styles['Heading2'], fontSize=11, leading=13,
                                   textColor=colors.HexColor('#1E293B'), spaceBefore=0, spaceAfter=6)
-    cell_style = ParagraphStyle('C', parent=styles['Normal'], fontSize=7, leading=9, alignment=0)
-    cell_center = ParagraphStyle('CC', parent=styles['Normal'], fontSize=7, leading=9, alignment=1)
-    cell_right = ParagraphStyle('CR', parent=styles['Normal'], fontSize=7, leading=9, alignment=2)
-    header_style = ParagraphStyle('H', parent=styles['Normal'], fontSize=7, leading=9,
+    cell_style = ParagraphStyle('C', parent=styles['Normal'], fontSize=6.5, leading=8.5, alignment=0)
+    cell_center = ParagraphStyle('CC', parent=styles['Normal'], fontSize=6.5, leading=8.5, alignment=1)
+    cell_right = ParagraphStyle('CR', parent=styles['Normal'], fontSize=6.5, leading=8.5, alignment=2)
+    header_style = ParagraphStyle('H', parent=styles['Normal'], fontSize=6.5, leading=8.5,
                                   fontName='Helvetica-Bold', textColor=colors.white, alignment=1)
 
     def _build(df_part, tipo):
@@ -532,7 +532,7 @@ def gerar_pdf_filial(nome_filial, cod, df):
 
         if tipo == "ENV":
             heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Reserva", "Ideal", "Motivo"]
-            widths = [22, 42, 50, 240, 35, 130, 60, 40, 42, 40, 110]
+            widths = [22, 38, 45, 310, 30, 100, 50, 38, 38, 38, 102]
             mapper = lambda r: [
                 (r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"),
                 (r["Produto"], "L"),
@@ -545,7 +545,7 @@ def gerar_pdf_filial(nome_filial, cod, df):
             ]
         else:
             heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd", "Dias", "Ideal", "Motivo"]
-            widths = [22, 42, 50, 240, 35, 130, 60, 40, 42, 40, 110]
+            widths = [22, 38, 45, 310, 30, 100, 50, 38, 38, 38, 102]
             mapper = lambda r: [
                 (r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"),
                 (r["Produto"], "L"),
@@ -579,9 +579,9 @@ def gerar_pdf_filial(nome_filial, cod, df):
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E293B')),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('FONTSIZE', (0, 0), (-1, -1), 7),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('FONTSIZE', (0, 0), (-1, -1), 6.5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
             ('GRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#CBD5E1')),
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
         ]))
