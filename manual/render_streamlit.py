@@ -432,7 +432,7 @@ def render_manual() -> None:
             ),
             (
                 "Por que meu produto não aparece?",
-                "Várias causas: não vendeu no período, está nos departamentos 09/10, "
+                "Várias causas: não vendeu no período, está nos departamentos INATIVOS ou USO INTERNO, "
                 "não tem excesso nem falta, ou o filtro excluiu."
             ),
             (
