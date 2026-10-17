@@ -25,12 +25,21 @@ st.set_page_config(page_title="Reposição de Produtos", layout="wide", page_ico
 
 st.markdown("""
     <style>
+        /* --- LIMPEZA DA TELA (Esconder cabeçalhos do Streamlit) --- */
+        #MainMenu {visibility: hidden;} /* Esconde o menu de 3 pontinhos */
+        header {visibility: hidden;}    /* Esconde a barra superior inteira */
+        footer {visibility: hidden;}    /* Esconde o rodapé ("Manage app") */
+        .stAppDeployButton {display: none;} /* Esconde o botão Deploy */
+
+        /* --- ÁREA ÚTIL DO APP (Expandir ao máximo) --- */
         .block-container {
-            padding-top: 1.5rem !important;
-            padding-bottom: 1rem !important;
-            padding-left: 1.2rem !important;
-            padding-right: 1.2rem !important;
+            padding-top: 1rem !important;
+            padding-bottom: 0rem !important;
+            padding-left: 0.8rem !important;
+            padding-right: 0.8rem !important;
+            max-width: 100% !important; /* Força o uso de 100% da largura */
         }
+
         .titulo-pagina {
             font-size: 1.7rem;
             font-weight: bold;
