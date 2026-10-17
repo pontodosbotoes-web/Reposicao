@@ -796,7 +796,7 @@ def gerar(buffer=None):
         ["1", "Normal", "627893", "FITA PAPEL", "Alecrim", "50", "20"],
         ["2", "Normal", "627893", "FITA PAPEL", "Via Direta", "30", "20"],
     ]
-    conteudo.append(tabela(caso2, colWidths=[1 * cm, 2 * cm, 2 * cm, 3.5 * cm, 3 * cm, 1.5 * cm, 2 * cm]))
+    conteudo.append(tabela(caso2, col_widths=[1 * cm, 2 * cm, 2 * cm, 3.5 * cm, 3 * cm, 1.5 * cm, 2 * cm]))
 
     conteudo.append(Spacer(1, 0.2 * cm))
     conteudo.append(p("<b>Ação</b>: confirmar rota, gerar PDF, criar 2 ordens (uma por destino)."))
@@ -808,7 +808,7 @@ def gerar(buffer=None):
         ["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Dias"],
         ["5", "Alta", "612202", "SUSPENSORIO", "Via Direta", "20", "10"],
     ]
-    conteudo.append(tabela(caso3, colWidths=[1 * cm, 2 * cm, 2 * cm, 3.5 * cm, 3 * cm, 1.5 * cm, 2 * cm]))
+    conteudo.append(tabela(caso3, col_widths=[1 * cm, 2 * cm, 2 * cm, 3.5 * cm, 3 * cm, 1.5 * cm, 2 * cm]))
 
     conteudo.append(Spacer(1, 0.2 * cm))
     conteudo.append(p("<b>Ação</b>: confirmar com a Via Direta, gerar PDF, criar ordem no ERP."))
