@@ -731,7 +731,7 @@ def gerar(buffer=None):
         ("Posso deixar em branco todos os filtros?",
          "Não. Escolha pelo menos um."),
         ("Por que meu produto não aparece?",
-         "Várias causas: não vendeu no período, está nos departamentos 09/10, "
+         "Várias causas: não vendeu no período, está nos departamentos INATIVO ou USO INTERNO, "
          "não tem excesso nem falta, ou o filtro excluiu."),
         ("A sugestão parece errada. O que faço?",
          "1. Verifique o Motivo. 2. Confira movimentações estranhas. "
