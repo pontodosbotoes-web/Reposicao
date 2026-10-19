@@ -96,7 +96,7 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
                     "CodigoFilialOrigem": int(doa["CodigoFilial"]), "NomeFilialOrigem": doa["Filial"],
                     "CodigoFilialDestino": 0, "NomeFilialDestino": "LIQUIDAR",
                     "QtdTransferir": qtd, "ReservaOrigem": 0, "IdealOrigem": 0, "IdealDestino": 0,
-                    "DiasAteZerarDestino": None, "Motivo": "Estoque Parado",
+                    "DiasAteZerarDestino": None, "Motivo": "ESTOQUE PARADO",
                 })
         return alocacoes
 
@@ -114,7 +114,7 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
                     "CodigoFilialOrigem": int(doa["CodigoFilial"]), "NomeFilialOrigem": doa["Filial"],
                     "CodigoFilialDestino": 0, "NomeFilialDestino": "DESCONTINUAR",
                     "QtdTransferir": qtd, "ReservaOrigem": 0, "IdealOrigem": 0, "IdealDestino": 0,
-                    "DiasAteZerarDestino": None, "Motivo": "Fim de Ciclo",
+                    "DiasAteZerarDestino": None, "Motivo": "FIM DE CICLO",
                 })
         return alocacoes
 
