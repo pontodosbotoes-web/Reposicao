@@ -18,6 +18,17 @@ def _gerar_manual_pdf_cached() -> bytes | None:
         return None
 
 
+def render_tabela(headers, rows):
+    """Renderiza uma tabela Markdown limpa, sem índices e ajustada ao conteúdo."""
+    md = "| " + " | ".join(headers) + " |\n"
+    md += "|" + "|".join(["---"] * len(headers)) + "|\n"
+    for row in rows:
+        # Substitui quebras de linha por espaços para não quebrar a tabela markdown
+        row_clean = [str(cell).replace("\n", " ") for cell in row]
+        md += "| " + " | ".join(row_clean) + " |\n"
+    st.markdown(md)
+
+
 def render_manual() -> None:
     """Renderiza o manual do gestor."""
 
@@ -46,16 +57,8 @@ def render_manual() -> None:
     st.markdown("---")
 
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
-        "🏁 Introdução",
-        "🧠 Como Pensa",
-        "🚪 Primeiro Acesso",
-        "🎛️ Filtros & Parâmetros",
-        "📊 Resultado",
-        "📅 Rotina",
-        "🔧 Ajustes",
-        "❓ FAQ",
-        "📚 Glossário",
-        "🛠️ Casos Práticos",
+        "🏁 Introdução", "🧠 Como Pensa", "🚪 Primeiro Acesso", "🎛️ Filtros & Parâmetros",
+        "📊 Resultado", "📅 Rotina", "🔧 Ajustes", "❓ FAQ", "📚 Glossário", "🛠️ Casos Práticos"
     ])
 
     # ---------------- ABA 1 - Introdução ----------------
@@ -63,9 +66,7 @@ def render_manual() -> None:
         st.header("1.1 Por que este sistema existe")
         st.markdown(
             "Imagine o dia a dia de uma rede com **5 filiais** e **milhares de produtos**. "
-            "Todos os dias você precisa responder:"
-        )
-        st.markdown(
+            "Todos os dias você precisa responder:\n\n"
             "- ❓ **Quanto** mandar de cada produto para cada loja?\n"
             "- ❓ **Quando** mandar?\n"
             "- ❓ Se uma loja tem **excesso** e outra tem **falta**, como fazer essa troca?\n"
@@ -129,10 +130,12 @@ def render_manual() -> None:
     with tab2:
         st.header("2.1 A metáfora da caixa d'água")
         st.markdown("Imagine que cada filial é uma **caixa d'água**. O sistema tenta manter cada caixa no nível ideal:")
-        st.table({
-            "Nível": ["100% (Ideal)", "80%", "40%", "0% (Ruptura)"],
-            "Estado": ["Tudo perfeito", "Atenção", "Crítico", "Urgente"]
-        })
+        render_tabela(["Nível", "Estado"], [
+            ["100% (Ideal)", "Tudo perfeito"],
+            ["80%", "Atenção"],
+            ["40%", "Crítico"],
+            ["0% (Ruptura)", "Urgente"]
+        ])
 
         st.header("2.2 Estoque Ideal")
         st.code("Estoque Ideal = max(Piso Exposição, Velocidade Período x (Cobertura + Tempo de Transporte))", language="text")
@@ -157,26 +160,23 @@ def render_manual() -> None:
         )
 
         st.markdown("**Exemplo com 5 filiais:**")
-        st.table({
-            "Filial": ["Atacado", "Alecrim", "Via Direta", "Zona Sul", "Zona Norte"],
-            "Saldo": [500, 30, 80, 15, 70],
-            "Ideal": [100, 50, 40, 60, 55],
-            "Excesso": [400, 0, 40, 0, 15],
-            "Falta": [0, 20, 0, 45, 0]
-        })
+        render_tabela(["Filial", "Saldo", "Ideal", "Excesso", "Falta"], [
+            ["Atacado", "500", "100", "400", "0"],
+            ["Alecrim", "30", "50", "0", "20"],
+            ["Via Direta", "80", "40", "40", "0"],
+            ["Zona Sul", "15", "60", "0", "45"],
+            ["Zona Norte", "70", "55", "15", "0"]
+        ])
 
         st.header("2.4 A Matriz de Proximidade")
         st.markdown("Quem ajuda quem:")
-        st.table({
-            "Destino": ["Alecrim", "Via Direta", "Zona Sul", "Zona Norte", "Atacado"],
-            "Ordem de prioridade dos doadores": [
-                "1º Atacado, 2º Via Direta, 3º Zona Sul, 4º Zona Norte",
-                "1º Atacado, 2º Alecrim, 3º Zona Sul",
-                "1º Atacado, 2º Alecrim, 3º Via Direta",
-                "1º Atacado, 2º Alecrim",
-                "Nunca recebe"
-            ]
-        })
+        render_tabela(["Destino", "Ordem de prioridade dos doadores"], [
+            ["Alecrim", "1º Atacado, 2º Via Direta, 3º Zona Sul, 4º Zona Norte"],
+            ["Via Direta", "1º Atacado, 2º Alecrim, 3º Zona Sul"],
+            ["Zona Sul", "1º Atacado, 2º Alecrim, 3º Via Direta"],
+            ["Zona Norte", "1º Atacado, 2º Alecrim"],
+            ["Atacado", "Nunca recebe"]
+        ])
 
         st.header("2.5 Regra do Mínimo de 5 unidades (MOQ)")
         st.markdown(
@@ -201,23 +201,22 @@ def render_manual() -> None:
         )
 
         st.header("3.2 Mapa visual da tela")
-        st.table({
-            "Área": ["Topo", "Linha 1", "Botões", "Aviso", "Parâmetros", "Resultados"],
-            "O que tem": [
-                "Título 'Reposição de Produtos'",
-                "6 filtros: Perfil, Fabricante, Depto, Grupo, Subgrupo, Produto",
-                "Consultar, Limpar, Parâmetros e Manual",
-                "Faixa azul quando o Produto está preenchido",
-                "Aparece ao clicar em Parâmetros (3 linhas)",
-                "Aparece após consultar (5 abas por filial)"
-            ]
-        })
+        render_tabela(["Área", "O que tem"], [
+            ["Topo", "Título 'Reposição de Produtos'"],
+            ["Linha 1", "6 filtros: Perfil, Fabricante, Depto, Grupo, Subgrupo, Produto"],
+            ["Botões", "Consultar, Limpar, Parâmetros e Manual"],
+            ["Aviso", "Faixa azul quando o Produto está preenchido"],
+            ["Parâmetros", "Aparece ao clicar em Parâmetros (3 linhas)"],
+            ["Resultados", "Aparece após consultar (5 abas por filial)"]
+        ])
 
         st.header("3.3 Problemas comuns")
-        st.table({
-            "Problema": ["App 'dormindo'", "Tela em branco", "Erro de conexão", "Consulta não retorna"],
-            "Solução": ["Clicar em 'Yes, get this app back up!'", "Atualizar navegador", "Testar em outra rede", "Aguardar 5 min e tentar"]
-        })
+        render_tabela(["Problema", "Solução"], [
+            ["App 'dormindo'", "Clicar em 'Yes, get this app back up!'"],
+            ["Tela em branco", "Atualizar navegador"],
+            ["Erro de conexão", "Testar em outra rede"],
+            ["Consulta não retorna", "Aguardar 5 min e tentar"]
+        ])
 
     # ---------------- ABA 4 - Filtros e Parâmetros ----------------
     with tab4:
@@ -232,31 +231,41 @@ def render_manual() -> None:
             "sua alteração. Para voltar ao padrão, clique em **Limpar** (🧹)."
         )
 
-        st.table({
-            "Perfil": ["Padrão", "Lançamento", "Classe A", "Alto Giro", "Sazonal Longo", "Sazonal Curto", "Baixo Giro", "Liquidação"],
-            "Quando usar": ["Uso geral", "Produto novo/coleção", "Maior faturamento", "Venda rápida constante", "Campanhas longas", "Pico explosivo", "Produtos encalhados", "Fim de ciclo / queima"],
-            "Exemplo do Dia a Dia": ["Materiais contínuos", "Nova coleção de tecidos", "Fita adesiva básica, papel kraft", "Bexigas de aniversário", "Artigos de Natal em novembro", "Máscaras de Halloween", "Tecido de seda (1 rolo/mês)", "Itens de Halloween na 1ª sem. nov"]
-        })
+        st.markdown("**Perfis disponíveis:**")
+        render_tabela(["Perfil", "Quando usar", "Exemplo do Dia a Dia"], [
+            ["Padrão", "Uso geral", "Materiais contínuos."],
+            ["Lançamento", "Produto novo/coleção", "Nova coleção de tecidos."],
+            ["Classe A", "Maior faturamento", "Fita adesiva básica, papel kraft."],
+            ["Alto Giro", "Venda rápida constante", "Bexigas de aniversário."],
+            ["Sazonal Longo", "Campanhas longas (Natal/Carnaval)", "Artigos de Natal em novembro."],
+            ["Sazonal Curto", "Pico explosivo (Páscoa/Mães/Halloween)", "Máscaras de Halloween."],
+            ["Baixo Giro", "Produtos encalhados", "Tecido de seda (1 rolo/mês)."],
+            ["Liquidação", "Fim de ciclo / queima", "Itens de Halloween na 1ª sem. nov."]
+        ])
 
         st.subheader("Os 9 parâmetros de cada perfil (tabela técnica)")
-        st.table({
-            "Parâmetro": ["Período análise", "Cobertura", "Lead time", "Piso Exposição", "Reserva Origem", "Atacado tem Piso?", "Atacado tem Reserva?", "Reposição Recente", "Dias em Trânsito"],
-            "Padrão": ["1 ano", "30d", "10", "0", "25%", "Não", "Não", "15", "10"],
-            "Lanç.": ["30d", "30d", "10", "5", "0%", "Não", "Não", "7", "10"],
-            "Classe A": ["3m", "15d", "7", "10", "40%", "Não", "Não", "7", "7"],
-            "Alto Giro": ["3m", "15d", "7", "5", "15%", "Não", "Não", "7", "7"],
-            "Saz.Longo": ["2m", "30d", "10", "5", "15%", "Não", "Não", "7", "10"],
-            "Saz.Curto": ["30d", "15d", "7", "3", "5%", "Não", "Não", "5", "7"],
-            "Baixo Giro": ["1 ano", "30d", "10", "3", "30%", "Não", "Não", "20", "10"],
-            "Liquid.": ["6m", "7d", "10", "0", "0%", "Não", "Não", "30", "10"]
-        })
+        render_tabela(
+            ["Parâmetro", "Padrão", "Lanç.", "Classe A", "Alto Giro", "Saz.Longo", "Saz.Curto", "Baixo Giro", "Liquid."],
+            [
+                ["Período análise", "1 ano", "30d", "3m", "3m", "2m", "30d", "1 ano", "6m"],
+                ["Cobertura", "30d", "30d", "15d", "15d", "30d", "15d", "30d", "7d"],
+                ["Lead time", "10", "10", "7", "7", "10", "7", "10", "10"],
+                ["Piso Exposição", "0", "5", "10", "5", "5", "3", "3", "0"],
+                ["Reserva Origem", "25%", "0%", "40%", "15%", "15%", "5%", "30%", "0%"],
+                ["Atacado tem Piso?", "Não", "Não", "Não", "Não", "Não", "Não", "Não", "Não"],
+                ["Atacado tem Reserva?", "Não", "Não", "Não", "Não", "Não", "Não", "Não", "Não"],
+                ["Reposição Recente", "15", "7", "7", "7", "7", "5", "20", "30"],
+                ["Dias em Trânsito", "10", "10", "7", "7", "10", "7", "10", "10"]
+            ]
+        )
 
         st.header("4.2 Busca Avançada de Produto")
         st.markdown("O campo **Produto** varre **4 fontes**: código interno, referência do fabricante, nome/descrição e código de barras (GTIN).")
-        st.table({
-            "Você digita": ["CAIXA QUADRADA", "CAPA, CAPUZ", "CAIXA QUADRADA, CAPA"],
-            "O que o sistema faz": ["Acha produtos que tenham CAIXA E QUADRADA", "Acha produtos com CAPA OU CAPUZ", "Acha (CAIXA E QUADRADA) OU CAPA"]
-        })
+        render_tabela(["Você digita", "O que o sistema faz"], [
+            ["CAIXA QUADRADA", "Acha produtos que tenham CAIXA E QUADRADA"],
+            ["CAPA, CAPUZ", "Acha produtos com CAPA OU CAPUZ"],
+            ["CAIXA QUADRADA, CAPA", "Acha (CAIXA E QUADRADA) OU CAPA"]
+        ])
         st.warning(
             "**Regra especial — Produto é exclusivo:** Quando você digita algo em Produto, "
             "o sistema **ignora** Fabricante, Departamento, Grupo, Subgrupo e Filial. Busca em toda a rede."
@@ -271,29 +280,34 @@ def render_manual() -> None:
         )
 
         st.header("5.2 Prioridades")
-        st.table({
-            "Prioridade": ["Crítica", "Alta", "Normal"],
-            "Critério": ["Zera em menos de 7 dias", "Zera de 7 a 14 dias", "Zera em 15 dias ou mais (ou sem projeção)"],
-            "Ação": ["Transferir hoje", "Esta semana", "Fluxo regular"]
-        })
+        render_tabela(["Prioridade", "Critério", "Ação"], [
+            ["Crítica", "Zera em menos de 7 dias", "Transferir hoje"],
+            ["Alta", "Zera de 7 a 14 dias", "Esta semana"],
+            ["Normal", "Zera em 15 dias ou mais (ou sem projeção)", "Fluxo regular"]
+        ])
         st.caption("💡 *Dias p/ Zerar usa a Velocidade Ativa (dias em que efetivamente vendeu).*")
 
         st.header("5.3 Motivos possíveis")
-        st.table({
-            "Motivo": ["SEM ESTOQUE", "AGUARDANDO TRANSFERENCIA", "RECEBIDO RECENTEMENTE", "URGENTE - zera em N dias", "Origem parada, destino vendendo", "Alta rotação no destino", "Maior giro no destino", "Reposição de ciclo"],
-            "Significado": ["Já zerou — urgente", "Saldo Provável <= 0 E tem envio a caminho", "Recebeu nos últimos N dias", "Vai zerar em breve", "Origem com velocidade < 0.05 e destino >= 0.1", "Destino vende 2x mais que origem", "Destino vende 1.5x mais que origem", "Padrão — mantém fluxo"]
-        })
+        render_tabela(["Motivo", "Significado"], [
+            ["SEM ESTOQUE", "Já zerou — urgente"],
+            ["AGUARDANDO TRANSFERENCIA", "Saldo Provável <= 0 E tem envio a caminho"],
+            ["RECEBIDO RECENTEMENTE", "Recebeu nos últimos N dias (parâmetro Reposição Recente)"],
+            ["URGENTE - zera em N dias", "Vai zerar em breve"],
+            ["Origem parada, destino vendendo", "Origem com velocidade < 0.05 e destino >= 0.1"],
+            ["Alta rotação no destino", "Destino vende 2x mais que origem"],
+            ["Maior giro no destino", "Destino vende 1.5x mais que origem"],
+            ["Reposição de ciclo", "Padrão — mantém fluxo"]
+        ])
 
         st.header("5.4 Ações de Fim de Linha (Liquidar e Descontinuar)")
         st.markdown(
             "Quando um produto não vende em nenhuma filial, transferi-lo gera custo de frete "
             "e não resolve a venda. O sistema cria duas seções exclusivas:"
         )
-        st.table({
-            "Ação": ["LIQUIDAR", "DESCONTINUAR"],
-            "Quando acontece?": ["Velocidade exata ZERO em toda a rede, mas há estoque.", "Velocidade > 0 mas < 0.1 (fim de ciclo), com estoque."],
-            "O que o gestor deve fazer?": ["Não transferir. Promoção, queima ou devolver ao fornecedor.", "Vender até o fim do estoque. Não repor e retirar do mix."]
-        })
+        render_tabela(["Ação", "Quando acontece?", "O que o gestor deve fazer?"], [
+            ["LIQUIDAR", "Velocidade exata ZERO em toda a rede, mas há estoque.", "Não transferir. Promoção, queima ou devolver ao fornecedor."],
+            ["DESCONTINUAR", "Velocidade > 0 mas < 0.1 (fim de ciclo), com estoque.", "Vender até o fim do estoque. Não repor e retirar do mix."]
+        ])
         st.info("**O Atacado nunca entra em LIQUIDAR/DESCONTINUAR** - apenas as lojas (filiais 1 a 4).")
 
         st.header("5.5 Reposição Recente (Anti-gangorra)")
@@ -334,28 +348,31 @@ def render_manual() -> None:
         st.header("Cenários e Soluções")
         
         st.subheader("Cenário A — Sugerindo transferência demais")
-        st.table({
-            "Ajuste": ["Aumentar Reposição Recente (15 -> 30)", "Aumentar Reserva Origem (25% -> 40%)", "Diminuir Cobertura (30 -> 15)"],
-            "Efeito": ["Bloqueia por mais tempo", "Origem doa menos", "Ideal menor"]
-        })
+        render_tabela(["Ajuste", "Efeito"], [
+            ["Aumentar Reposição Recente (15 -> 30)", "Bloqueia por mais tempo"],
+            ["Aumentar Reserva Origem (25% -> 40%)", "Origem doa menos"],
+            ["Diminuir Cobertura (30 -> 15)", "Ideal menor"]
+        ])
 
         st.subheader("Cenário B — Sugerindo transferência de menos")
-        st.table({
-            "Ajuste": ["Diminuir Reposição Recente (15 -> 7)", "Diminuir Reserva Origem (25% -> 15%)", "Aumentar Cobertura (30 -> 45)"],
-            "Efeito": ["Bloqueia menos", "Origem doa mais", "Ideal maior"]
-        })
+        render_tabela(["Ajuste", "Efeito"], [
+            ["Diminuir Reposição Recente (15 -> 7)", "Bloqueia menos"],
+            ["Diminuir Reserva Origem (25% -> 15%)", "Origem doa mais"],
+            ["Aumentar Cobertura (30 -> 45)", "Ideal maior"]
+        ])
 
         st.subheader("Cenário C — Produto sempre zerado")
-        st.table({
-            "Ajuste": ["Aumentar Piso Exposição (0 -> 5)", "Aumentar Cobertura", "Verificar Tempo de Transporte"],
-            "Efeito": ["Mínimo maior na prateleira", "Ideal maior", "Corrigir se subestimado"]
-        })
+        render_tabela(["Ajuste", "Efeito"], [
+            ["Aumentar Piso Exposição (0 -> 5)", "Mínimo maior na prateleira"],
+            ["Aumentar Cobertura", "Ideal maior"],
+            ["Verificar Tempo de Transporte", "Corrigir se subestimado"]
+        ])
 
         st.subheader("Cenário D — Duplicidade de envio")
-        st.table({
-            "Ajuste": ["Aumentar Dias em Trânsito (10 -> 15)", "Aumentar Reposição Recente (15 -> 25)"],
-            "Efeito": ["Cobre mais tempo", "Quarentena maior"]
-        })
+        render_tabela(["Ajuste", "Efeito"], [
+            ["Aumentar Dias em Trânsito (10 -> 15)", "Cobre mais tempo"],
+            ["Aumentar Reposição Recente (15 -> 25)", "Quarentena maior"]
+        ])
         st.warning("**Nota:** Nunca mude 2 parâmetros ao mesmo tempo. Assim você não sabe qual causou o efeito.")
 
     # ---------------- ABA 8 - FAQ ----------------
@@ -390,28 +407,25 @@ def render_manual() -> None:
     # ---------------- ABA 9 - Glossário ----------------
     with tab9:
         st.header("Glossário")
-        st.table({
-            "Termo": ["Base", "Cobertura de Vendas", "Dias em Trânsito", "Estoque Ideal", "Excesso", "Falta", "Hub", "Matriz de Proximidade", "MOQ", "Piso Exposição", "Reposição Recente", "Reserva Origem", "Saldo Ajustado", "Saldo Provável", "Tempo de Transporte", "Velocidade Ativa", "Velocidade Período"],
-            "Definição": [
-                "Consulta SQL que traz todos os produtos x filial",
-                "Dias de venda que o produto deve cobrir",
-                "Período entre envio e recebimento",
-                "max(Piso, VelocPeriodo x (Cob + Lead))",
-                "Saldo Ajustado acima do Ideal",
-                "Saldo Ajustado abaixo do Ideal",
-                "Filial central (Atacado)",
-                "Regra de quem ajuda quem",
-                "Minimum Order Quantity - mínimo de 5 un por transferência",
-                "Quantidade mínima na prateleira",
-                "Bloqueio parcial pós-recebimento",
-                "% do excesso que fica na origem (ceil)",
-                "SaldoProvavel + QtdEmTransito",
-                "Estoque calculado (compras + recebidas - enviadas - vendidas)",
-                "Dias entre envio e entrega",
-                "Vendas / dias com venda (usada em Dias p/ Zerar)",
-                "Vendas / dias corridos (usada no Estoque Ideal)"
-            ]
-        })
+        render_tabela(["Termo", "Definição"], [
+            ["Base", "Consulta SQL que traz todos os produtos x filial"],
+            ["Cobertura de Vendas", "Dias de venda que o produto deve cobrir"],
+            ["Dias em Trânsito", "Período entre envio e recebimento"],
+            ["Estoque Ideal", "max(Piso, VelocPeriodo x (Cob + Lead))"],
+            ["Excesso", "Saldo Ajustado acima do Ideal"],
+            ["Falta", "Saldo Ajustado abaixo do Ideal"],
+            ["Hub", "Filial central (Atacado)"],
+            ["Matriz de Proximidade", "Regra de quem ajuda quem"],
+            ["MOQ", "Minimum Order Quantity - mínimo de 5 un por transferência"],
+            ["Piso Exposição", "Quantidade mínima na prateleira"],
+            ["Reposição Recente", "Bloqueio parcial pós-recebimento"],
+            ["Reserva Origem", "% do excesso que fica na origem (ceil)"],
+            ["Saldo Ajustado", "SaldoProvavel + QtdEmTransito"],
+            ["Saldo Provável", "Estoque calculado (compras + recebidas - enviadas - vendidas)"],
+            ["Tempo de Transporte", "Dias entre envio e entrega"],
+            ["Velocidade Ativa", "Vendas / dias com venda (usada em Dias p/ Zerar)"],
+            ["Velocidade Período", "Vendas / dias corridos (usada no Estoque Ideal)"]
+        ])
 
     # ---------------- ABA 10 - Casos Práticos ----------------
     with tab10:
@@ -420,27 +434,24 @@ def render_manual() -> None:
 
         with st.expander("Caso 1 — Produto em falta crítica (RECEBER)"):
             st.markdown("**Aba Zona Sul (RECEBER):**")
-            st.table({
-                "#": [1], "Prior.": ["Crítica"], "Cod": ["562351"], "Produto": ["FITA ADESIVA"], 
-                "Origem": ["Atacado"], "Qtd": [85], "Dias": [3], "Motivo": ["URGENTE"]
-            })
+            render_tabela(["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Dias", "Motivo"], [
+                ["1", "Crítica", "562351", "FITA ADESIVA", "Atacado", "85", "3", "URGENTE"]
+            ])
             st.markdown("**Ação:** gerar PDF, enviar para o Atacado, criar ordem no ERP.")
 
         with st.expander("Caso 2 — Produto com excesso (ENVIAR)"):
             st.markdown("**Aba Atacado (ENVIAR):**")
-            st.table({
-                "#": [1, 2], "Prior.": ["Normal", "Normal"], "Cod": ["627893", "627893"], 
-                "Produto": ["FITA PAPEL", "FITA PAPEL"], "Destino": ["Alecrim", "Via Direta"], 
-                "Qtd": [50, 30], "Reserva": [20, 20]
-            })
+            render_tabela(["#", "Prior.", "Cod", "Produto", "Destino", "Qtd", "Reserva"], [
+                ["1", "Normal", "627893", "FITA PAPEL", "Alecrim", "50", "20"],
+                ["2", "Normal", "627893", "FITA PAPEL", "Via Direta", "30", "20"]
+            ])
             st.markdown("**Ação:** confirmar rota, gerar PDF, criar 2 ordens (uma por destino).")
 
         with st.expander("Caso 3 — Transferência entre lojas (sem passar pelo Atacado)"):
             st.markdown("**Aba Zona Sul (RECEBER):**")
-            st.table({
-                "#": [5], "Prior.": ["Alta"], "Cod": ["612202"], "Produto": ["SUSPENSORIO"], 
-                "Origem": ["Via Direta"], "Qtd": [20], "Dias": [10]
-            })
+            render_tabela(["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Dias"], [
+                ["5", "Alta", "612202", "SUSPENSORIO", "Via Direta", "20", "10"]
+            ])
             st.markdown("**Ação:** confirmar com a Via Direta, gerar PDF, criar ordem no ERP.")
 
         with st.expander("Caso 4 — Nenhuma sugestão encontrada"):
@@ -450,30 +461,27 @@ def render_manual() -> None:
 
         with st.expander("Caso 5 — Produto parado: LIQUIDAR"):
             st.markdown("**Aba Zona Norte (LIQUIDAR):**")
-            st.table({
-                "#": [1], "Prior.": ["Normal"], "Cod": ["771234"], "Produto": ["SQUEEZE HALLOWEEN"], 
-                "Emb.": ["UN"], "Fabricante": ["CASA FESTA"], "Qtd p/ Liq.": [15], "Motivo": ["ESTOQUE PARADO"]
-            })
+            render_tabela(["#", "Prior.", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Liq.", "Motivo"], [
+                ["1", "Normal", "771234", "SQUEEZE HALLOWEEN", "UN", "CASA FESTA", "15", "ESTOQUE PARADO"]
+            ])
             st.markdown("**Por que caiu aqui?** O produto não teve NENHUMA venda (velocidade zero) nos últimos 365 dias em toda a rede, mas a Zona Norte tem 15 unidades no estoque.")
             st.markdown("**O que o sistema faz:** Não sugere transferir para outras lojas. Transferir um produto que não vende só gasta frete e não gera receita.")
             st.markdown("**Ação:** Criar uma promoção local, fazer um kit com outro produto, ou devolver ao fornecedor.")
 
         with st.expander("Caso 6 — Produto de fim de ciclo: DESCONTINUAR"):
             st.markdown("**Aba Alecrim (DESCONTINUAR):**")
-            st.table({
-                "#": [1], "Prior.": ["Normal"], "Cod": ["554433"], "Produto": ["FITA CETIM VERMELHA"], 
-                "Emb.": ["UN"], "Fabricante": ["ADERE"], "Qtd p/ Desc.": [8], "Motivo": ["FIM DE CICLO"]
-            })
+            render_tabela(["#", "Prior.", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Desc.", "Motivo"], [
+                ["1", "Normal", "554433", "FITA CETIM VERMELHA", "UN", "ADERE", "8", "FIM DE CICLO"]
+            ])
             st.markdown("**Por que caiu aqui?** O produto tem uma velocidade de venda muito baixa (ex: 0.08 un/dia, ou seja, 1 unidade a cada 12 dias) na rede inteira. O ciclo de vida dele acabou.")
             st.markdown("**O que o sistema faz:** Não sugere reposição. Você deve vender o que tem e não comprar mais.")
             st.markdown("**Ação:** Vender até o fim do estoque atual. Não fazer novas compras e retirar o item do mix da loja quando zerar.")
 
         with st.expander("Caso 7 — Produto recém-recebido: AGUARDANDO QUARENTENA"):
             st.markdown("**Aba Zona Sul (RECEBER):**")
-            st.table({
-                "#": [3], "Prior.": ["Alta"], "Cod": ["889900"], "Produto": ["PAPEL KRAFT"], 
-                "Origem": ["Atacado"], "Qtd": [40], "Dias": [5], "Motivo": ["RECEBIDO RECENTEMENTE"]
-            })
+            render_tabela(["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Dias", "Motivo"], [
+                ["3", "Alta", "889900", "PAPEL KRAFT", "Atacado", "40", "5", "RECEBIDO RECENTEMENTE"]
+            ])
             st.markdown("**Por que caiu aqui?** A Zona Sul ainda tem uma falta projetada, mas recebeu uma transferência deste produto nos últimos 15 dias (parâmetro Reposição Recente).")
             st.markdown("**O que o sistema faz:** Mostra o alerta para você saber que a falta existe, mas a origem já mandou algo recentemente. Ele evita mandar de novo (efeito gangorra).")
             st.markdown("**Ação:** Verificar fisicamente na loja. Se a transferência anterior já cobre a falta, não fazer nada. Se não chegou, acionar a transportadora.")
