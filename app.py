@@ -344,15 +344,24 @@ with f0:
         key="perfil_sel",
         help=(
             "**Perfil de Análise**\n\n"
-            "Escolha um perfil para ajustar automaticamente os 9 parâmetros.\n\n"
-            "**🔹 Padrão** — Uso geral. *1 ano de histórico, cobertura 30d, reserva 25%.*\n\n"
-            "**🔹 Lançamento** — Produto novo/coleção. *30 dias de histórico, piso 5, reserva 0%.*\n\n"
-            "**🔹 Classe A** — Itens de maior faturamento. *3 meses de histórico, piso 10, reserva 40%.*\n\n"
-            "**🔹 Alto Giro** — Produtos que vendem muito rápido. *3 meses de histórico, cobertura 15d, lead 7d.*\n\n"
-            "**🔹 Sazonal Longo** — Vendas por várias semanas (Natal/Carnaval). *2 meses de histórico, piso 5, cobertura 30d.*\n\n"
-            "**🔹 Sazonal Curto** — Pico rápido de 3 a 7 dias (Páscoa/Mães/Halloween). *1 mês de histórico, cobertura 15d, reserva 5%.*\n\n"
-            "**🔹 Baixo Giro** — Produtos lentos. *1 ano de histórico, piso 3, reserva 30%.*\n\n"
-            "**🔹 Liquidação** — Fim de ciclo / queima de estoque. *6 meses de histórico, cobertura 7d, reserva 0%.*"
+            "Escolha um perfil para ajustar automaticamente os 9 parâmetros. "
+            "**Um mesmo produto pode usar perfis diferentes dependendo do momento da análise.**\n\n"
+            "**🔹 Padrão** — Uso geral. *1 ano de histórico, cobertura 30d, reserva 25%.*\n"
+            "👉 *Ex: Materiais de escritório do dia a dia.*\n\n"
+            "**🔹 Lançamento** — Novidade na prateleira. *30 dias de histórico, piso 5, reserva 0%.*\n"
+            "👉 *Ex: Chegou a nova coleção de fitas de cetim de fim de ano. Mesmo sem histórico de venda, o piso garante a exposição.*\n\n"
+            "**🔹 Classe A** — O carro-chefe da loja. *3 meses de histórico, piso 10, reserva 40%.*\n"
+            "👉 *Ex: Papel kraft e fita adesiva básica. Não podem faltar nunca.*\n\n"
+            "**🔹 Alto Giro** — Venda rápida e constante. *3 meses de histórico, cobertura 15d, lead 7d.*\n"
+            "👉 *Ex: Bexigas de aniversário na primavera.*\n\n"
+            "**🔹 Sazonal Longo** — Campanhas longas (Natal/Carnaval). *2 meses de histórico, piso 5, cobertura 30d.*\n"
+            "👉 *Ex: Artigos de Natal em novembro. A demanda dura várias semanas.*\n\n"
+            "**🔹 Sazonal Curto** — Pico explosivo (Páscoa/Mães/Halloween). *1 mês de histórico, cobertura 15d, reserva 5%.*\n"
+            "👉 *Ex: Máscaras de Halloween. Vende tudo em uma semana, não pode estocar demais para não sobrar.*\n\n"
+            "**🔹 Baixo Giro** — Produtos encalhados. *1 ano de histórico, piso 3, reserva 30%.*\n"
+            "👉 *Ex: Tecido de seda específico que vende 1 rolo por mês.*\n\n"
+            "**🔹 Liquidação** — Fim de ciclo. *6 meses de histórico, cobertura 7d, reserva 0%.*\n"
+            "👉 *Ex: Itens de Halloween na primeira semana de novembro.*"
         ),
         on_change=_aplicar_perfil_do_session,
     )
