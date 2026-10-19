@@ -206,15 +206,15 @@ def render_manual() -> None:
         st.subheader("⭐ 4.1 Perfil de Análise")
 
         st.info(
-            "O **Perfil de Análise** é o primeiro campo no topo da tela. Ele é a ferramenta "
-            "de produtividade mais importante para o gestor, pois configura **9 parâmetros de uma só vez**."
+            "O **Perfil de Análise** configura automaticamente os 9 parâmetros. "
+            "**Um mesmo produto pode (e deve) ser analisado com perfis diferentes**, dependendo do seu momento de vida."
         )
 
         st.markdown("**Onde se aplica e qual a sua importância:**")
         st.markdown(
-            "- Evita erros manuais ao configurar 9 campos separadamente todos os dias.\n"
+            "- Evita erros manuais ao configurar 9 campos separadamente.\n"
             "- Padroniza a análise: toda a equipe usa a mesma régua para o mesmo tipo de produto.\n"
-            "- Agiliza a rotina: em 1 clique você muda a estratégia de 'Padrão' para 'Sazonal', por exemplo."
+            "- **Ciclo de Vida:** A Fita de Cetim Vermelha é 'Lançamento' em Setembro, 'Classe A' em Dezembro e 'Liquidação' em Janeiro. O perfil certo depende do momento."
         )
 
         st.markdown("**Como ele interage com os Parâmetros?**")
@@ -226,13 +226,16 @@ def render_manual() -> None:
         )
 
         st.markdown(
-            "| Perfil | Quando usar | Principais diferenças |\n"
+            "| Perfil | Quando usar | Exemplo do Dia a Dia |\n"
             "|--------|-------------|----------------------|\n"
-            "| **Padrão** | Uso geral | 1 ano de histórico, cobertura 30d, reserva 25%, quarentena 15d |\n"
-            "| **Sazonal** | Carnaval, São João, Natal | 30 dias de histórico, piso 3, reserva 10%, quarentena 7d |\n"
-            "| **Alto Giro** | Produtos que vendem muito rápido | 3 meses de histórico, cobertura 15d, lead 7d, piso 5 |\n"
-            "| **Baixo Giro** | Produtos lentos, pouca saída | 1 ano de histórico, piso 3, reserva 30%, quarentena 20d |\n"
-            "| **Liquidação** | Fim de ciclo / queima de estoque | 6 meses de histórico, cobertura 7d, reserva 0% |"
+            "| **Padrão** | Uso geral | Materiais de escritório contínuos. |\n"
+            "| **Lançamento** | Produto novo/coleção | Nova coleção de tecidos que acabou de chegar. |\n"
+            "| **Classe A** | Itens de maior faturamento | Fita adesiva básica, papel kraft. |\n"
+            "| **Alto Giro** | Venda rápida e constante | Bexigas de aniversário. |\n"
+            "| **Sazonal Longo** | Campanhas longas (Natal/Carnaval) | Artigos de Natal em novembro. |\n"
+            "| **Sazonal Curto** | Pico explosivo (Páscoa/Mães/Halloween) | Máscaras de Halloween na última semana de outubro. |\n"
+            "| **Baixo Giro** | Produtos encalhados | Tecido de seda específico que vende 1 rolo/mês. |\n"
+            "| **Liquidação** | Fim de ciclo / queima | Itens de Halloween na primeira semana de novembro. |"
         )
 
         st.info(
