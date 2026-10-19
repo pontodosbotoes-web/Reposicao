@@ -897,7 +897,7 @@ if "df_transf" in st.session_state:
                     st.dataframe(dfr, use_container_width=True, hide_index=True, height=h)
 
                 # ---- DESCONTINUAR ----
-                st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR (Fim de Ciclo)</div>', unsafe_allow_html=True)
+                st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR</div>', unsafe_allow_html=True)
                 if df_desc.empty:
                     st.caption("Nenhum produto para descontinuar")
                 else:
@@ -910,7 +910,7 @@ if "df_transf" in st.session_state:
                     st.dataframe(dfd, use_container_width=True, hide_index=True, height=h)
 
                 # ---- LIQUIDAR ----
-                st.markdown('<div class="secao-titulo">🔥 LIQUIDAR (Estoque Parado)</div>', unsafe_allow_html=True)
+                st.markdown('<div class="secao-titulo">🔥 LIQUIDAR</div>', unsafe_allow_html=True)
                 if df_liq.empty:
                     st.caption("Nenhum produto para liquidar")
                 else:
