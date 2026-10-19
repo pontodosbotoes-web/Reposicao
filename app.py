@@ -173,16 +173,27 @@ PERFIS = {
         "anti_gangorra":    15,
         "dias_transito":    10,
     },
-    "Sazonal": {
-        "opcao_data":       "30 dias atrás",
-        "cobertura_opcao":  "Para 30 dias",
+    "Sazonal Longo (Natal/Carnaval/São João)": {
+        "opcao_data":       "60 dias atrás",      # Olha 2 meses para trás
+        "cobertura_opcao":  "Para 30 dias",       # Mantém o estoque cheio
         "lead_time":        10,
-        "piso":             3,
-        "reserva":          10,
+        "piso":             5,                    # Prateleira sempre abastecida
+        "reserva":          15,                   # Guarda um pouco na origem
         "atacado_piso":     "Não",
         "atacado_reserva":  "Não",
         "anti_gangorra":    7,
         "dias_transito":    10,
+    },
+    "Sazonal Curto (Páscoa/Mães/Namorados/Halloween)": {
+        "opcao_data":       "30 dias atrás",      # Olha 1 mês (pico recente)
+        "cobertura_opcao":  "Para 15 dias",       # Cobertura curta (evita sobra)
+        "lead_time":        7,                    # Reposição mais ágil
+        "piso":             3,                    # Piso menor
+        "reserva":          5,                    # Distribui rápido para as lojas
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    5,                    # Quarentena curta para não travar
+        "dias_transito":    7,
     },
     "Alto Giro": {
         "opcao_data":       "3 meses atrás",
@@ -217,8 +228,29 @@ PERFIS = {
         "anti_gangorra":    30,
         "dias_transito":    10,
     },
+    "Lançamento (Novidade)": {
+        "opcao_data":       "30 dias atrás",
+        "cobertura_opcao":  "Para 30 dias",
+        "lead_time":        10,
+        "piso":             5,
+        "reserva":          0,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    7,
+        "dias_transito":    10,
+    },
+    "Curva A (Proteger)": {
+        "opcao_data":       "3 meses atrás",
+        "cobertura_opcao":  "Para 15 dias",
+        "lead_time":        7,
+        "piso":             10,
+        "reserva":          40,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    7,
+        "dias_transito":    7,
+    },
 }
-
 
 if "show_params" not in st.session_state:
     st.session_state.show_params = False
@@ -312,18 +344,15 @@ with f0:
         key="perfil_sel",
         help=(
             "**Perfil de Análise**\n\n"
-            "Escolha um perfil para ajustar automaticamente os 9 parâmetros. "
-            "Depois, se quiser, refine individualmente no painel ⚙️ Parâmetros.\n\n"
-            "**🔹 Padrão** — Uso geral. *1 ano de histórico, cobertura 30d, "
-            "lead 10d, reserva 25%, quarentena 15d.*\n\n"
-            "**🔹 Sazonal** — Produtos com pico (Carnaval, São João, Natal). "
-            "*30 dias de histórico, piso 3, reserva 10%, quarentena 7d.*\n\n"
-            "**🔹 Alto Giro** — Produtos que vendem muito rápido. "
-            "*3 meses de histórico, cobertura 15d, lead 7d, piso 5, quarentena 7d.*\n\n"
-            "**🔹 Baixo Giro** — Produtos lentos, pouca saída. "
-            "*1 ano de histórico, piso 3, reserva 30%, quarentena 20d.*\n\n"
-            "**🔹 Liquidação** — Fim de ciclo / queima de estoque. "
-            "*6 meses de histórico, cobertura 7d, reserva 0%, quarentena 30d.*"
+            "Escolha um perfil para ajustar automaticamente os 9 parâmetros.\n\n"
+            "**🔹 Padrão** — Uso geral. *1 ano de histórico, cobertura 30d, reserva 25%.*\n\n"
+            "**🔹 Sazonal Longo (Natal/Carnaval/São João)** — Vendas por várias semanas. *2 meses de histórico, piso 5, cobertura 30d.*\n\n"
+            "**🔹 Sazonal Curto (Páscoa/Mães/Namorados/Halloween)** — Pico rápido (3 a 7 dias). *1 mês de histórico, cobertura 15d, reserva 5%.*\n\n"
+            "**🔹 Alto Giro** — Produtos que vendem muito rápido. *3 meses de histórico, cobertura 15d, lead 7d.*\n\n"
+            "**🔹 Baixo Giro** — Produtos lentos. *1 ano de histórico, piso 3, reserva 30%.*\n\n"
+            "**🔹 Lançamento (Novidade)** — Produto novo/coleção. *30 dias de histórico, piso 5, reserva 0%.*\n\n"
+            "**🔹 Curva A (Proteger)** — Itens de maior faturamento. *3 meses de histórico, piso 10, reserva 40%.*\n\n"
+            "**🔹 Liquidação** — Fim de ciclo / queima de estoque. *6 meses de histórico, cobertura 7d, reserva 0%.*"
         ),
         on_change=_aplicar_perfil_do_session,
     )
