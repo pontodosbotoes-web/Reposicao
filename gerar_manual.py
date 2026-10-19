@@ -650,7 +650,7 @@ def gerar(buffer=None):
     conteudo.append(PageBreak())
 
     # ---------- PARTE 8 - FAQ 20 ----------
-    conteudo.append(h1("Parte 8 - Perguntas frequentes (20)"))
+    conteudo.append(h1("Parte 8 - Perguntas frequentes"))
     faq = [
         ("O sistema demora quanto para carregar?",
          "Com filtro de fabricante: 30-60 segundos. Sem filtro: pode demorar mais."),
