@@ -173,26 +173,26 @@ PERFIS = {
         "anti_gangorra":    15,
         "dias_transito":    10,
     },
-    "Sazonal Longo (Natal/Carnaval/São João)": {
-        "opcao_data":       "60 dias atrás",      # Olha 2 meses para trás
-        "cobertura_opcao":  "Para 30 dias",       # Mantém o estoque cheio
+    "Lançamento": {
+        "opcao_data":       "30 dias atrás",
+        "cobertura_opcao":  "Para 30 dias",
         "lead_time":        10,
-        "piso":             5,                    # Prateleira sempre abastecida
-        "reserva":          15,                   # Guarda um pouco na origem
+        "piso":             5,         # Garante exposição da novidade
+        "reserva":          0,         # Foco em distribuir
         "atacado_piso":     "Não",
         "atacado_reserva":  "Não",
         "anti_gangorra":    7,
         "dias_transito":    10,
     },
-    "Sazonal Curto (Páscoa/Mães/Namorados/Halloween)": {
-        "opcao_data":       "30 dias atrás",      # Olha 1 mês (pico recente)
-        "cobertura_opcao":  "Para 15 dias",       # Cobertura curta (evita sobra)
-        "lead_time":        7,                    # Reposição mais ágil
-        "piso":             3,                    # Piso menor
-        "reserva":          5,                    # Distribui rápido para as lojas
+    "Classe A": {
+        "opcao_data":       "3 meses atrás",
+        "cobertura_opcao":  "Para 15 dias",
+        "lead_time":        7,
+        "piso":             10,        # Prateleira sempre cheia
+        "reserva":          40,        # Protege a origem contra ruptura
         "atacado_piso":     "Não",
         "atacado_reserva":  "Não",
-        "anti_gangorra":    5,                    # Quarentena curta para não travar
+        "anti_gangorra":    7,
         "dias_transito":    7,
     },
     "Alto Giro": {
@@ -204,6 +204,28 @@ PERFIS = {
         "atacado_piso":     "Não",
         "atacado_reserva":  "Não",
         "anti_gangorra":    7,
+        "dias_transito":    7,
+    },
+    "Sazonal Longo": {
+        "opcao_data":       "2 meses atrás",      # Corrigido para combinar com o dropdown
+        "cobertura_opcao":  "Para 30 dias",
+        "lead_time":        10,
+        "piso":             5,
+        "reserva":          15,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    7,
+        "dias_transito":    10,
+    },
+    "Sazonal Curto": {
+        "opcao_data":       "30 dias atrás",
+        "cobertura_opcao":  "Para 15 dias",
+        "lead_time":        7,
+        "piso":             3,
+        "reserva":          5,
+        "atacado_piso":     "Não",
+        "atacado_reserva":  "Não",
+        "anti_gangorra":    5,
         "dias_transito":    7,
     },
     "Baixo Giro": {
@@ -227,28 +249,6 @@ PERFIS = {
         "atacado_reserva":  "Não",
         "anti_gangorra":    30,
         "dias_transito":    10,
-    },
-    "Lançamento (Novidade)": {
-        "opcao_data":       "30 dias atrás",
-        "cobertura_opcao":  "Para 30 dias",
-        "lead_time":        10,
-        "piso":             5,
-        "reserva":          0,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    7,
-        "dias_transito":    10,
-    },
-    "Curva A (Proteger)": {
-        "opcao_data":       "3 meses atrás",
-        "cobertura_opcao":  "Para 15 dias",
-        "lead_time":        7,
-        "piso":             10,
-        "reserva":          40,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    7,
-        "dias_transito":    7,
     },
 }
 
@@ -346,12 +346,12 @@ with f0:
             "**Perfil de Análise**\n\n"
             "Escolha um perfil para ajustar automaticamente os 9 parâmetros.\n\n"
             "**🔹 Padrão** — Uso geral. *1 ano de histórico, cobertura 30d, reserva 25%.*\n\n"
-            "**🔹 Sazonal Longo (Natal/Carnaval/São João)** — Vendas por várias semanas. *2 meses de histórico, piso 5, cobertura 30d.*\n\n"
-            "**🔹 Sazonal Curto (Páscoa/Mães/Namorados/Halloween)** — Pico rápido (3 a 7 dias). *1 mês de histórico, cobertura 15d, reserva 5%.*\n\n"
+            "**🔹 Lançamento** — Produto novo/coleção. *30 dias de histórico, piso 5, reserva 0%.*\n\n"
+            "**🔹 Classe A** — Itens de maior faturamento. *3 meses de histórico, piso 10, reserva 40%.*\n\n"
             "**🔹 Alto Giro** — Produtos que vendem muito rápido. *3 meses de histórico, cobertura 15d, lead 7d.*\n\n"
+            "**🔹 Sazonal Longo** — Vendas por várias semanas (Natal/Carnaval). *2 meses de histórico, piso 5, cobertura 30d.*\n\n"
+            "**🔹 Sazonal Curto** — Pico rápido de 3 a 7 dias (Páscoa/Mães/Halloween). *1 mês de histórico, cobertura 15d, reserva 5%.*\n\n"
             "**🔹 Baixo Giro** — Produtos lentos. *1 ano de histórico, piso 3, reserva 30%.*\n\n"
-            "**🔹 Lançamento (Novidade)** — Produto novo/coleção. *30 dias de histórico, piso 5, reserva 0%.*\n\n"
-            "**🔹 Curva A (Proteger)** — Itens de maior faturamento. *3 meses de histórico, piso 10, reserva 40%.*\n\n"
             "**🔹 Liquidação** — Fim de ciclo / queima de estoque. *6 meses de histórico, cobertura 7d, reserva 0%.*"
         ),
         on_change=_aplicar_perfil_do_session,
@@ -505,6 +505,7 @@ class HeaderFooterCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
         self.titulo = kwargs.pop("titulo", "Relatorio de Transferencias")
         self.gerado_em = kwargs.pop("gerado_em", "")
+        self.parametros_texto = kwargs.pop("parametros_texto", "") # NOVO
         super().__init__(*args, **kwargs)
         self._saved_page_states = []
 
@@ -540,10 +541,14 @@ class HeaderFooterCanvas(canvas.Canvas):
         # Esquerda: Gerado em
         self.drawString(15, 12, f"Gerado em {self.gerado_em}")
 
-        # Centro: Página X de Y
-        self.drawCentredString(w / 2, 12, f"Página {self._pageNumber} de {page_count}")
+        # Centro: Parâmetros
+        if self.parametros_texto:
+            self.drawCentredString(w / 2, 12, self.parametros_texto)
 
-def gerar_pdf_filial(nome_filial, cod, df):
+        # Direita: Página X de Y
+        self.drawRightString(w - 15, 12, f"Página {self._pageNumber} de {page_count}")
+
+def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
     """Gera PDF de UMA filial com cabeçalho/rodapé em todas as páginas."""
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -632,12 +637,13 @@ def gerar_pdf_filial(nome_filial, cod, df):
     if df_env.empty and df_rec.empty:
         elements.append(Paragraph(f"<b>Sem movimentações para {nome_filial.title()}</b>", filial_style))
         agora = agora_br()
-        titulo_cab = f"Relatorio de Reposicao - {nome_filial.title()}"
+        titulo_cab = f"Relatorio de Reposicao - {nome_perfil} - {nome_filial.title()}"
         doc.build(
             elements,
             canvasmaker=lambda *a, **kw: HeaderFooterCanvas(
                 *a, titulo=titulo_cab,
-                gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), **kw
+                gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), 
+                parametros_texto=parametros_texto, **kw
             ),
         )
         buffer.seek(0)
@@ -725,12 +731,13 @@ def gerar_pdf_filial(nome_filial, cod, df):
 
     # Gera
     agora = agora_br()
-    titulo_cab = f"Relatorio de Reposicao - {nome_filial.title()}"
+    titulo_cab = f"Relatorio de Reposicao - {nome_perfil} - {nome_filial.title()}"
     doc.build(
         elements,
         canvasmaker=lambda *a, **kw: HeaderFooterCanvas(
             *a, titulo=titulo_cab,
-            gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), **kw
+            gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), 
+            parametros_texto=parametros_texto, **kw
         ),
     )
     buffer.seek(0)
@@ -870,7 +877,17 @@ if "df_transf" in st.session_state:
 
                     if cache_key not in st.session_state:
                         try:
-                            pdf_bytes, agora = gerar_pdf_filial(nome, cod, df)
+                            # Monta a string com os parâmetros atuais
+                            parametros_str = (
+                                f"Cob: {cobertura}d | Lead: {lead_time}d | Res: {reserva}% | "
+                                f"Piso: {piso} | Quarentena: {anti_gangorra}d | Trânsito: {dias_transito}d"
+                            )
+                            
+                            pdf_bytes, agora = gerar_pdf_filial(
+                                nome, cod, df, 
+                                st.session_state.get("perfil_sel", "Padrão"), 
+                                parametros_str
+                            )
                             st.session_state[cache_key] = (pdf_bytes, agora)
                         except Exception:
                             st.session_state[cache_key] = (None, None)
