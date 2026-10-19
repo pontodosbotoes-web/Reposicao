@@ -125,8 +125,12 @@ def tabela(data, col_widths=None):
     for i, row in enumerate(data):
         row_fmt = []
         for cell in row:
-            st = est_header if i == 0 else est_cell
-            row_fmt.append(Paragraph(str(cell), st))
+            # CORRECAO: Aceita tanto strings quanto Paragraphs ja formatados
+            if isinstance(cell, Paragraph):
+                row_fmt.append(cell)
+            else:
+                st = est_header if i == 0 else est_cell
+                row_fmt.append(Paragraph(str(cell), st))
         data_fmt.append(row_fmt)
 
     t = Table(data_fmt, colWidths=col_widths, repeatRows=1)
@@ -420,7 +424,12 @@ def gerar(buffer=None):
         ["Reposicao Recente", "15", "7", "7", "7", "7", "5", "20", "30"],
         ["Dias em Transito", "10", "10", "7", "7", "10", "7", "10", "10"],
     ]
-    conteudo.append(tabela(perfis_tec, col_widths=[2.5 * cm, 1.4 * cm, 1.4 * cm, 1.5 * cm, 1.5 * cm, 1.6 * cm, 1.6 * cm, 1.6 * cm, 1.4 * cm]))
+    est_tec = ParagraphStyle('Tec', parent=styles['Normal'], fontSize=7, leading=9)
+    for i, row in enumerate(perfis_tec):
+        if i > 0:
+            for j in range(1, 9):
+                perfis_tec[i][j] = Paragraph(perfis_tec[i][j], est_tec)
+    conteudo.append(tabela(perfis_tec, col_widths=[2.5 * cm, 1.7 * cm, 1.7 * cm, 1.8 * cm, 1.9 * cm, 2.0 * cm, 2.0 * cm, 2.0 * cm, 1.4 * cm]))
 
     conteudo.append(Spacer(1, 0.3 * cm))
     conteudo.append(h2("4.2 Filtros do topo"))
@@ -527,7 +536,7 @@ def gerar(buffer=None):
     motivos = [
         ["Motivo", "Significado"],
         ["SEM ESTOQUE", "Ja zerou - urgente"],
-        ["AGUARDANDO TRANSFERENCIA", "SaldoProvavel <= 0 E tem envio a caminho (QtdEmTransito > 0)"],
+        ["AGUARDANDO TRANSFERENCIA", "Saldo Provavel menor ou igual a 0 E tem envio a caminho (QtdEmTransito > 0)"],
         ["RECEBIDO RECENTEMENTE", "Recebeu nos ultimos N dias (parametro Reposicao Recente)"],
         ["URGENTE - zera em N dias", "Vai zerar em breve"],
         ["Origem parada, destino vendendo", "Origem com velocidade < 0.05 e destino >= 0.1"],
