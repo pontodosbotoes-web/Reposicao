@@ -541,7 +541,7 @@ def gerar_pdf_filial(nome_filial, cod, df):
 
         if tipo == "ENV":
             heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Res.", "Ideal", "Motivo"]
-            widths = [28, 34, 45, 276, 30, 80, 55, 36, 40, 36, 152]
+            widths = [28, 34, 45, 240, 30, 138, 55, 36, 40, 36, 130]
             mapper = lambda r: [
                 (r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"),
                 (r["Produto"], "L"),
@@ -554,7 +554,7 @@ def gerar_pdf_filial(nome_filial, cod, df):
             ]
         else:
             heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd", "Dias", "Ideal", "Motivo"]
-            widths = [28, 34, 45, 276, 30, 80, 55, 36, 40, 36, 152]
+            widths = [28, 34, 45, 240, 30, 138, 55, 36, 40, 36, 130]
             mapper = lambda r: [
                 (r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"),
                 (r["Produto"], "L"),
@@ -622,18 +622,21 @@ def gerar_pdf_filial(nome_filial, cod, df):
     desc_totais = df_env[df_env["NomeFilialDestino"] == "DESCONTINUAR"]
 
     resumo_data = [
-        ["Ação", "Itens", "Unidades"],
-        ["Enviar", str(len(env_totais)), str(int(env_totais["QtdTransferir"].sum()) if not env_totais.empty else 0)],
-        ["Receber", str(len(df_rec)), str(int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0)],
-        ["Liquidar", str(len(liq_totais)), str(int(liq_totais["QtdTransferir"].sum()) if not liq_totais.empty else 0)],
-        ["Descontinuar", str(len(desc_totais)), str(int(desc_totais["QtdTransferir"].sum()) if not desc_totais.empty else 0)],
+        ["", "ENVIAR", "RECEBER", "DESCONTINUAR", "LIQUIDAR"],
+        ["Itens", str(len(env_totais)), str(len(df_rec)), str(len(desc_totais)), str(len(liq_totais))],
+        ["Unidades", 
+         str(int(env_totais["QtdTransferir"].sum()) if not env_totais.empty else 0),
+         str(int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0),
+         str(int(desc_totais["QtdTransferir"].sum()) if not desc_totais.empty else 0),
+         str(int(liq_totais["QtdTransferir"].sum()) if not liq_totais.empty else 0)]
     ]
     
-    t_resumo = Table(resumo_data, colWidths=[150, 50, 50], hAlign='LEFT')
+    t_resumo = Table(resumo_data, colWidths=[70, 70, 70, 90, 70], hAlign='LEFT')
     t_resumo.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E293B')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'), # Destaca a coluna "Itens / Unidades"
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('GRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#CBD5E1')),
         ('FONTSIZE', (0, 0), (-1, -1), 8),
@@ -676,8 +679,8 @@ def gerar_pdf_filial(nome_filial, cod, df):
         df_desc.insert(0, "#", range(1, len(df_desc) + 1))
         df_desc["Prioridade"] = df_desc["Prioridade"].map(PRIO_TXT).fillna("-")
         df_desc["Qtd Ideal"] = 0
-        df_desc["NomeFilialDestino"] = "DESCONTINUAR"
-        elements.append(Paragraph("<b>DESCONTINUAR (Fim de Ciclo)</b>", filial_style))
+        df_desc["NomeFilialDestino"] = df_desc["NomeFilialOrigem"] # Item 4: Destino é a própria filial
+        elements.append(Paragraph("<b>DESCONTINUAR</b>", filial_style)) # Item 2: Título limpo
         elements.append(_build(df_desc, "ENV"))
         elements.append(Spacer(1, 14))
 
@@ -687,8 +690,8 @@ def gerar_pdf_filial(nome_filial, cod, df):
         df_liq.insert(0, "#", range(1, len(df_liq) + 1))
         df_liq["Prioridade"] = df_liq["Prioridade"].map(PRIO_TXT).fillna("-")
         df_liq["Qtd Ideal"] = 0
-        df_liq["NomeFilialDestino"] = "LIQUIDAR"
-        elements.append(Paragraph("<b>LIQUIDAR (Estoque Parado)</b>", filial_style))
+        df_liq["NomeFilialDestino"] = df_liq["NomeFilialOrigem"] # Item 4: Destino é a própria filial
+        elements.append(Paragraph("<b>LIQUIDAR</b>", filial_style)) # Item 3: Título limpo
         elements.append(_build(df_liq, "ENV"))
 
     # Gera
