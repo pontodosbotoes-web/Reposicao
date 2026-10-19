@@ -614,24 +614,82 @@ def gerar_pdf_filial(nome_filial, cod, df):
         buffer.seek(0)
         return buffer, agora
 
-    # ENVIAR
-    df_env = df_env.reset_index(drop=True)
-    df_env.insert(0, "#", range(1, len(df_env) + 1))
-    # Regra: Atacado mostra IdealDestino; Lojas mostram IdealOrigem
-    df_env["Qtd Ideal"] = df_env["IdealDestino"] if cod == 5 else df_env["IdealOrigem"]
-    df_env["Prioridade"] = df_env["Prioridade"].map(PRIO_TXT).fillna("-")
-    elements.append(Paragraph("<b>ENVIAR</b>", filial_style))
-    elements.append(_build(df_env, "ENV"))
+    # ============================================================
+    # RESUMO DA FILIAL NO TOPO DO PDF
+    # ============================================================
+    env_totais = df_env[~df_env["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])]
+    liq_totais = df_env[df_env["NomeFilialDestino"] == "LIQUIDAR"]
+    desc_totais = df_env[df_env["NomeFilialDestino"] == "DESCONTINUAR"]
+
+    resumo_data = [
+        ["Ação", "Itens", "Unidades"],
+        ["Enviar", str(len(env_totais)), str(int(env_totais["QtdTransferir"].sum()) if not env_totais.empty else 0)],
+        ["Receber", str(len(df_rec)), str(int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0)],
+        ["Liquidar", str(len(liq_totais)), str(int(liq_totais["QtdTransferir"].sum()) if not liq_totais.empty else 0)],
+        ["Descontinuar", str(len(desc_totais)), str(int(desc_totais["QtdTransferir"].sum()) if not desc_totais.empty else 0)],
+    ]
+    
+    t_resumo = Table(resumo_data, colWidths=[150, 50, 50], hAlign='LEFT')
+    t_resumo.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E293B')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('GRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#CBD5E1')),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(t_resumo)
     elements.append(Spacer(1, 14))
+    # ============================================================
+    # ============================================================
+    
+    # Separa as categorias para o PDF
+    df_liq = df_env[df_env["NomeFilialDestino"] == "LIQUIDAR"].copy()
+    df_desc = df_env[df_env["NomeFilialDestino"] == "DESCONTINUAR"].copy()
+    df_env = df_env[~df_env["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])].copy()
+
+    # ENVIAR
+    if not df_env.empty:
+        df_env = df_env.reset_index(drop=True)
+        df_env.insert(0, "#", range(1, len(df_env) + 1))
+        df_env["Qtd Ideal"] = df_env["IdealDestino"] if cod == 5 else df_env["IdealOrigem"]
+        df_env["Prioridade"] = df_env["Prioridade"].map(PRIO_TXT).fillna("-")
+        elements.append(Paragraph("<b>ENVIAR</b>", filial_style))
+        elements.append(_build(df_env, "ENV"))
+        elements.append(Spacer(1, 14))
 
     # RECEBER
-    df_rec = df_rec.reset_index(drop=True)
-    df_rec.insert(0, "#", range(1, len(df_rec) + 1))
-    # Sempre IdealDestino (a loja é o destino)
-    df_rec["Qtd Ideal"] = df_rec["IdealDestino"]
-    df_rec["Prioridade"] = df_rec["Prioridade"].map(PRIO_TXT).fillna("-")
-    elements.append(Paragraph("<b>RECEBER</b>", filial_style))
-    elements.append(_build(df_rec, "REC"))
+    if not df_rec.empty:
+        df_rec = df_rec.reset_index(drop=True)
+        df_rec.insert(0, "#", range(1, len(df_rec) + 1))
+        df_rec["Qtd Ideal"] = df_rec["IdealDestino"]
+        df_rec["Prioridade"] = df_rec["Prioridade"].map(PRIO_TXT).fillna("-")
+        elements.append(Paragraph("<b>RECEBER</b>", filial_style))
+        elements.append(_build(df_rec, "REC"))
+        elements.append(Spacer(1, 14))
+
+    # DESCONTINUAR
+    if not df_desc.empty:
+        df_desc = df_desc.reset_index(drop=True)
+        df_desc.insert(0, "#", range(1, len(df_desc) + 1))
+        df_desc["Prioridade"] = df_desc["Prioridade"].map(PRIO_TXT).fillna("-")
+        df_desc["Qtd Ideal"] = 0
+        df_desc["NomeFilialDestino"] = "DESCONTINUAR"
+        elements.append(Paragraph("<b>DESCONTINUAR (Fim de Ciclo)</b>", filial_style))
+        elements.append(_build(df_desc, "ENV"))
+        elements.append(Spacer(1, 14))
+
+    # LIQUIDAR
+    if not df_liq.empty:
+        df_liq = df_liq.reset_index(drop=True)
+        df_liq.insert(0, "#", range(1, len(df_liq) + 1))
+        df_liq["Prioridade"] = df_liq["Prioridade"].map(PRIO_TXT).fillna("-")
+        df_liq["Qtd Ideal"] = 0
+        df_liq["NomeFilialDestino"] = "LIQUIDAR"
+        elements.append(Paragraph("<b>LIQUIDAR (Estoque Parado)</b>", filial_style))
+        elements.append(_build(df_liq, "ENV"))
 
     # Gera
     agora = agora_br()
@@ -746,17 +804,31 @@ if "df_transf" in st.session_state:
         for tab, nome in zip(tabs, nomes):
             cod = codigos[nome]
             with tab:
-                df_env = df[df["CodigoFilialOrigem"] == cod].copy().reset_index(drop=True)
+                # Filtra as filiais base
+                df_env_all = df[df["CodigoFilialOrigem"] == cod].copy().reset_index(drop=True)
                 df_rec = df[df["CodigoFilialDestino"] == cod].copy().reset_index(drop=True)
 
-                # ---- MÉTRICAS + BOTÃO PDF NA MESMA LINHA ----
-                m1, m2, m3, m4, m5 = st.columns([1, 1, 1, 1, 1.2])
+                # Separa as categorias antecipadamente
+                df_liq = df_env_all[df_env_all["NomeFilialDestino"] == "LIQUIDAR"].copy().reset_index(drop=True)
+                df_desc = df_env_all[df_env_all["NomeFilialDestino"] == "DESCONTINUAR"].copy().reset_index(drop=True)
+                df_env = df_env_all[~df_env_all["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])].copy().reset_index(drop=True)
+
+                # ---- MÉTRICAS E BOTÃO PDF NA MESMA LINHA ----
+                m1, m2, m3, m4, m5, m6, m7, m8, m9 = st.columns([1, 1, 1, 1, 1, 1, 1, 1, 1.5])
+                
                 m1.metric("📤 Enviar (itens)", len(df_env))
                 m2.metric("📤 Enviar (un)", int(df_env["QtdTransferir"].sum()) if not df_env.empty else 0)
+                
                 m3.metric("📥 Receber (itens)", len(df_rec))
                 m4.metric("📥 Receber (un)", int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0)
+                
+                m5.metric("🔥 Liquidar (itens)", len(df_liq))
+                m6.metric("🔥 Liquidar (un)", int(df_liq["QtdTransferir"].sum()) if not df_liq.empty else 0)
+                
+                m7.metric("⏸️ Desc. (itens)", len(df_desc))
+                m8.metric("⏸️ Desc. (un)", int(df_desc["QtdTransferir"].sum()) if not df_desc.empty else 0)
 
-                with m5:
+                with m9:
                     st.write("")
                     # Chave estável: filial + impressão digital do conteúdo real
                     _h = hashlib.md5(
@@ -797,16 +869,10 @@ if "df_transf" in st.session_state:
                     dfe["Qtd Ideal"] = dfe["IdealDestino"] if cod == 5 else dfe["IdealOrigem"]
                     dfe["Prioridade"] = dfe["Prioridade"].map(PRIO_TXT).fillna("-")
                     dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante",
-                               "NomeFilialDestino", "QtdTransferir",
-                               "ReservaOrigem", "Qtd Ideal", "Motivo"]]
+                               "NomeFilialDestino", "QtdTransferir", "ReservaOrigem", "Qtd Ideal", "Motivo"]]
                     dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante",
                                    "Destino", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
-
-                    styler_e = dfe.style.set_properties(
-                        subset=["Qtd Transf.", "Reserva", "Qtd Ideal"],
-                        **{"text-align": "right"}
-                    )
-
+                    styler_e = dfe.style.set_properties(subset=["Qtd Transf.", "Reserva", "Qtd Ideal"], **{"text-align": "right"})
                     h = min(420, max(120, len(dfe) * 36 + 42))
                     st.dataframe(styler_e, use_container_width=True, hide_index=True, height=h)
 
@@ -819,19 +885,39 @@ if "df_transf" in st.session_state:
                     dfr.insert(0, "#", range(1, len(dfr) + 1))
                     dfr["Qtd Ideal"] = dfr["IdealDestino"]
                     dfr["Prioridade"] = dfr["Prioridade"].map(PRIO_TXT).fillna("-")
-                    # Trata None → "-" e converte para inteiro quando houver valor
-                    dfr["Dias p/ Zerar"] = dfr["DiasAteZerarDestino"].apply(
-                        lambda x: 0 if pd.isna(x) or x is None else int(x)
-                    ).astype(int)
-
+                    dfr["Dias p/ Zerar"] = dfr["DiasAteZerarDestino"].apply(lambda x: 0 if pd.isna(x) or x is None else int(x)).astype(int)
                     dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante",
-                               "NomeFilialOrigem", "QtdTransferir",
-                               "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
+                               "NomeFilialOrigem", "QtdTransferir", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
                     dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante",
                                    "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
-
                     h = min(420, max(120, len(dfr) * 36 + 42))
                     st.dataframe(dfr, use_container_width=True, hide_index=True, height=h)
+
+                # ---- DESCONTINUAR ----
+                st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR (Fim de Ciclo)</div>', unsafe_allow_html=True)
+                if df_desc.empty:
+                    st.caption("Nenhum produto para descontinuar")
+                else:
+                    dfd = df_desc.copy()
+                    dfd.insert(0, "#", range(1, len(dfd) + 1))
+                    dfd["Prioridade"] = dfd["Prioridade"].map(PRIO_TXT).fillna("-")
+                    dfd = dfd[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "QtdTransferir", "IdealOrigem", "Motivo"]]
+                    dfd.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Desc.", "Qtd Ideal", "Motivo"]
+                    h = min(420, max(120, len(dfd) * 36 + 42))
+                    st.dataframe(dfd, use_container_width=True, hide_index=True, height=h)
+
+                # ---- LIQUIDAR ----
+                st.markdown('<div class="secao-titulo">🔥 LIQUIDAR (Estoque Parado)</div>', unsafe_allow_html=True)
+                if df_liq.empty:
+                    st.caption("Nenhum produto para liquidar")
+                else:
+                    dfi = df_liq.copy()
+                    dfi.insert(0, "#", range(1, len(dfi) + 1))
+                    dfi["Prioridade"] = dfi["Prioridade"].map(PRIO_TXT).fillna("-")
+                    dfi = dfi[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "QtdTransferir", "IdealOrigem", "Motivo"]]
+                    dfi.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Liq.", "Qtd Ideal", "Motivo"]
+                    h = min(420, max(120, len(dfi) * 36 + 42))
+                    st.dataframe(dfi, use_container_width=True, hide_index=True, height=h)
                     
 
 
