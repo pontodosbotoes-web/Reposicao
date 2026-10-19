@@ -482,8 +482,9 @@ def gerar(buffer=None):
     conteudo.append(h2("4.1 Perfil de Análise"))
 
     conteudo.append(p(
-        "O <b>Perfil de Análise</b> é o primeiro campo no topo da tela. Ele é a ferramenta "
-        "de produtividade mais importante para o gestor, pois configura <b>9 parâmetros de uma só vez</b>."
+        "O <b>Perfil de Análise</b> configura automaticamente os 9 parâmetros do motor. "
+        "A grande sacada é entender que <b>um mesmo produto pode ser analisado com perfis diferentes</b>, "
+        "dependendo do seu momento de vida (lançamento, alta temporada, fim de ciclo)."
     ))
 
     conteudo.append(h3("Onde se aplica e qual a sua importância:"))
@@ -500,14 +501,17 @@ def gerar(buffer=None):
     ))
 
     perfis = [
-        ["Perfil", "Quando usar", "Principais diferenças"],
-        ["Padrão", "Uso geral", "1 ano de histórico, cobertura 30d, reserva 25%, quarentena 15d"],
-        ["Sazonal", "Carnaval, São João, Natal", "30 dias de histórico, piso 3, reserva 10%, quarentena 7d"],
-        ["Alto Giro", "Produtos que vendem muito rápido", "3 meses de histórico, cobertura 15d, lead 7d, piso 5"],
-        ["Baixo Giro", "Produtos lentos, pouca saída", "1 ano de histórico, piso 3, reserva 30%, quarentena 20d"],
-        ["Liquidação", "Fim de ciclo / queima de estoque", "6 meses de histórico, cobertura 7d, reserva 0%"],
+        ["Perfil", "Quando usar", "Exemplo do Dia a Dia"],
+        ["Padrão", "Uso geral", "Materiais de escritório contínuos."],
+        ["Lançamento", "Produto novo/coleção", "A nova coleção de tecidos que acabou de chegar."],
+        ["Classe A", "Itens de maior faturamento", "Fita adesiva básica e papel kraft."],
+        ["Alto Giro", "Venda rápida e constante", "Bexigas de aniversário na primavera."],
+        ["Sazonal Longo", "Campanhas longas (Natal/Carnaval)", "Artigos de Natal em novembro."],
+        ["Sazonal Curto", "Pico explosivo (Páscoa/Mães/Halloween)", "Máscaras de Halloween na última semana de outubro."],
+        ["Baixo Giro", "Produtos encalhados", "Tecido de seda específico que vende 1 rolo/mês."],
+        ["Liquidação", "Fim de ciclo / queima de estoque", "Itens de Halloween na primeira semana de novembro."],
     ]
-    conteudo.append(tabela(perfis, col_widths=[2.5 * cm, 5 * cm, 6.5 * cm]))
+    conteudo.append(tabela(perfis, col_widths=[2.5 * cm, 4.5 * cm, 7 * cm]))
 
     conteudo.append(nota(
         "Cada perfil sobrescreve todos os 9 parâmetros. Se você alterar um deles manualmente, "
@@ -515,7 +519,6 @@ def gerar(buffer=None):
     ))
 
     conteudo.append(Spacer(1, 0.3 * cm))
-
 
     conteudo.append(h2("4.2 Filtros do topo"))
     filtros = [
