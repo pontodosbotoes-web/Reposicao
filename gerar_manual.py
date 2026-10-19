@@ -497,12 +497,12 @@ def gerar(buffer=None):
         "Ao trocar o Perfil, o sistema sobrescreve os 9 parâmetros no painel de Parâmetros. "
         "Se você mudar manualmente um parâmetro (ex: mudar a Cobertura de 30 para 45 dias), "
         "o sistema respeitará a sua alteração manual e o nome do perfil continuará o mesmo. "
-        "Se quiser voltar tudo ao padrão do sistema, basta clicar no botão <b>Limpar (🧹)</b>."
+        "Se quiser voltar tudo ao padrão do sistema, basta clicar no botão <b>Limpar</b>."
     ))
 
     perfis = [
         ["Perfil", "Quando usar", "Exemplo do Dia a Dia"],
-        ["Padrão", "Uso geral", "Materiais de escritório contínuos."],
+        ["Padrão", "Uso geral", "Materiais contínuos."],
         ["Lançamento", "Produto novo/coleção", "A nova coleção de tecidos que acabou de chegar."],
         ["Classe A", "Itens de maior faturamento", "Fita adesiva básica e papel kraft."],
         ["Alto Giro", "Venda rápida e constante", "Bexigas de aniversário na primavera."],
@@ -605,6 +605,8 @@ def gerar(buffer=None):
     conteudo.append(p("Após consultar, você verá 5 abas: ATACADO, ALECRIM, VIA DIRETA, ZONA SUL, ZONA NORTE."))
     conteudo.append(bullet("<b>ENVIAR</b> — o que essa filial precisa mandar"))
     conteudo.append(bullet("<b>RECEBER</b> — o que essa filial precisa receber"))
+    conteudo.append(bullet("<b>DESCONTINUAR</b> — produtos com giro baixíssimo que precisam sair do mix"))
+    conteudo.append(bullet("<b>LIQUIDAR</b> — produtos com giro zero que precisam de ação comercial"))
 
     conteudo.append(h2("5.2 As colunas essenciais"))
     colunas = [
@@ -643,6 +645,26 @@ def gerar(buffer=None):
         ["Reposicao de ciclo", "Padrão — mantém fluxo"],
     ]
     conteudo.append(tabela(motivos, col_widths=[6 * cm, 8 * cm]))
+    
+        conteudo.append(h2("5.5 Ações de Fim de Linha — Liquidar e Descontinuar"))
+    
+    conteudo.append(p(
+        "Quando um produto não vende (ou vende muito pouco) em <b>nenhuma filial</b>, "
+        "transferi-lo de uma loja para outra apenas gera custo de frete e não resolve a venda. "
+        "Para esses casos, o sistema cria duas seções exclusivas de ação comercial:"
+    ))
+
+    acoes_fim_linha = [
+        ["Ação", "Quando acontece?", "O que o gestor deve fazer?"],
+        ["LIQUIDAR", "A velocidade de venda é zero em toda a rede, mas existe estoque na filial.", "Não transferir. Criar uma promoção, queima de estoque ou devolver ao fornecedor."],
+        ["DESCONTINUAR", "A velocidade de venda é muito baixa (fim de ciclo), mas ainda há estoque.", "Vender até o fim do estoque atual. Não repor e retirar o item do mix da loja."],
+    ]
+    conteudo.append(tabela(acoes_fim_linha, col_widths=[3 * cm, 6 * cm, 5 * cm]))
+
+    conteudo.append(nota(
+        "O sistema NÃO sugere transferir itens de LIQUIDAÇÃO ou DESCONTINUAÇÃO entre as lojas. "
+        "O objetivo é resolver o estoque na própria origem."
+    ))
 
     conteudo.append(PageBreak())
 
