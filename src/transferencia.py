@@ -71,22 +71,63 @@ def filtrar_recentes(df: pd.DataFrame, df_recentes: pd.DataFrame | None) -> pd.D
 
 
 def excluir_descontinuados(df: pd.DataFrame) -> pd.DataFrame:
+    # Agrupa por produto para ver a situação da rede inteira
     vel_max = df.groupby("IdProduto")["VelocidadeAtiva"].transform("max")
-    return df[vel_max >= 0.1].copy()
+    saldo_max = df.groupby("IdProduto")["SaldoAjustado"].transform("max")
+    
+    # Mantém se: vendeu (vel >= 0.1) OU se tem estoque (saldo > 0) para ser sinalizado.
+    return df[(vel_max >= 0.1) | (saldo_max > 0)].copy()
 
 
 def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
+    vel_max = df_produto["VelocidadePeriodo"].max()
+
+    # === REGRA 1: LIQUIDAÇÃO (Velocidade exata zero) ===
+    if vel_max == 0:
+        alocacoes = []
+        doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & (df_produto["SaldoAjustado"] > 0)]
+        for _, doa in doadoras.iterrows():
+            qtd = int(doa["SaldoAjustado"])
+            if qtd >= 5:
+                alocacoes.append({
+                    "Prioridade": 3, "CodigoProduto": doa["CodigoProduto"],
+                    "ReferenciaFabricante": doa["ReferenciaFabricante"], "Produto": doa["Produto"],
+                    "Fabricante": doa["Fabricante"], "Embalagem": doa["Embalagem"],
+                    "CodigoFilialOrigem": int(doa["CodigoFilial"]), "NomeFilialOrigem": doa["Filial"],
+                    "CodigoFilialDestino": 0, "NomeFilialDestino": "LIQUIDAR",
+                    "QtdTransferir": qtd, "ReservaOrigem": 0, "IdealOrigem": 0, "IdealDestino": 0,
+                    "DiasAteZerarDestino": None, "Motivo": "LIQUIDAR (Estoque Parado)",
+                })
+        return alocacoes
+
+    # === REGRA 2: DESCONTINUAÇÃO (Velocidade muito baixa) ===
+    elif vel_max < 0.1:
+        alocacoes = []
+        doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & (df_produto["SaldoAjustado"] > 0)]
+        for _, doa in doadoras.iterrows():
+            qtd = int(doa["SaldoAjustado"])
+            if qtd >= 5:
+                alocacoes.append({
+                    "Prioridade": 3, "CodigoProduto": doa["CodigoProduto"],
+                    "ReferenciaFabricante": doa["ReferenciaFabricante"], "Produto": doa["Produto"],
+                    "Fabricante": doa["Fabricante"], "Embalagem": doa["Embalagem"],
+                    "CodigoFilialOrigem": int(doa["CodigoFilial"]), "NomeFilialOrigem": doa["Filial"],
+                    "CodigoFilialDestino": 0, "NomeFilialDestino": "DESCONTINUAR",
+                    "QtdTransferir": qtd, "ReservaOrigem": 0, "IdealOrigem": 0, "IdealDestino": 0,
+                    "DiasAteZerarDestino": None, "Motivo": "DESCONTINUAR (Fim de Ciclo)",
+                })
+        return alocacoes
+
+    # --- Lógica normal de transferência (Velocidade >= 0.1) ---
     receptoras = df_produto[df_produto["Falta"] >= 5].copy()
     receptoras = receptoras[receptoras["QtdRecebidaRecente"] < receptoras["Falta"]]
     receptoras = receptoras.sort_values(
-        ["VelocidadePeriodo", "VelocidadeAtiva", "DiasInativo"],
-        ascending=[False, False, True],
+        ["VelocidadePeriodo", "VelocidadeAtiva", "DiasInativo"], ascending=[False, False, True],
     )
 
     doadoras = df_produto[df_produto["ExcessoTransferivel"] >= 5].copy()
     doadoras = doadoras.sort_values(
-        ["VelocidadePeriodo", "VelocidadeAtiva"],
-        ascending=[True, True],
+        ["VelocidadePeriodo", "VelocidadeAtiva"], ascending=[True, True],
     )
 
     if receptoras.empty or doadoras.empty:
@@ -100,15 +141,12 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
         ordem = MATRIZ_PROXIMIDADE.get(rec["CodigoFilial"], [])
 
         for cod_doador in ordem:
-            if precisa < 5:
-                break
-            if excesso_livre.get(cod_doador, 0) < 5:
-                continue
+            if precisa < 5: break
+            if excesso_livre.get(cod_doador, 0) < 5: continue
 
             doa = doadoras[doadoras["CodigoFilial"] == cod_doador].iloc[0]
             qtd = int(min(excesso_livre[cod_doador], precisa))
-            if qtd < 5:
-                break
+            if qtd < 5: break
 
             if rec["SaldoAjustado"] <= 0:
                 motivo = "SEM ESTOQUE"
@@ -127,30 +165,19 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
             else:
                 motivo = "Reposicao de ciclo"
 
-            if pd.isna(rec["DiasAteZerar"]):
-                prio = 3
-            elif rec["DiasAteZerar"] < 7:
-                prio = 1
-            elif rec["DiasAteZerar"] < 15:
-                prio = 2
-            else:
-                prio = 3
+            if pd.isna(rec["DiasAteZerar"]): prio = 3
+            elif rec["DiasAteZerar"] < 7: prio = 1
+            elif rec["DiasAteZerar"] < 15: prio = 2
+            else: prio = 3
 
             alocacoes.append({
-                "Prioridade": prio,
-                "CodigoProduto": rec["CodigoProduto"],
-                "ReferenciaFabricante": rec["ReferenciaFabricante"],
-                "Produto": rec["Produto"],
-                "Fabricante": rec["Fabricante"],
-                "Embalagem": rec["Embalagem"],
-                "CodigoFilialOrigem": int(doa["CodigoFilial"]),
-                "NomeFilialOrigem": doa["Filial"],
-                "CodigoFilialDestino": int(rec["CodigoFilial"]),
-                "NomeFilialDestino": rec["Filial"],
-                "QtdTransferir": qtd,
-                "ReservaOrigem": int(doa["ReservaOrigem"]),
-                "IdealOrigem": int(doa["EstoqueIdeal"]),
-                "IdealDestino": int(rec["EstoqueIdeal"]),
+                "Prioridade": prio, "CodigoProduto": rec["CodigoProduto"],
+                "ReferenciaFabricante": rec["ReferenciaFabricante"], "Produto": rec["Produto"],
+                "Fabricante": rec["Fabricante"], "Embalagem": rec["Embalagem"],
+                "CodigoFilialOrigem": int(doa["CodigoFilial"]), "NomeFilialOrigem": doa["Filial"],
+                "CodigoFilialDestino": int(rec["CodigoFilial"]), "NomeFilialDestino": rec["Filial"],
+                "QtdTransferir": qtd, "ReservaOrigem": int(doa["ReservaOrigem"]),
+                "IdealOrigem": int(doa["EstoqueIdeal"]), "IdealDestino": int(rec["EstoqueIdeal"]),
                 "DiasAteZerarDestino": round(rec["DiasAteZerar"], 1) if pd.notna(rec["DiasAteZerar"]) else None,
                 "Motivo": motivo,
             })
