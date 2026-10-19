@@ -228,7 +228,7 @@ def render_manual() -> None:
         st.markdown(
             "| Perfil | Quando usar | Exemplo do Dia a Dia |\n"
             "|--------|-------------|----------------------|\n"
-            "| **Padrão** | Uso geral | Materiais de escritório contínuos. |\n"
+            "| **Padrão** | Uso geral | Materiais contínuos. |\n"
             "| **Lançamento** | Produto novo/coleção | Nova coleção de tecidos que acabou de chegar. |\n"
             "| **Classe A** | Itens de maior faturamento | Fita adesiva básica, papel kraft. |\n"
             "| **Alto Giro** | Venda rápida e constante | Bexigas de aniversário. |\n"
@@ -348,7 +348,9 @@ def render_manual() -> None:
             "**ATACADO, ALECRIM, VIA DIRETA, ZONA SUL, ZONA NORTE**.\n\n"
             "Cada uma mostra:\n\n"
             "- **ENVIAR** — o que essa filial precisa mandar\n"
-            "- **RECEBER** — o que essa filial precisa receber"
+            "- **RECEBER** — o que essa filial precisa receber\n"
+            "- **DESCONTINUAR** — produtos com giro baixíssimo que precisam sair do mix\n"
+            "- **LIQUIDAR** — produtos com giro zero que precisam de ação comercial"
         )
 
         st.subheader("Colunas essenciais")
@@ -387,6 +389,26 @@ def render_manual() -> None:
             "| Alta rotacao no destino | Destino vende 2x mais |\n"
             "| Maior giro no destino | Destino vende 1,5x mais |\n"
             "| Reposicao de ciclo | Padrão — mantém fluxo |"
+        )
+        
+        st.subheader("Ações de Fim de Linha — Liquidar e Descontinuar")
+        
+        st.info(
+            "Quando um produto não vende (ou vende muito pouco) em **nenhuma filial**, "
+            "transferi-lo de uma loja para outra apenas gera custo de frete e não resolve a venda. "
+            "Por isso, o sistema cria duas seções exclusivas de ação comercial."
+        )
+
+        st.markdown(
+            "| Ação | Quando acontece? | O que o gestor deve fazer? |\n"
+            "|------|------------------|----------------------------|\n"
+            "| **LIQUIDAR** | A velocidade de venda é zero em toda a rede, mas existe estoque na filial. | Não transferir. Criar uma promoção, queima de estoque ou devolver ao fornecedor. |\n"
+            "| **DESCONTINUAR** | A velocidade de venda é muito baixa (fim de ciclo), mas ainda há estoque. | Vender até o fim do estoque atual. Não repor e retirar o item do mix da loja. |"
+        )
+
+        st.warning(
+            "**Regra de Ouro:** O sistema **NÃO** sugere transferir itens de LIQUIDAÇÃO ou DESCONTINUAÇÃO entre as lojas. "
+            "O objetivo é resolver o estoque na própria origem."
         )
 
     # ---------------- ABA 5 ----------------
