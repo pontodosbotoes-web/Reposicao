@@ -125,7 +125,6 @@ def tabela(data, col_widths=None):
     for i, row in enumerate(data):
         row_fmt = []
         for cell in row:
-            # CORRECAO: Aceita tanto strings quanto Paragraphs ja formatados
             if isinstance(cell, Paragraph):
                 row_fmt.append(cell)
             else:
@@ -536,10 +535,10 @@ def gerar(buffer=None):
     motivos = [
         ["Motivo", "Significado"],
         ["SEM ESTOQUE", "Ja zerou - urgente"],
-        ["AGUARDANDO TRANSFERENCIA", "Saldo Provavel menor ou igual a 0 E tem envio a caminho (QtdEmTransito > 0)"],
+        ["AGUARDANDO TRANSFERENCIA", "Saldo Provavel menor ou igual a 0 E tem envio a caminho (QtdEmTransito &gt; 0)"],
         ["RECEBIDO RECENTEMENTE", "Recebeu nos ultimos N dias (parametro Reposicao Recente)"],
         ["URGENTE - zera em N dias", "Vai zerar em breve"],
-        ["Origem parada, destino vendendo", "Origem com velocidade < 0.05 e destino >= 0.1"],
+        ["Origem parada, destino vendendo", "Origem com velocidade &lt; 0.05 e destino &gt;= 0.1"],
         ["Alta rotacao no destino", "Destino vende 2x mais que origem"],
         ["Maior giro no destino", "Destino vende 1.5x mais que origem"],
         ["Reposicao de ciclo", "Padrao - mantem fluxo"],
@@ -555,7 +554,7 @@ def gerar(buffer=None):
     acoes_fim_linha = [
         ["Acao", "Quando acontece?", "O que o gestor deve fazer?"],
         ["LIQUIDAR", "Velocidade exata ZERO em toda a rede, mas ha estoque.", "Nao transferir. Promocao, queima ou devolver ao fornecedor."],
-        ["DESCONTINUAR", "Velocidade > 0 mas < 0.1 (fim de ciclo), com estoque.", "Vender ate o fim do estoque. Nao repor e retirar do mix."],
+        ["DESCONTINUAR", "Velocidade &gt; 0 mas &lt; 0.1 (fim de ciclo), com estoque.", "Vender ate o fim do estoque. Nao repor e retirar do mix."],
     ]
     conteudo.append(tabela(acoes_fim_linha, col_widths=[3 * cm, 6 * cm, 5 * cm]))
     conteudo.append(nota(
@@ -729,7 +728,10 @@ def gerar(buffer=None):
 
     # ---------- PARTE 10 ----------
     conteudo.append(h1("Parte 10 - Casos praticos"))
-    conteudo.append(h2("Caso 1 - Produto em falta critica"))
+    conteudo.append(p("Estes casos mostram situacoes reais do dia a dia e como o sistema reage a cada uma."))
+    conteudo.append(Spacer(1, 0.3 * cm))
+
+    conteudo.append(h2("Caso 1 - Produto em falta critica (RECEBER)"))
     conteudo.append(p("Aba Zona Sul (RECEBER):"))
     caso1 = [
         ["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Dias", "Motivo"],
@@ -739,7 +741,7 @@ def gerar(buffer=None):
     conteudo.append(Spacer(1, 0.2 * cm))
     conteudo.append(p("<b>Acao</b>: gerar PDF, enviar para o Atacado, criar ordem no ERP."))
 
-    conteudo.append(h2("Caso 2 - Produto com excesso"))
+    conteudo.append(h2("Caso 2 - Produto com excesso (ENVIAR)"))
     conteudo.append(p("Aba Atacado (ENVIAR):"))
     caso2 = [
         ["#", "Prior.", "Cod", "Produto", "Destino", "Qtd", "Reserva"],
@@ -750,7 +752,7 @@ def gerar(buffer=None):
     conteudo.append(Spacer(1, 0.2 * cm))
     conteudo.append(p("<b>Acao</b>: confirmar rota, gerar PDF, criar 2 ordens (uma por destino)."))
 
-    conteudo.append(h2("Caso 3 - Transferencia entre lojas"))
+    conteudo.append(h2("Caso 3 - Transferencia entre lojas (sem passar pelo Atacado)"))
     conteudo.append(p("Aba Zona Sul (RECEBER):"))
     caso3 = [
         ["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Dias"],
@@ -760,13 +762,62 @@ def gerar(buffer=None):
     conteudo.append(Spacer(1, 0.2 * cm))
     conteudo.append(p("<b>Acao</b>: confirmar com a Via Direta, gerar PDF, criar ordem no ERP."))
 
-    conteudo.append(h2("Caso 4 - Nenhuma sugestao"))
+    conteudo.append(h2("Caso 4 - Nenhuma sugestao encontrada"))
     conteudo.append(p("Mensagem: <b>'Nenhuma sugestao encontrada'</b>"))
     conteudo.append(p("Significa que nenhum produto atendeu aos criterios. O que fazer:"))
     conteudo.append(bullet("Confirmar se os produtos estao equilibrados"))
     conteudo.append(bullet("Tentar afrouxar a Cobertura (ex.: 15 dias)"))
     conteudo.append(bullet("Tentar outro periodo de analise (ex.: 6 meses)"))
     conteudo.append(bullet("Verificar se o filtro de Fabricante nao esta muito restritivo"))
+
+    conteudo.append(PageBreak())
+
+    # NOVOS CASOS - LIQUIDAR E DESCONTINUAR
+    conteudo.append(h2("Caso 5 - Produto parado: LIQUIDAR"))
+    conteudo.append(p("Aba Zona Norte (LIQUIDAR):"))
+    caso5 = [
+        ["#", "Prior.", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Liq.", "Motivo"],
+        ["1", "Normal", "771234", "SQUEEZE HALLOWEEN", "UN", "CASA FESTA", "15", "ESTOQUE PARADO"],
+    ]
+    conteudo.append(tabela(caso5, col_widths=[1 * cm, 2 * cm, 2 * cm, 3.5 * cm, 1.5 * cm, 3 * cm, 2 * cm, 2 * cm]))
+    conteudo.append(Spacer(1, 0.2 * cm))
+    conteudo.append(p("<b>Por que caiu aqui?</b> O produto nao teve <b>NENHUMA</b> venda (velocidade zero) nos ultimos 365 dias em toda a rede, mas a Zona Norte tem 15 unidades no estoque."))
+    conteudo.append(p("<b>O que o sistema faz:</b> Nao sugere transferir para outras lojas. Transferir um produto que nao vende so gasta frete e nao gera receita."))
+    conteudo.append(p("<b>Acao</b>: Criar uma promocao local, fazer um kit com outro produto, ou devolver ao fornecedor."))
+
+    conteudo.append(Spacer(1, 0.3 * cm))
+    conteudo.append(h2("Caso 6 - Produto de fim de ciclo: DESCONTINUAR"))
+    conteudo.append(p("Aba Alecrim (DESCONTINUAR):"))
+    caso6 = [
+        ["#", "Prior.", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Desc.", "Motivo"],
+        ["1", "Normal", "554433", "FITA CETIM VERMELHA", "UN", "ADERE", "8", "FIM DE CICLO"],
+    ]
+    conteudo.append(tabela(caso6, col_widths=[1 * cm, 2 * cm, 2 * cm, 3.5 * cm, 1.5 * cm, 3 * cm, 2 * cm, 2 * cm]))
+    conteudo.append(Spacer(1, 0.2 * cm))
+    conteudo.append(p("<b>Por que caiu aqui?</b> O produto tem uma velocidade de venda muito baixa (ex: 0.08 un/dia, ou seja, 1 unidade a cada 12 dias) na rede inteira. O ciclo de vida dele acabou."))
+    conteudo.append(p("<b>O que o sistema faz:</b> Nao sugere reposicao. Voce deve vender o que tem e nao comprar mais."))
+    conteudo.append(p("<b>Acao</b>: Vender ate o fim do estoque atual. Nao fazer novas compras e retirar o item do mix da loja quando zerar."))
+
+    conteudo.append(PageBreak())
+
+    # NOVOS CASOS - ANTI-GANGORRA E MOQ
+    conteudo.append(h2("Caso 7 - Produto recem-recebido: AGUARDANDO QUARENTENA"))
+    conteudo.append(p("Aba Zona Sul (RECEBER):"))
+    caso7 = [
+        ["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Dias", "Motivo"],
+        ["3", "Alta", "889900", "PAPEL KRAFT", "Atacado", "40", "5", "RECEBIDO RECENTEMENTE"],
+    ]
+    conteudo.append(tabela(caso7, col_widths=[1 * cm, 2 * cm, 2 * cm, 3.5 * cm, 2 * cm, 1.5 * cm, 1.5 * cm, 2.5 * cm]))
+    conteudo.append(Spacer(1, 0.2 * cm))
+    conteudo.append(p("<b>Por que caiu aqui?</b> A Zona Sul ainda tem uma falta projetada, mas recebeu uma transferencia deste produto nos ultimos 15 dias (parametro Reposicao Recente)."))
+    conteudo.append(p("<b>O que o sistema faz:</b> Mostra o alerta para voce saber que a falta existe, mas a origem ja mandou algo recentemente. Ele evita mandar de novo (efeito gangorra)."))
+    conteudo.append(p("<b>Acao</b>: Verificar fisicamente na loja. Se a transferencia anterior ja cobre a falta, nao fazer nada. Se nao chegou, acionar a transportadora."))
+
+    conteudo.append(Spacer(1, 0.3 * cm))
+    conteudo.append(h2("Caso 8 - Falta pequena: A REGRA DO MINIMO DE 5"))
+    conteudo.append(p("Voce consulta e nota que o produto 'Fita Refletiva' tem falta de 3 unidades na Zona Norte, mas ele <b>nao aparece</b> no sistema."))
+    conteudo.append(p("<b>Por que nao aparece?</b> O motor ignora transferencias menores que 5 unidades em todas as regras. E o MOQ (Minimum Order Quantity)."))
+    conteudo.append(p("<b>O que fazer:</b> O custo logistico (frete, separacao, embalagem) para mover 3 unidades e maior que o beneficio. Deixe o produto seguir o fluxo natural ou aguarde acumular uma falta maior."))
 
     # ---------- GERAR ----------
     doc.build(conteudo, canvasmaker=ManualCanvas)
