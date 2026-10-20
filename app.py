@@ -125,6 +125,7 @@ st.markdown('<div class="titulo-pagina">Reposição de Produtos</div>', unsafe_a
 
 
 PRIO_TXT = {1: "Crítica", 2: "Alta", 3: "Normal"}
+codigos_filial = {"ATACADO": 5, "ALECRIM": 1, "VIA DIRETA": 2, "ZONA SUL": 3, "ZONA NORTE": 4}
 
 try:
     TZ_BR = ZoneInfo("America/Sao_Paulo")
@@ -139,19 +140,11 @@ def agora_br():
 def calcular_janela_analise(opcao: str) -> tuple[date, int]:
     """Retorna (data_referencia, max_lookback)."""
     hoje = date.today()
-
     mapa_dias = {
-        "1 ano atrás":   365,
-        "6 meses atrás": 180,
-        "3 meses atrás":  90,
-        "2 meses atrás":  60,
-        "30 dias atrás":  30,
-        "15 dias atrás":  15,
-        "7 dias atrás":    7,
+        "1 ano atrás": 365, "6 meses atrás": 180, "3 meses atrás": 90,
+        "2 meses atrás": 60, "30 dias atrás": 30, "15 dias atrás": 15, "7 dias atrás": 7,
     }
-
-    dias = mapa_dias.get(opcao, 365)
-    return hoje, dias
+    return hoje, mapa_dias.get(opcao, 365)
 
 
 # ============================================================
@@ -168,94 +161,14 @@ subgrupos = carregar_subgrupos()
 # PERFIS PRÉ-DEFINIDOS
 # ============================================================
 PERFIS = {
-    "Padrão": {
-        "opcao_data":       "1 ano atrás",
-        "cobertura_opcao":  "Para 30 dias",
-        "lead_time":        10,
-        "piso":             0,
-        "reserva":          25,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    15,
-        "dias_transito":    10,
-    },
-    "Lançamento": {
-        "opcao_data":       "30 dias atrás",
-        "cobertura_opcao":  "Para 30 dias",
-        "lead_time":        10,
-        "piso":             5,
-        "reserva":          0,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    7,
-        "dias_transito":    10,
-    },
-    "Classe A": {
-        "opcao_data":       "3 meses atrás",
-        "cobertura_opcao":  "Para 15 dias",
-        "lead_time":        7,
-        "piso":             10,
-        "reserva":          40,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    7,
-        "dias_transito":    7,
-    },
-    "Alto Giro": {
-        "opcao_data":       "3 meses atrás",
-        "cobertura_opcao":  "Para 15 dias",
-        "lead_time":        7,
-        "piso":             5,
-        "reserva":          15,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    7,
-        "dias_transito":    7,
-    },
-    "Sazonal Longo": {
-        "opcao_data":       "2 meses atrás",
-        "cobertura_opcao":  "Para 30 dias",
-        "lead_time":        10,
-        "piso":             5,
-        "reserva":          15,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    7,
-        "dias_transito":    10,
-    },
-    "Sazonal Curto": {
-        "opcao_data":       "30 dias atrás",
-        "cobertura_opcao":  "Para 15 dias",
-        "lead_time":        7,
-        "piso":             3,
-        "reserva":          5,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    5,
-        "dias_transito":    7,
-    },
-    "Baixo Giro": {
-        "opcao_data":       "1 ano atrás",
-        "cobertura_opcao":  "Para 30 dias",
-        "lead_time":        10,
-        "piso":             3,
-        "reserva":          30,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    20,
-        "dias_transito":    10,
-    },
-    "Liquidação": {
-        "opcao_data":       "6 meses atrás",
-        "cobertura_opcao":  "Para 7 dias",
-        "lead_time":        10,
-        "piso":             0,
-        "reserva":          0,
-        "atacado_piso":     "Não",
-        "atacado_reserva":  "Não",
-        "anti_gangorra":    30,
-        "dias_transito":    10,
-    },
+    "Padrão": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 0, "reserva": 25, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 15, "dias_transito": 10},
+    "Lançamento": {"opcao_data": "30 dias atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 5, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 7, "dias_transito": 10},
+    "Classe A": {"opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 10, "reserva": 40, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 7, "dias_transito": 7},
+    "Alto Giro": {"opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 7, "dias_transito": 7},
+    "Sazonal Longo": {"opcao_data": "2 meses atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 7, "dias_transito": 10},
+    "Sazonal Curto": {"opcao_data": "30 dias atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 3, "reserva": 5, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 5, "dias_transito": 7},
+    "Baixo Giro": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 3, "reserva": 30, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 20, "dias_transito": 10},
+    "Liquidação": {"opcao_data": "6 meses atrás", "cobertura_opcao": "Para 7 dias", "lead_time": 10, "piso": 0, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 30, "dias_transito": 10},
 }
 
 if "show_params" not in st.session_state:
@@ -264,53 +177,30 @@ if "show_params" not in st.session_state:
 if "view" not in st.session_state:
     st.session_state["view"] = "calculadora"
 
-# Roteamento para o manual
 if st.session_state["view"] == "manual":
     render_manual()
     st.stop()
 
 # ============================================================
-# VALORES PADRÃO DOS WIDGETS (controlados via session_state)
+# VALORES PADRÃO DOS WIDGETS
 # ============================================================
 _DEFAULTS = {
-    "perfil_sel":       "Padrão",
-    "fabricante_sel":   "(todos)",
-    "depto_sel":        "(todos)",
-    "grupo_sel":        "(todos)",
-    "subgrupo_sel":     "(todos)",
-    "produto_busca":    "",
-    "opcao_data":       "1 ano atrás",
-    "filial_param":     "(todas)",
-    "cobertura_opcao":  "Para 30 dias",
-    "lead_time":        10,
-    "piso":             0,
-    "reserva":          25,
-    "atacado_piso":     "Não",
-    "atacado_reserva":  "Não",
-    "anti_gangorra":    15,
-    "dias_transito":    10,
+    "perfil_sel": "Padrão", "fabricante_sel": "(todos)", "depto_sel": "(todos)",
+    "grupo_sel": "(todos)", "subgrupo_sel": "(todos)", "produto_busca": "",
+    "opcao_data": "1 ano atrás", "filial_param": "(todas)", "cobertura_opcao": "Para 30 dias",
+    "lead_time": 10, "piso": 0, "reserva": 25, "atacado_piso": "Não",
+    "atacado_reserva": "Não", "anti_gangorra": 15, "dias_transito": 10,
 }
 for _k, _v in _DEFAULTS.items():
     if _k not in st.session_state:
         st.session_state[_k] = _v
 
-# ============================================================
-# MAPA DE COBERTURA DE VENDAS (opções → dias)
-# ============================================================
 COBERTURA_MAP = {
-    "Para 7 dias":   7,
-    "Para 15 dias": 15,
-    "Para 30 dias": 30,
-    "Para 2 meses": 60,
-    "Para 3 meses": 90,
-    "Para 6 meses": 180,
-    "Para 1 ano":   365,
+    "Para 7 dias": 7, "Para 15 dias": 15, "Para 30 dias": 30, "Para 2 meses": 60,
+    "Para 3 meses": 90, "Para 6 meses": 180, "Para 1 ano": 365,
 }
 
 
-# ============================================================
-# FUNÇÕES DE ESTADO
-# ============================================================
 def _aplicar_perfil_do_session():
     perfil = st.session_state.get("perfil_sel", "Padrão")
     if perfil in PERFIS:
@@ -322,23 +212,18 @@ def _limpar_filtros():
     for _k, _v in _DEFAULTS.items():
         st.session_state[_k] = _v
     st.session_state["_ultimo_perfil_aplicado"] = "Padrão"
-    for _k in ("df_base", "df_transf", "df_base_n"):
+    for _k in ("df_base", "df_transf", "df_base_n", "pdf_bytes_global"):
         if _k in st.session_state:
             del st.session_state[_k]
 
 # ============================================================
 # LINHA 1: FILTROS
 # ============================================================
-f0, f1, f2, f3, f4, f5 = st.columns(
-    [1.6, 1.9, 1.3, 1.3, 1.3, 1.8],
-    vertical_alignment="bottom",
-)
+f0, f1, f2, f3, f4, f5 = st.columns([1.6, 1.9, 1.3, 1.3, 1.3, 1.8], vertical_alignment="bottom")
 
 with f0:
     st.selectbox(
-        "Perfil de Análise",
-        list(PERFIS.keys()),
-        key="perfil_sel",
+        "Perfil de Análise", list(PERFIS.keys()), key="perfil_sel",
         help=(
             "**Perfil de Análise**\n\n"
             "Escolha um perfil para ajustar automaticamente os 9 parâmetros. "
@@ -362,29 +247,17 @@ with f0:
         ),
         on_change=_aplicar_perfil_do_session,
     )
-with f1:
-    fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel")
-
-with f2:
-    depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel")
-
-with f3:
-    grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()), key="grupo_sel")
-
-with f4:
-    subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel")
-
+with f1: fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel")
+with f2: depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel")
+with f3: grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()), key="grupo_sel")
+with f4: subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel")
 with f5:
     produto_busca = st.text_input(
-        "Produto",
-        placeholder='Ex: CAIXA QUADRADA (E) | CAPA, CAPUZ (OU)',
-        key="produto_busca",
+        "Produto", placeholder='Ex: CAIXA QUADRADA (E) | CAPA, CAPUZ (OU)', key="produto_busca",
         help=(
             "Busca por produto com E / OU:\n\n"
-            "• Espaço = E (AND): 'CAIXA QUADRADA' acha produtos que tenham "
-            "as DUAS palavras.\n\n"
-            "• Vírgula = OU (OR): 'CAPA, CAPUZ' acha produtos com UMA ou "
-            "OUTRA.\n\n"
+            "• Espaço = E (AND): 'CAIXA QUADRADA' acha produtos que tenham as DUAS palavras.\n\n"
+            "• Vírgula = OU (OR): 'CAPA, CAPUZ' acha produtos com UMA ou OUTRA.\n\n"
             "• Combine: 'CAIXA QUADRADA, CAPA' = (CAIXA E QUADRADA) OU CAPA."
         ),
     )
@@ -392,35 +265,31 @@ with f5:
 # ============================================================
 # LINHA 2: BOTÕES
 # ============================================================
-st.write("") # Respiro para separar a linha de filtros da linha de botões
-b1, b2, b3, b4 = st.columns(4)
+st.write("")
+b1, b2, b3, b4, b5, b6 = st.columns([1, 1, 1, 1.2, 1.5, 1.2])
 
-with b1:
-    btn_consultar = st.button("🔍 Consultar", type="primary", use_container_width=True)
-with b2:
-    st.button("🧹 Limpar", use_container_width=True, on_click=_limpar_filtros)
-with b3:
-    btn_params = st.button("⚙️ Parâmetros", use_container_width=True)
-with b4:
-    btn_manual = st.button("📖 Manual do Gestor", use_container_width=True)
+with b1: btn_consultar = st.button("🔍 Consultar", type="primary", use_container_width=True)
+with b2: st.button("🧹 Limpar", use_container_width=True, on_click=_limpar_filtros)
+with b3: btn_params = st.button("⚙️ Parâmetros", use_container_width=True)
+with b4: btn_manual = st.button("📖 Manual do Gestor", use_container_width=True)
+
+with b5:
+    # Seletor de filial para o PDF. O padrão é a primeira filial da lista.
+    filial_pdf = st.selectbox("Filial p/ PDF", ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"], label_visibility="collapsed")
+    
+with b6:
+    # O botão fica desabilitado se não houver dados calculados na sessão
+    tem_dados = "df_transf" in st.session_state and not st.session_state["df_transf"].empty
+    btn_pdf_global = st.button("📄 Gerar PDF", use_container_width=True, disabled=not tem_dados)
 
 # ============================================================
 # AVISO — Busca por Produto ignora os outros filtros
 # ============================================================
 if produto_busca and produto_busca.strip():
     st.markdown(
-        '<div style="'
-        'background-color: rgba(59,130,246,0.12); '
-        'border-left: 3px solid #3B82F6; '
-        'padding: 6px 12px; '
-        'margin-top: 8px; '
-        'border-radius: 4px; '
-        'font-size: 0.85rem; '
-        'color: #93C5FD;">'
-        'ℹ️ <b>Busca por produto:</b> '
-        'Fabricante, Departamento, Grupo, Subgrupo e Filial serão ignorados.'
-        '</div>',
-        unsafe_allow_html=True,
+        '<div style="background-color: rgba(59,130,246,0.12); border-left: 3px solid #3B82F6; padding: 6px 12px; margin-top: 8px; border-radius: 4px; font-size: 0.85rem; color: #93C5FD;">'
+        'ℹ️ <b>Busca por produto:</b> Fabricante, Departamento, Grupo, Subgrupo e Filial serão ignorados.'
+        '</div>', unsafe_allow_html=True,
     )
 
 # ============================================================
@@ -442,48 +311,20 @@ if btn_params:
 if st.session_state.show_params:
     with st.container(border=True):
         r1c1, r1c2, r1c3, r1c4 = st.columns(4)
-        with r1c1:
-            opcao_data = st.selectbox(
-                "Período de Análise",
-                ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás",
-                 "30 dias atrás", "15 dias atrás", "7 dias atrás"],
-                key="opcao_data",
-            )
-        with r1c2:
-            filial_sel = st.selectbox(
-                "Filial",
-                ["(todas)"] + list(filiais.keys()),
-                key="filial_param",
-                help="Apenas visual: o motor sempre analisa todas as filiais.",
-            )
-        with r1c3:
-            cobertura_opcao = st.selectbox(
-                "Cobertura de Vendas",
-                ["Para 7 dias", "Para 15 dias", "Para 30 dias",
-                 "Para 2 meses", "Para 3 meses", "Para 6 meses", "Para 1 ano"],
-                key="cobertura_opcao",
-            )
-        with r1c4:
-            lead_time = st.number_input(
-                "Tempo de Transporte (dias)",
-                0, 30, 10, key="lead_time",
-            )
+        with r1c1: opcao_data = st.selectbox("Período de Análise", ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás", "30 dias atrás", "15 dias atrás", "7 dias atrás"], key="opcao_data")
+        with r1c2: filial_sel = st.selectbox("Filial", ["(todas)"] + list(filiais.keys()), key="filial_param", help="Apenas visual: o motor sempre analisa todas as filiais.")
+        with r1c3: cobertura_opcao = st.selectbox("Cobertura de Vendas", ["Para 7 dias", "Para 15 dias", "Para 30 dias", "Para 2 meses", "Para 3 meses", "Para 6 meses", "Para 1 ano"], key="cobertura_opcao")
+        with r1c4: lead_time = st.number_input("Tempo de Transporte (dias)", 0, 30, 10, key="lead_time")
 
         r2c1, r2c2, r2c3, r2c4 = st.columns(4)
-        with r2c1:
-            piso = st.number_input("Piso Exposição (un)", 0, 50, 0, key="piso")
-        with r2c2:
-            reserva = st.number_input("Reserva Origem (%)", 0, 100, 25, key="reserva")
-        with r2c3:
-            atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="atacado_piso")
-        with r2c4:
-            atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], key="atacado_reserva")
+        with r2c1: piso = st.number_input("Piso Exposição (un)", 0, 50, 0, key="piso")
+        with r2c2: reserva = st.number_input("Reserva Origem (%)", 0, 100, 25, key="reserva")
+        with r2c3: atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="atacado_piso")
+        with r2c4: atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], key="atacado_reserva")
 
         r3c1, r3c2 = st.columns(2)
-        with r3c1:
-            anti_gangorra = st.number_input("Reposição Recente (dias)", 0, 90, 15, key="anti_gangorra")
-        with r3c2:
-            dias_transito = st.number_input("Dias em Trânsito", 1, 60, 10, key="dias_transito")
+        with r3c1: anti_gangorra = st.number_input("Reposição Recente (dias)", 0, 90, 15, key="anti_gangorra")
+        with r3c2: dias_transito = st.number_input("Dias em Trânsito", 1, 60, 10, key="dias_transito")
 else:
     perfil_sel = st.session_state.get("perfil_sel", "Padrão")
     opcao_data = st.session_state.get("opcao_data", "1 ano atrás")
@@ -505,7 +346,7 @@ cobertura = COBERTURA_MAP.get(cobertura_opcao, 30)
 data_ref, lookback = calcular_janela_analise(opcao_data)
 
 # ============================================================
-# PDF
+# FUNÇÃO GERADORA DE PDF
 # ============================================================
 class HeaderFooterCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
@@ -535,7 +376,6 @@ class HeaderFooterCanvas(canvas.Canvas):
         self.setStrokeColor(colors.HexColor("#CBD5E1"))
         self.setLineWidth(0.5)
         self.line(15, h - 28, w - 15, h - 28)
-
         self.setFont("Helvetica", 8)
         self.setFillColor(colors.HexColor("#64748B"))
         self.drawString(15, 12, f"Gerado em {self.gerado_em}")
@@ -545,70 +385,42 @@ class HeaderFooterCanvas(canvas.Canvas):
 
 def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer, pagesize=landscape(A4),
-        rightMargin=15, leftMargin=15,
-        topMargin=35, bottomMargin=25,
-    )
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=15, leftMargin=15, topMargin=35, bottomMargin=25)
     elements = []
     styles = getSampleStyleSheet()
-    page_w = landscape(A4)[0] - 30
-
-    filial_style = ParagraphStyle('F', parent=styles['Heading2'], fontSize=11, leading=13,
-                                  textColor=colors.HexColor('#1E293B'), spaceBefore=0, spaceAfter=6)
+    
+    filial_style = ParagraphStyle('F', parent=styles['Heading2'], fontSize=11, leading=13, textColor=colors.HexColor('#1E293B'), spaceBefore=0, spaceAfter=6)
     cell_style = ParagraphStyle('C', parent=styles['Normal'], fontSize=6.5, leading=8.5, alignment=0)
     cell_center = ParagraphStyle('CC', parent=styles['Normal'], fontSize=6.5, leading=8.5, alignment=1)
     cell_right = ParagraphStyle('CR', parent=styles['Normal'], fontSize=6.5, leading=8.5, alignment=2)
-    header_style = ParagraphStyle('H', parent=styles['Normal'], fontSize=6.5, leading=8.5,
-                                  fontName='Helvetica-Bold', textColor=colors.white, alignment=1)
+    header_style = ParagraphStyle('H', parent=styles['Normal'], fontSize=6.5, leading=8.5, fontName='Helvetica-Bold', textColor=colors.white, alignment=1)
 
     def _build(df_part, tipo):
-        if df_part.empty:
-            return Paragraph("<i>Nenhum item.</i>", cell_style)
-
+        if df_part.empty: return Paragraph("<i>Nenhum item.</i>", cell_style)
         if tipo == "ENV":
             heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Res.", "Ideal", "Motivo"]
             widths = [28, 34, 45, 240, 30, 138, 55, 36, 40, 36, 130]
-            mapper = lambda r: [
-                (r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"),
-                (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"),
-                (r["NomeFilialDestino"], "C"), (int(r["QtdTransferir"]), "R"),
-                (int(r["ReservaOrigem"]), "R"), (int(r["Qtd Ideal"]), "R"),
-                (r["Motivo"], "L"),
-            ]
+            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialDestino"], "C"), (int(r["QtdTransferir"]), "R"), (int(r["ReservaOrigem"]), "R"), (int(r["Qtd Ideal"]), "R"), (r["Motivo"], "L")]
         else:
             heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd", "Dias", "Ideal", "Motivo"]
             widths = [28, 34, 45, 240, 30, 138, 55, 36, 40, 36, 130]
-            mapper = lambda r: [
-                (r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"),
-                (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"),
-                (r["NomeFilialOrigem"], "C"), (int(r["QtdTransferir"]), "R"),
-                (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"),
-                (int(r["Qtd Ideal"]), "R"), (r["Motivo"], "L"),
-            ]
+            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (int(r["QtdTransferir"]), "R"), (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"), (int(r["Qtd Ideal"]), "R"), (r["Motivo"], "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
         for _, row in df_part.iterrows():
             vals = []
             for v, align in mapper(row):
-                if v is None or (isinstance(v, float) and pd.isna(v)):
-                    v = ""
-                elif isinstance(v, float) and v.is_integer():
-                    v = int(v)
-                if align == "R": stl = cell_right
-                elif align == "C": stl = cell_center
-                else: stl = cell_style
+                if v is None or (isinstance(v, float) and pd.isna(v)): v = ""
+                elif isinstance(v, float) and v.is_integer(): v = int(v)
+                stl = cell_right if align == "R" else (cell_center if align == "C" else cell_style)
                 vals.append(Paragraph(str(v), stl))
             data.append(vals)
 
         t = Table(data, colWidths=widths, repeatRows=1, hAlign='LEFT')
         t.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E293B')),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('FONTSIZE', (0, 0), (-1, -1), 6.5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-            ('TOPPADDING', (0, 0), (-1, -1), 2),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E293B')), ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'), ('FONTSIZE', (0, 0), (-1, -1), 6.5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2), ('TOPPADDING', (0, 0), (-1, -1), 2),
             ('GRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#CBD5E1')),
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
         ]))
@@ -620,15 +432,7 @@ def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
     if df_env.empty and df_rec.empty:
         elements.append(Paragraph(f"<b>Sem movimentações para {nome_filial.title()}</b>", filial_style))
         agora = agora_br()
-        titulo_cab = f"Relatorio de Reposicao - {nome_perfil} - {nome_filial.title()}"
-        doc.build(
-            elements,
-            canvasmaker=lambda *a, **kw: HeaderFooterCanvas(
-                *a, titulo=titulo_cab,
-                gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), 
-                parametros_texto=parametros_texto, **kw
-            ),
-        )
+        doc.build(elements, canvasmaker=lambda *a, **kw: HeaderFooterCanvas(*a, titulo=f"Relatorio de Reposicao - {nome_perfil} - {nome_filial.title()}", gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), parametros_texto=parametros_texto, **kw))
         buffer.seek(0)
         return buffer, agora
 
@@ -639,24 +443,14 @@ def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
     resumo_data = [
         ["", "ENVIAR", "RECEBER", "DESCONTINUAR", "LIQUIDAR"],
         ["Itens", str(len(env_totais)), str(len(df_rec)), str(len(desc_totais)), str(len(liq_totais))],
-        ["Unidades", 
-         str(int(env_totais["QtdTransferir"].sum()) if not env_totais.empty else 0),
-         str(int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0),
-         str(int(desc_totais["QtdTransferir"].sum()) if not desc_totais.empty else 0),
-         str(int(liq_totais["QtdTransferir"].sum()) if not liq_totais.empty else 0)]
+        ["Unidades", str(int(env_totais["QtdTransferir"].sum()) if not env_totais.empty else 0), str(int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0), str(int(desc_totais["QtdTransferir"].sum()) if not desc_totais.empty else 0), str(int(liq_totais["QtdTransferir"].sum()) if not liq_totais.empty else 0)]
     ]
-    
     t_resumo = Table(resumo_data, colWidths=[70, 70, 70, 90, 70], hAlign='LEFT')
     t_resumo.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E293B')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('GRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#CBD5E1')),
-        ('FONTSIZE', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E293B')), ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'), ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('GRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#CBD5E1')),
+        ('FONTSIZE', (0, 0), (-1, -1), 8), ('BOTTOMPADDING', (0, 0), (-1, -1), 4), ('TOPPADDING', (0, 0), (-1, -1), 4),
     ]))
     elements.append(t_resumo)
     elements.append(Spacer(1, 14))
@@ -666,52 +460,27 @@ def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
     df_env = df_env[~df_env["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])].copy()
 
     if not df_env.empty:
-        df_env = df_env.reset_index(drop=True)
-        df_env.insert(0, "#", range(1, len(df_env) + 1))
+        df_env = df_env.reset_index(drop=True); df_env.insert(0, "#", range(1, len(df_env) + 1))
         df_env["Qtd Ideal"] = df_env["IdealDestino"] if cod == 5 else df_env["IdealOrigem"]
         df_env["Prioridade"] = df_env["Prioridade"].map(PRIO_TXT).fillna("-")
-        elements.append(Paragraph("<b>ENVIAR</b>", filial_style))
-        elements.append(_build(df_env, "ENV"))
-        elements.append(Spacer(1, 14))
-
+        elements.append(Paragraph("<b>ENVIAR</b>", filial_style)); elements.append(_build(df_env, "ENV")); elements.append(Spacer(1, 14))
     if not df_rec.empty:
-        df_rec = df_rec.reset_index(drop=True)
-        df_rec.insert(0, "#", range(1, len(df_rec) + 1))
-        df_rec["Qtd Ideal"] = df_rec["IdealDestino"]
-        df_rec["Prioridade"] = df_rec["Prioridade"].map(PRIO_TXT).fillna("-")
-        elements.append(Paragraph("<b>RECEBER</b>", filial_style))
-        elements.append(_build(df_rec, "REC"))
-        elements.append(Spacer(1, 14))
-
+        df_rec = df_rec.reset_index(drop=True); df_rec.insert(0, "#", range(1, len(df_rec) + 1))
+        df_rec["Qtd Ideal"] = df_rec["IdealDestino"]; df_rec["Prioridade"] = df_rec["Prioridade"].map(PRIO_TXT).fillna("-")
+        elements.append(Paragraph("<b>RECEBER</b>", filial_style)); elements.append(_build(df_rec, "REC")); elements.append(Spacer(1, 14))
     if not df_desc.empty:
-        df_desc = df_desc.reset_index(drop=True)
-        df_desc.insert(0, "#", range(1, len(df_desc) + 1))
-        df_desc["Prioridade"] = df_desc["Prioridade"].map(PRIO_TXT).fillna("-")
-        df_desc["Qtd Ideal"] = 0
+        df_desc = df_desc.reset_index(drop=True); df_desc.insert(0, "#", range(1, len(df_desc) + 1))
+        df_desc["Prioridade"] = df_desc["Prioridade"].map(PRIO_TXT).fillna("-"); df_desc["Qtd Ideal"] = 0
         df_desc["NomeFilialDestino"] = df_desc["NomeFilialOrigem"]
-        elements.append(Paragraph("<b>DESCONTINUAR</b>", filial_style))
-        elements.append(_build(df_desc, "ENV"))
-        elements.append(Spacer(1, 14))
-
+        elements.append(Paragraph("<b>DESCONTINUAR</b>", filial_style)); elements.append(_build(df_desc, "ENV")); elements.append(Spacer(1, 14))
     if not df_liq.empty:
-        df_liq = df_liq.reset_index(drop=True)
-        df_liq.insert(0, "#", range(1, len(df_liq) + 1))
-        df_liq["Prioridade"] = df_liq["Prioridade"].map(PRIO_TXT).fillna("-")
-        df_liq["Qtd Ideal"] = 0
+        df_liq = df_liq.reset_index(drop=True); df_liq.insert(0, "#", range(1, len(df_liq) + 1))
+        df_liq["Prioridade"] = df_liq["Prioridade"].map(PRIO_TXT).fillna("-"); df_liq["Qtd Ideal"] = 0
         df_liq["NomeFilialDestino"] = df_liq["NomeFilialOrigem"]
-        elements.append(Paragraph("<b>LIQUIDAR</b>", filial_style))
-        elements.append(_build(df_liq, "ENV"))
+        elements.append(Paragraph("<b>LIQUIDAR</b>", filial_style)); elements.append(_build(df_liq, "ENV"))
 
     agora = agora_br()
-    titulo_cab = f"Relatorio de Reposicao - {nome_perfil} - {nome_filial.title()}"
-    doc.build(
-        elements,
-        canvasmaker=lambda *a, **kw: HeaderFooterCanvas(
-            *a, titulo=titulo_cab,
-            gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), 
-            parametros_texto=parametros_texto, **kw
-        ),
-    )
+    doc.build(elements, canvasmaker=lambda *a, **kw: HeaderFooterCanvas(*a, titulo=f"Relatorio de Reposicao - {nome_perfil} - {nome_filial.title()}", gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), parametros_texto=parametros_texto, **kw))
     buffer.seek(0)
     return buffer, agora
 
@@ -720,73 +489,63 @@ def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
 # ============================================================
 if btn_consultar:
     produto_preenchido = bool(produto_busca and produto_busca.strip())
-
     if produto_preenchido:
-        fabricante_filtro   = ""
-        departamento_filtro = ""
-        grupo_filtro        = ""
-        subgrupo_filtro     = ""
+        fabricante_filtro, departamento_filtro, grupo_filtro, subgrupo_filtro = "", "", "", ""
     else:
-        fabricante_filtro   = "" if fabricante_sel == "(todos)" else fabricantes[fabricante_sel]
+        fabricante_filtro = "" if fabricante_sel == "(todos)" else fabricantes[fabricante_sel]
         departamento_filtro = "" if depto_sel == "(todos)" else departamentos[depto_sel]
-        grupo_filtro        = "" if grupo_sel == "(todos)" else grupos[grupo_sel]
-        subgrupo_filtro     = "" if subgrupo_sel == "(todos)" else subgrupos[subgrupo_sel]
+        grupo_filtro = "" if grupo_sel == "(todos)" else grupos[grupo_sel]
+        subgrupo_filtro = "" if subgrupo_sel == "(todos)" else subgrupos[subgrupo_sel]
 
-    nenhum_filtro = (
-        not produto_preenchido
-        and not fabricante_filtro
-        and not departamento_filtro
-        and not grupo_filtro
-        and not subgrupo_filtro
-    )
+    nenhum_filtro = not produto_preenchido and not fabricante_filtro and not departamento_filtro and not grupo_filtro and not subgrupo_filtro
 
     if nenhum_filtro:
         st.warning("⚠️ Digite um produto ou escolha pelo menos 1 filtro.")
     else:
         try:
             with st.spinner("⏳ Construindo Base..."):
-                df_base = carregar_base(
-                    data_referencia=data_ref.strftime("%Y-%m-%d"),
-                    max_lookback=lookback,
-                    fabricante=fabricante_filtro,
-                    departamento=departamento_filtro,
-                    grupo=grupo_filtro,
-                    subgrupo=subgrupo_filtro,
-                    filial="",
-                    produto=produto_busca,
-                )
+                df_base = carregar_base(data_ref.strftime("%Y-%m-%d"), lookback, fabricante_filtro, departamento_filtro, grupo_filtro, subgrupo_filtro, "", produto_busca)
                 st.session_state["df_base"] = df_base
 
             with st.spinner("⏳ Calculando sugestões..."):
-                df_transito = carregar_transf_em_transito(
-                    data_referencia=data_ref.strftime("%Y-%m-%d"),
-                    dias_transito=dias_transito,
-                )
-
-                df_recebidas = carregar_transf_recebidas_recentes(
-                    data_referencia=data_ref.strftime("%Y-%m-%d"),
-                    dias_reposicao=anti_gangorra,
-                )
-
-                df_transf = gerar_sugestoes(
-                    df_base,
-                    df_transito=df_transito,
-                    df_recebidas_recentes=df_recebidas,
-                    cobertura_alvo=cobertura,
-                    lead_time=lead_time,
-                    piso_exposicao=piso,
-                    reserva_pct=reserva,
-                    atacado_tem_piso=(atacado_piso == "Sim"),
-                    atacado_tem_reserva=(atacado_reserva == "Sim"),
-                )
+                df_transito = carregar_transf_em_transito(data_ref.strftime("%Y-%m-%d"), dias_transito)
+                df_recebidas = carregar_transf_recebidas_recentes(data_ref.strftime("%Y-%m-%d"), anti_gangorra)
+                df_transf = gerar_sugestoes(df_base, df_transito, df_recebidas, cobertura, lead_time, piso, reserva, (atacado_piso == "Sim"), (atacado_reserva == "Sim"))
+                
                 st.session_state["df_transf"] = df_transf
                 st.session_state["df_base_n"] = len(df_base)
+                if "pdf_bytes_global" in st.session_state: del st.session_state["pdf_bytes_global"]
         except Exception as e:
             st.error(f"❌ Erro: {e}")
 
+# ============================================================
+# AÇÃO DO BOTÃO GLOBAL DE PDF
+# ============================================================
+if btn_pdf_global and "df_transf" in st.session_state:
+    df_atual = st.session_state["df_transf"]
+    cod_pdf = codigos_filial[filial_pdf]
+    parametros_str = f"Cob: {cobertura}d | Lead: {lead_time}d | Res: {reserva}% | Piso: {piso} | Quarentena: {anti_gangorra}d | Trânsito: {dias_transito}d"
+    
+    with st.spinner("Gerando PDF..."):
+        try:
+            pdf_bytes, agora = gerar_pdf_filial(filial_pdf, cod_pdf, df_atual, st.session_state.get("perfil_sel", "Padrão"), parametros_str)
+            nome_file = filial_pdf.title().replace(" ", "")
+            st.session_state["pdf_bytes_global"] = (pdf_bytes, f"Reposicao {nome_file} {agora.strftime('%Y%m%d %H%M%S')}.pdf")
+        except Exception as e:
+            st.error(f"Erro ao gerar PDF: {e}")
+
+if "pdf_bytes_global" in st.session_state and st.session_state["pdf_bytes_global"][0] is not None:
+    _pdf_data, _file_name = st.session_state["pdf_bytes_global"]
+    st.download_button(
+        label=f"⬇️ Baixar {_file_name}",
+        data=_pdf_data,
+        file_name=_file_name,
+        mime="application/pdf",
+        type="primary"
+    )
 
 # ============================================================
-# RESULTADO
+# RESULTADO (ABAS)
 # ============================================================
 if "df_transf" in st.session_state:
     df = st.session_state["df_transf"]
@@ -795,18 +554,17 @@ if "df_transf" in st.session_state:
         st.info("Nenhuma sugestão encontrada.")
     else:
         nomes_todos = ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"]
-        codigos = {"ATACADO": 5, "ALECRIM": 1, "VIA DIRETA": 2, "ZONA SUL": 3, "ZONA NORTE": 4}
-
         produto_preenchido = bool(produto_busca and produto_busca.strip())
+        
         if filial_sel != "(todas)" and not produto_preenchido:
             cod_sel = int(filiais[filial_sel])
-            nomes = [n for n in nomes_todos if codigos[n] == cod_sel]
+            nomes = [n for n in nomes_todos if codigos_filial[n] == cod_sel]
         else:
             nomes = nomes_todos
 
         tabs = st.tabs(nomes)
         for tab, nome in zip(tabs, nomes):
-            cod = codigos[nome]
+            cod = codigos_filial[nome]
             with tab:
                 df_env_all = df[df["CodigoFilialOrigem"] == cod].copy().reset_index(drop=True)
                 df_rec = df[df["CodigoFilialDestino"] == cod].copy().reset_index(drop=True)
@@ -815,123 +573,64 @@ if "df_transf" in st.session_state:
                 df_desc = df_env_all[df_env_all["NomeFilialDestino"] == "DESCONTINUAR"].copy().reset_index(drop=True)
                 df_env = df_env_all[~df_env_all["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])].copy().reset_index(drop=True)
 
-                # ---- MÉTRICAS (Ocupando as 8 colunas) ----
+                # ---- MÉTRICAS ----
                 m1, m2, m3, m4, m5, m6, m7, m8 = st.columns(8)
-                
                 m1.metric("📤 Enviar (itens)", len(df_env))
                 m2.metric("📤 Enviar (un)", int(df_env["QtdTransferir"].sum()) if not df_env.empty else 0)
-                
                 m3.metric("📥 Receber (itens)", len(df_rec))
                 m4.metric("📥 Receber (un)", int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0)
-                
                 m5.metric("🔥 Liquidar (itens)", len(df_liq))
                 m6.metric("🔥 Liquidar (un)", int(df_liq["QtdTransferir"].sum()) if not df_liq.empty else 0)
-                
                 m7.metric("⏸️ Desc. (itens)", len(df_desc))
                 m8.metric("⏸️ Desc. (un)", int(df_desc["QtdTransferir"].sum()) if not df_desc.empty else 0)
-
-                # ---- BOTÃO PDF CENTRALIZADO ABAIXO ----
-                st.write("") # Respiro
-                esp_esq, centro_pdf, esp_dir = st.columns([1, 2, 1])
-                with centro_pdf:
-                    _h = hashlib.md5(
-                        pd.util.hash_pandas_object(df, index=True).values.tobytes()
-                    ).hexdigest()[:10]
-                    cache_key = f"pdf_cache_{cod}_{_h}"
-
-                    if cache_key not in st.session_state:
-                        try:
-                            parametros_str = (
-                                f"Cob: {cobertura}d | Lead: {lead_time}d | Res: {reserva}% | "
-                                f"Piso: {piso} | Quarentena: {anti_gangorra}d | Trânsito: {dias_transito}d"
-                            )
-                            
-                            pdf_bytes, agora = gerar_pdf_filial(
-                                nome, cod, df, 
-                                st.session_state.get("perfil_sel", "Padrão"), 
-                                parametros_str
-                            )
-                            st.session_state[cache_key] = (pdf_bytes, agora)
-                        except Exception:
-                            st.session_state[cache_key] = (None, None)
-                    
-                    pdf_bytes, agora = st.session_state[cache_key]
-                    
-                    if pdf_bytes is not None:
-                        nome_file = nome.title().replace(" ", "")
-                        file_name = f"Reposicao {nome_file} {agora.strftime('%Y%m%d %H%M%S')}.pdf"
-                        st.download_button(
-                            "📄 Gerar PDF",
-                            data=pdf_bytes,
-                            file_name=file_name,
-                            mime="application/pdf",
-                            use_container_width=True,
-                            key=f"pdf_{cod}",
-                        )
-                    else:
-                        st.button("📄 Gerar PDF", disabled=True, use_container_width=True)
+                st.write("")
 
                 # ---- ENVIAR ----
                 st.markdown('<div class="secao-titulo">📤 ENVIAR</div>', unsafe_allow_html=True)
                 if df_env.empty:
                     st.caption("Nada a enviar")
                 else:
-                    dfe = df_env.copy()
-                    dfe.insert(0, "#", range(1, len(dfe) + 1))
+                    dfe = df_env.copy(); dfe.insert(0, "#", range(1, len(dfe) + 1))
                     dfe["Qtd Ideal"] = dfe["IdealDestino"] if cod == 5 else dfe["IdealOrigem"]
                     dfe["Prioridade"] = dfe["Prioridade"].map(PRIO_TXT).fillna("-")
-                    dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante",
-                               "NomeFilialDestino", "QtdTransferir", "ReservaOrigem", "Qtd Ideal", "Motivo"]]
-                    dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante",
-                                   "Destino", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
-                    styler_e = dfe.style.set_properties(subset=["Qtd Transf.", "Reserva", "Qtd Ideal"], **{"text-align": "right"})
-                    h = min(420, max(120, len(dfe) * 36 + 42))
-                    st.dataframe(styler_e, use_container_width=True, hide_index=True, height=h)
+                    dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "QtdTransferir", "ReservaOrigem", "Qtd Ideal", "Motivo"]]
+                    dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
+                    st.dataframe(dfe.style.set_properties(subset=["Qtd Transf.", "Reserva", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfe) * 36 + 42)))
 
                 # ---- RECEBER ----
                 st.markdown('<div class="secao-titulo">📥 RECEBER</div>', unsafe_allow_html=True)
                 if df_rec.empty:
                     st.caption("Nada a receber")
                 else:
-                    dfr = df_rec.copy()
-                    dfr.insert(0, "#", range(1, len(dfr) + 1))
-                    dfr["Qtd Ideal"] = dfr["IdealDestino"]
-                    dfr["Prioridade"] = dfr["Prioridade"].map(PRIO_TXT).fillna("-")
+                    dfr = df_rec.copy(); dfr.insert(0, "#", range(1, len(dfr) + 1))
+                    dfr["Qtd Ideal"] = dfr["IdealDestino"]; dfr["Prioridade"] = dfr["Prioridade"].map(PRIO_TXT).fillna("-")
                     dfr["Dias p/ Zerar"] = dfr["DiasAteZerarDestino"].apply(lambda x: 0 if pd.isna(x) or x is None else int(x)).astype(int)
-                    dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante",
-                               "NomeFilialOrigem", "QtdTransferir", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
-                    dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante",
-                                   "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
-                    h = min(420, max(120, len(dfr) * 36 + 42))
-                    st.dataframe(dfr, use_container_width=True, hide_index=True, height=h)
+                    dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "QtdTransferir", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
+                    dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
+                    st.dataframe(dfr, use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
 
                 # ---- DESCONTINUAR ----
                 st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR</div>', unsafe_allow_html=True)
                 if df_desc.empty:
                     st.caption("Nenhum produto para descontinuar")
                 else:
-                    dfd = df_desc.copy()
-                    dfd.insert(0, "#", range(1, len(dfd) + 1))
+                    dfd = df_desc.copy(); dfd.insert(0, "#", range(1, len(dfd) + 1))
                     dfd["Prioridade"] = dfd["Prioridade"].map(PRIO_TXT).fillna("-")
                     dfd = dfd[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "QtdTransferir", "IdealOrigem", "Motivo"]]
                     dfd.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Desc.", "Qtd Ideal", "Motivo"]
-                    h = min(420, max(120, len(dfd) * 36 + 42))
-                    st.dataframe(dfd, use_container_width=True, hide_index=True, height=h)
+                    st.dataframe(dfd, use_container_width=True, hide_index=True, height=min(420, max(120, len(dfd) * 36 + 42)))
 
                 # ---- LIQUIDAR ----
                 st.markdown('<div class="secao-titulo">🔥 LIQUIDAR</div>', unsafe_allow_html=True)
                 if df_liq.empty:
                     st.caption("Nenhum produto para liquidar")
                 else:
-                    dfi = df_liq.copy()
-                    dfi.insert(0, "#", range(1, len(dfi) + 1))
+                    dfi = df_liq.copy(); dfi.insert(0, "#", range(1, len(dfi) + 1))
                     dfi["Prioridade"] = dfi["Prioridade"].map(PRIO_TXT).fillna("-")
                     dfi = dfi[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "QtdTransferir", "IdealOrigem", "Motivo"]]
                     dfi.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Liq.", "Qtd Ideal", "Motivo"]
-                    h = min(420, max(120, len(dfi) * 36 + 42))
-                    st.dataframe(dfi, use_container_width=True, hide_index=True, height=h)
+                    st.dataframe(dfi, use_container_width=True, hide_index=True, height=min(420, max(120, len(dfi) * 36 + 42)))
                     
-
 
 if btn_manual:
     st.session_state["view"] = "manual"
@@ -940,4 +639,4 @@ if btn_manual:
 # ============================================================
 # BADGE DE VERSÃO
 # ============================================================
-st.markdown('<div class="rodape">v1.4 — 2026-10-20</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v1.5 — 2026-10-20</div>', unsafe_allow_html=True)
