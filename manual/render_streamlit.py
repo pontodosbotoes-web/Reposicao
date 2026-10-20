@@ -5,34 +5,6 @@ from io import BytesIO
 
 from gerar_manual import gerar as gerar_pdf_manual
 
-# ============================================================
-# CORREÇÃO MOBILE: SCROLL HORIZONTAL NAS ABAS
-# ============================================================
-st.markdown("""
-    <style>
-        /* Força a barra de abas a ter rolagem horizontal no celular */
-        .stTabs [data-baseweb="tab-list"] {
-            overflow-x: auto !important;
-            flex-wrap: nowrap !important; /* Impede que as abas desçam de linha */
-            white-space: nowrap !important;
-            -webkit-overflow-scrolling: touch !important; /* Rolagem suave no iOS */
-            gap: 8px;
-            padding-bottom: 4px;
-        }
-        /* Esconde a barra de rolagem visualmente para manter o design limpo */
-        .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {
-            display: none !important;
-        }
-        .stTabs [data-baseweb="tab-list"] {
-            -ms-overflow-style: none !important;  /* IE and Edge */
-            scrollbar-width: none !important;  /* Firefox */
-        }
-        .stTabs [data-baseweb="tab"] {
-            flex-shrink: 0 !important; /* Impede que as abas fiquem minúsculas */
-        }
-    </style>
-""", unsafe_allow_html=True)
-
 
 @st.cache_data
 def _gerar_manual_pdf_cached() -> bytes | None:
@@ -59,6 +31,35 @@ def render_tabela(headers, rows):
 
 def render_manual() -> None:
     """Renderiza o manual do gestor."""
+
+    # ============================================================
+    # CORREÇÃO MOBILE: SCROLL HORIZONTAL NAS ABAS 
+    # (Movido para dentro da função para não quebrar o app.py)
+    # ============================================================
+    st.markdown("""
+        <style>
+            /* Força a barra de abas a ter rolagem horizontal no celular */
+            .stTabs [data-baseweb="tab-list"] {
+                overflow-x: auto !important;
+                flex-wrap: nowrap !important; /* Impede que as abas desçam de linha */
+                white-space: nowrap !important;
+                -webkit-overflow-scrolling: touch !important; /* Rolagem suave no iOS */
+                gap: 8px;
+                padding-bottom: 4px;
+            }
+            /* Esconde a barra de rolagem visualmente para manter o design limpo */
+            .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {
+                display: none !important;
+            }
+            .stTabs [data-baseweb="tab-list"] {
+                -ms-overflow-style: none !important;  /* IE and Edge */
+                scrollbar-width: none !important;  /* Firefox */
+            }
+            .stTabs [data-baseweb="tab"] {
+                flex-shrink: 0 !important; /* Impede que as abas fiquem minúsculas */
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
     col_voltar, col_download, _ = st.columns([1, 1.3, 4])
 
