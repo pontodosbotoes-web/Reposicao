@@ -212,7 +212,7 @@ def _limpar_filtros():
     for _k, _v in _DEFAULTS.items():
         st.session_state[_k] = _v
     st.session_state["_ultimo_perfil_aplicado"] = "Padrão"
-    for _k in ("df_base", "df_transf", "df_base_n", "pdf_bytes_global"):
+    for _k in ("df_base", "df_transf", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
         if _k in st.session_state:
             del st.session_state[_k]
 
@@ -277,12 +277,14 @@ with b5:
     filial_pdf = st.selectbox(
         "Filial p/ PDF", 
         ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"], 
-        help="Selecione qual filial você quer exportar e depois clique em 'Gerar PDF' ao lado."
+        index=None,
+        placeholder="Selecione a Filial p/ PDF...",
+        label_visibility="collapsed",
+        key="filial_pdf_sel"
     )
     
 with b6:
-    st.write("") # Respiro para alinhar o botão
-    btn_pdf_global = st.button("📄 Gerar PDF", use_container_width=True)
+    btn_pdf_global = st.button("📄 Gerar PDF", use_container_width=True, disabled=(filial_pdf is None))
 
 # ============================================================
 # AVISO — Busca por Produto ignora os outros filtros
@@ -521,7 +523,7 @@ if btn_consultar:
             st.error(f"❌ Erro: {e}")
 
 # ============================================================
-# AÇÃO DO BOTÃO GLOBAL DE PDF (CORRIGIDO)
+# AÇÃO DO BOTÃO GLOBAL DE PDF
 # ============================================================
 if btn_pdf_global:
     if "df_transf" not in st.session_state or st.session_state["df_transf"].empty:
@@ -644,4 +646,4 @@ if btn_manual:
 # ============================================================
 # BADGE DE VERSÃO
 # ============================================================
-st.markdown('<div class="rodape">v1.6 — 2026-10-20</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v1.7 — 2026-10-20</div>', unsafe_allow_html=True)
