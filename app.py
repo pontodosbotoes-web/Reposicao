@@ -101,7 +101,7 @@ st.markdown("""
             width: 100%;
         }
 
-        /* Botões */
+        /* --- ESTILIZAÇÃO DOS BOTÕES --- */
         div[data-testid="stButton"] button,
         div[data-testid="stDownloadButton"] button {
             width: 100% !important;
@@ -110,6 +110,73 @@ st.markdown("""
             font-size: 1.05rem !important;
             border-radius: 6px !important;
             font-weight: 600 !important;
+            transition: all 0.2s;
+        }
+
+        /* Consultar - Azul */
+        .st-key-btn_consultar button {
+            background-color: #2563EB !important;
+            color: #FFFFFF !important;
+            border: none !important;
+        }
+        .st-key-btn_consultar button:hover {
+            background-color: #1D4ED8 !important;
+        }
+
+        /* Limpar - Vermelho */
+        .st-key-btn_limpar button {
+            background-color: #DC2626 !important;
+            color: #FFFFFF !important;
+            border: none !important;
+        }
+        .st-key-btn_limpar button:hover {
+            background-color: #B91C1C !important;
+        }
+
+        /* Parâmetros - Roxo */
+        .st-key-btn_parametros button {
+            background-color: #7C3AED !important;
+            color: #FFFFFF !important;
+            border: none !important;
+        }
+        .st-key-btn_parametros button:hover {
+            background-color: #6D28D9 !important;
+        }
+
+        /* Manual - Verde */
+        .st-key-btn_manual button {
+            background-color: #059669 !important;
+            color: #FFFFFF !important;
+            border: none !important;
+        }
+        .st-key-btn_manual button:hover {
+            background-color: #047857 !important;
+        }
+
+        /* Gerar PDF - Laranja */
+        .st-key-btn_pdf button {
+            background-color: #D97706 !important;
+            color: #FFFFFF !important;
+            border: none !important;
+        }
+        .st-key-btn_pdf button:hover {
+            background-color: #B45309 !important;
+        }
+        /* Estado desabilitado do PDF */
+        .st-key-btn_pdf button:disabled {
+            background-color: #334155 !important;
+            color: #94A3B8 !important;
+            cursor: not-allowed;
+        }
+
+        /* Baixar PDF - Ciano */
+        .st-key-btn_download_pdf button {
+            background-color: #0891B2 !important;
+            color: #FFFFFF !important;
+            border: none !important;
+        }
+        .st-key-btn_download_pdf button:hover {
+            background-color: #0E7490 !important;
         }
 
         /* Cabeçalhos das tabelas centralizados */
@@ -268,10 +335,10 @@ with f5:
 st.write("")
 b1, b2, b3, b4, b5, b6 = st.columns([1, 1, 1, 1.2, 1.5, 1.2])
 
-with b1: btn_consultar = st.button("🔍 Consultar", type="primary", use_container_width=True)
-with b2: st.button("🧹 Limpar", use_container_width=True, on_click=_limpar_filtros)
-with b3: btn_params = st.button("⚙️ Parâmetros", use_container_width=True)
-with b4: btn_manual = st.button("📖 Manual do Gestor", use_container_width=True)
+with b1: btn_consultar = st.button("🔍 Consultar", use_container_width=True, key="btn_consultar")
+with b2: st.button("🧹 Limpar", use_container_width=True, on_click=_limpar_filtros, key="btn_limpar")
+with b3: btn_params = st.button("⚙️ Parâmetros", use_container_width=True, key="btn_parametros")
+with b4: btn_manual = st.button("📖 Manual do Gestor", use_container_width=True, key="btn_manual")
 
 with b5:
     filial_pdf = st.selectbox(
@@ -284,7 +351,7 @@ with b5:
     )
     
 with b6:
-    btn_pdf_global = st.button("📄 Gerar PDF", use_container_width=True, disabled=(filial_pdf is None))
+    btn_pdf_global = st.button("📄 Gerar PDF", use_container_width=True, disabled=(filial_pdf is None), key="btn_pdf")
 
 # ============================================================
 # AVISO — Busca por Produto ignora os outros filtros
@@ -548,7 +615,7 @@ if "pdf_bytes_global" in st.session_state and st.session_state["pdf_bytes_global
         data=_pdf_data,
         file_name=_file_name,
         mime="application/pdf",
-        type="primary"
+        key="btn_download_pdf"
     )
 
 # ============================================================
@@ -646,4 +713,4 @@ if btn_manual:
 # ============================================================
 # BADGE DE VERSÃO
 # ============================================================
-st.markdown('<div class="rodape">v1.7 — 2026-10-20</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v1.8 — 2026-10-20</div>', unsafe_allow_html=True)
