@@ -23,7 +23,6 @@ def render_tabela(headers, rows):
     md = "| " + " | ".join(headers) + " |\n"
     md += "|" + "|".join(["---"] * len(headers)) + "|\n"
     for row in rows:
-        # Substitui quebras de linha por espaços para não quebrar a tabela markdown
         row_clean = [str(cell).replace("\n", " ") for cell in row]
         md += "| " + " | ".join(row_clean) + " |\n"
     st.markdown(md)
@@ -33,30 +32,31 @@ def render_manual() -> None:
     """Renderiza o manual do gestor."""
 
     # ============================================================
-    # CORREÇÃO MOBILE: SCROLL HORIZONTAL NAS ABAS 
-    # (Movido para dentro da função para não quebrar o app.py)
+    # CORREÇÃO MOBILE: ABAS EM GRID (QUEBRAM LINHA)
     # ============================================================
     st.markdown("""
         <style>
-            /* Força a barra de abas a ter rolagem horizontal no celular */
+            /* Permite que as abas pulem de linha no celular */
             .stTabs [data-baseweb="tab-list"] {
-                overflow-x: auto !important;
-                flex-wrap: nowrap !important; /* Impede que as abas desçam de linha */
-                white-space: nowrap !important;
-                -webkit-overflow-scrolling: touch !important; /* Rolagem suave no iOS */
-                gap: 8px;
-                padding-bottom: 4px;
+                flex-wrap: wrap !important; 
+                justify-content: center !important;
+                gap: 6px !important;
+                padding-bottom: 10px;
             }
-            /* Esconde a barra de rolagem visualmente para manter o design limpo */
-            .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar {
-                display: none !important;
-            }
-            .stTabs [data-baseweb="tab-list"] {
-                -ms-overflow-style: none !important;  /* IE and Edge */
-                scrollbar-width: none !important;  /* Firefox */
-            }
+            /* Deixa as abas com formato de botão (pílula) no celular */
             .stTabs [data-baseweb="tab"] {
-                flex-shrink: 0 !important; /* Impede que as abas fiquem minúsculas */
+                flex-grow: 1 !important;
+                justify-content: center !important;
+                background-color: #262730 !important;
+                border-radius: 6px !important;
+                padding: 6px 12px !important;
+                font-size: 0.85rem !important;
+                border: 1px solid #334155 !important;
+            }
+            /* Destaque para a aba ativa */
+            .stTabs [aria-selected="true"] {
+                background-color: #2563EB !important;
+                border-color: #2563EB !important;
             }
         </style>
     """, unsafe_allow_html=True)
