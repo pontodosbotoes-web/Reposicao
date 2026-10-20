@@ -218,7 +218,7 @@ def _aplicar_perfil_do_session():
 def _limpar_filtros():
     for _k, _v in _DEFAULTS.items(): st.session_state[_k] = _v
     st.session_state["_ultimo_perfil_aplicado"] = "Padrão"
-    for _k in ("df_base", "df_transf", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
+    for _k in ("df_base", "df_transf", "df_compras", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
         if _k in st.session_state: del st.session_state[_k]
 
 # ============================================================
@@ -368,13 +368,13 @@ def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
     def _build(df_part, tipo):
         if df_part.empty: return Paragraph("<i>Nenhum item.</i>", cell_style)
         if tipo == "ENV":
-            heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Res.", "Ideal", "Motivo"]
-            widths = [28, 34, 45, 240, 30, 138, 55, 36, 40, 36, 130]
-            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialDestino"], "C"), (int(r["QtdTransferir"]), "R"), (int(r["ReservaOrigem"]), "R"), (int(r["Qtd Ideal"]), "R"), (r["Motivo"], "L")]
+            heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Saldo", "Qtd", "Res.", "Ideal", "Motivo"]
+            widths = [28, 34, 45, 200, 30, 120, 55, 40, 36, 40, 36, 150]
+            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialDestino"], "C"), (int(r["SaldoAjustado"]), "R"), (int(r["QtdTransferir"]), "R"), (int(r["ReservaOrigem"]), "R"), (int(r["Qtd Ideal"]), "R"), (r["Motivo"], "L")]
         else:
-            heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd", "Dias", "Ideal", "Motivo"]
-            widths = [28, 34, 45, 240, 30, 138, 55, 36, 40, 36, 130]
-            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (int(r["QtdTransferir"]), "R"), (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"), (int(r["Qtd Ideal"]), "R"), (r["Motivo"], "L")]
+            heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Saldo", "Qtd", "Dias", "Ideal", "Motivo"]
+            widths = [28, 34, 45, 200, 30, 120, 55, 40, 36, 40, 36, 150]
+            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (int(r["SaldoAjustado"]), "R"), (int(r["QtdTransferir"]), "R"), (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"), (int(r["Qtd Ideal"]), "R"), (r["Motivo"], "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
         for _, row in df_part.iterrows():
@@ -480,9 +480,10 @@ if btn_consultar:
             with st.spinner("⏳ Calculando sugestões..."):
                 df_transito = carregar_transf_em_transito(data_ref.strftime("%Y-%m-%d"), dias_transito)
                 df_recebidas = carregar_transf_recebidas_recentes(data_ref.strftime("%Y-%m-%d"), anti_gangorra)
-                df_transf = gerar_sugestoes(df_base, df_transito, df_recebidas, cobertura, lead_time, piso, reserva, (atacado_piso == "Sim"), (atacado_reserva == "Sim"))
+                df_transf, df_compras = gerar_sugestoes(df_base, df_transito, df_recebidas, cobertura, lead_time, piso, reserva, (atacado_piso == "Sim"), (atacado_reserva == "Sim"))
                 
                 st.session_state["df_transf"] = df_transf
+                st.session_state["df_compras"] = df_compras
                 st.session_state["df_base_n"] = len(df_base)
                 if "pdf_bytes_global" in st.session_state: del st.session_state["pdf_bytes_global"]
         except Exception as e:
@@ -519,8 +520,9 @@ if "pdf_bytes_global" in st.session_state and st.session_state["pdf_bytes_global
 # ============================================================
 if "df_transf" in st.session_state:
     df = st.session_state["df_transf"]
+    df_compras = st.session_state.get("df_compras", pd.DataFrame())
 
-    if df.empty:
+    if df.empty and df_compras.empty:
         st.info("Nenhuma sugestão encontrada.")
     else:
         nomes_todos = ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"]
@@ -532,10 +534,12 @@ if "df_transf" in st.session_state:
         else:
             nomes = nomes_todos
 
-        tabs = st.tabs(nomes)
-        for tab, nome in zip(tabs, nomes):
+        # Nova aba de Compras
+        tabs = st.tabs(nomes + ["🛒 Compras (Rede)"])
+        
+        for i, nome in enumerate(nomes):
             cod = codigos_filial[nome]
-            with tab:
+            with tabs[i]:
                 df_env_all = df[df["CodigoFilialOrigem"] == cod].copy().reset_index(drop=True)
                 df_rec = df[df["CodigoFilialDestino"] == cod].copy().reset_index(drop=True)
 
@@ -543,7 +547,6 @@ if "df_transf" in st.session_state:
                 df_desc = df_env_all[df_env_all["NomeFilialDestino"] == "DESCONTINUAR"].copy().reset_index(drop=True)
                 df_env = df_env_all[~df_env_all["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])].copy().reset_index(drop=True)
 
-                # ---- GRID RESPONSIVO DE MÉTRICAS ----
                 html_metrics = f"""
                 <div class="metric-grid">
                     <div class="metric-card"><div class="metric-label">📤 Enviar (itens)</div><div class="metric-value">{len(df_env)}</div></div>
@@ -559,7 +562,6 @@ if "df_transf" in st.session_state:
                 st.markdown(html_metrics, unsafe_allow_html=True)
                 st.write("")
 
-                # ---- TABELAS ----
                 st.markdown('<div class="secao-titulo">📤 ENVIAR</div>', unsafe_allow_html=True)
                 if df_env.empty:
                     st.caption("Nada a enviar")
@@ -567,9 +569,9 @@ if "df_transf" in st.session_state:
                     dfe = df_env.copy(); dfe.insert(0, "#", range(1, len(dfe) + 1))
                     dfe["Qtd Ideal"] = dfe["IdealDestino"] if cod == 5 else dfe["IdealOrigem"]
                     dfe["Prioridade"] = dfe["Prioridade"].map(PRIO_TXT).fillna("-")
-                    dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "QtdTransferir", "ReservaOrigem", "Qtd Ideal", "Motivo"]]
-                    dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
-                    st.dataframe(dfe.style.set_properties(subset=["Qtd Transf.", "Reserva", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfe) * 36 + 42)))
+                    dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "SaldoAjustado", "QtdTransferir", "ReservaOrigem", "Qtd Ideal", "Motivo"]]
+                    dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Saldo Atual", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
+                    st.dataframe(dfe.style.set_properties(subset=["Saldo Atual", "Qtd Transf.", "Reserva", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfe) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">📥 RECEBER</div>', unsafe_allow_html=True)
                 if df_rec.empty:
@@ -578,9 +580,9 @@ if "df_transf" in st.session_state:
                     dfr = df_rec.copy(); dfr.insert(0, "#", range(1, len(dfr) + 1))
                     dfr["Qtd Ideal"] = dfr["IdealDestino"]; dfr["Prioridade"] = dfr["Prioridade"].map(PRIO_TXT).fillna("-")
                     dfr["Dias p/ Zerar"] = dfr["DiasAteZerarDestino"].apply(lambda x: 0 if pd.isna(x) or x is None else int(x)).astype(int)
-                    dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "QtdTransferir", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
-                    dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
-                    st.dataframe(dfr, use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
+                    dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "SaldoAjustado", "QtdTransferir", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
+                    dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Saldo Atual", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
+                    st.dataframe(dfr.style.set_properties(subset=["Saldo Atual", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR</div>', unsafe_allow_html=True)
                 if df_desc.empty:
@@ -601,10 +603,22 @@ if "df_transf" in st.session_state:
                     dfi = dfi[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "QtdTransferir", "IdealOrigem", "Motivo"]]
                     dfi.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Liq.", "Qtd Ideal", "Motivo"]
                     st.dataframe(dfi, use_container_width=True, hide_index=True, height=min(420, max(120, len(dfi) * 36 + 42)))
-                    
+
+        # ---- ABA DE COMPRAS ----
+        with tabs[-1]:
+            st.header("🛒 Sugestão de Compra (Atacado)")
+            st.markdown("Itens que precisam ser comprados pois a rede está sem estoque e não há excesso para transferir.")
+            if df_compras.empty:
+                st.info("Nenhuma compra sugerida no momento.")
+            else:
+                dfc = df_compras.copy()
+                dfc.insert(0, "#", range(1, len(dfc) + 1))
+                dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "FaltaLojas", "SaldoAtacado", "IdealAtacado", "QtdSugerida", "Motivo"]]
+                dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Falta Lojas", "Saldo Atacado", "Ideal Atacado", "Qtd Sugerida", "Motivo"]
+                st.dataframe(dfc.style.set_properties(subset=["Falta Lojas", "Saldo Atacado", "Ideal Atacado", "Qtd Sugerida"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
 
 if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v1.9 — 2026-10-20</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v2.1 — 2026-10-20</div>', unsafe_allow_html=True)
