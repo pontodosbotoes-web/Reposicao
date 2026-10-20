@@ -105,10 +105,11 @@ st.markdown("""
         div[data-testid="stButton"] button,
         div[data-testid="stDownloadButton"] button {
             width: 100% !important;
-            height: 40px !important;
+            height: 42px !important;
             padding: 4px 2px !important;
-            font-size: 1.1rem !important;
+            font-size: 1.05rem !important;
             border-radius: 6px !important;
+            font-weight: 600 !important;
         }
 
         /* Cabeçalhos das tabelas centralizados */
@@ -326,10 +327,10 @@ def _limpar_filtros():
             del st.session_state[_k]
 
 # ============================================================
-# FILTROS + BOTÕES
+# LINHA 1: FILTROS
 # ============================================================
-f0, f1, f2, f3, f4, f5, b1, b2, b3, b4 = st.columns(
-    [1.6, 1.9, 1.3, 1.3, 1.3, 1.8, 0.45, 0.45, 0.45, 0.45],
+f0, f1, f2, f3, f4, f5 = st.columns(
+    [1.6, 1.9, 1.3, 1.3, 1.3, 1.8],
     vertical_alignment="bottom",
 )
 
@@ -388,14 +389,20 @@ with f5:
         ),
     )
 
+# ============================================================
+# LINHA 2: BOTÕES
+# ============================================================
+st.write("") # Respiro para separar a linha de filtros da linha de botões
+b1, b2, b3, b4 = st.columns(4)
+
 with b1:
-    btn_consultar = st.button("🔍", type="primary", use_container_width=True, help="Consultar")
+    btn_consultar = st.button("🔍 Consultar", type="primary", use_container_width=True)
 with b2:
-    st.button("🧹", use_container_width=True, help="Limpar filtros", on_click=_limpar_filtros)
+    st.button("🧹 Limpar", use_container_width=True, on_click=_limpar_filtros)
 with b3:
-    btn_params = st.button("⚙️", use_container_width=True, help="Parâmetros")
+    btn_params = st.button("⚙️ Parâmetros", use_container_width=True)
 with b4:
-    btn_manual = st.button("📖", use_container_width=True, help="Manual do Gestor")
+    btn_manual = st.button("📖 Manual do Gestor", use_container_width=True)
 
 # ============================================================
 # AVISO — Busca por Produto ignora os outros filtros
@@ -933,4 +940,4 @@ if btn_manual:
 # ============================================================
 # BADGE DE VERSÃO
 # ============================================================
-st.markdown('<div class="rodape">v1.3 — 2026-10-20</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v1.4 — 2026-10-20</div>', unsafe_allow_html=True)
