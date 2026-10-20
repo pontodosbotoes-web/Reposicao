@@ -177,14 +177,14 @@ grupos = carregar_grupos()
 subgrupos = carregar_subgrupos()
 
 PERFIS = {
-    "Padrão": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 0, "reserva": 25, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 15, "dias_transito": 10},
-    "Lançamento": {"opcao_data": "30 dias atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 5, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 7, "dias_transito": 10},
-    "Classe A": {"opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 10, "reserva": 40, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 7, "dias_transito": 7},
-    "Alto Giro": {"opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 7, "dias_transito": 7},
-    "Sazonal Longo": {"opcao_data": "2 meses atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 7, "dias_transito": 10},
-    "Sazonal Curto": {"opcao_data": "30 dias atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 3, "reserva": 5, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 5, "dias_transito": 7},
-    "Baixo Giro": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 3, "reserva": 30, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 20, "dias_transito": 10},
-    "Liquidação": {"opcao_data": "6 meses atrás", "cobertura_opcao": "Para 7 dias", "lead_time": 10, "piso": 0, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 30, "dias_transito": 10},
+    "Padrão": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 0, "reserva": 25, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 15, "dias_transito": 10},
+    "Lançamento": {"opcao_data": "30 dias atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 5, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 10},
+    "Classe A": {"opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 10, "reserva": 40, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 7},
+    "Alto Giro": {"opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 7},
+    "Sazonal Longo": {"opcao_data": "2 meses atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 10},
+    "Sazonal Curto": {"opcao_data": "30 dias atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 3, "reserva": 5, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 5, "dias_transito": 7},
+    "Baixo Giro": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 3, "reserva": 30, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 20, "dias_transito": 10},
+    "Liquidação": {"opcao_data": "6 meses atrás", "cobertura_opcao": "Para 7 dias", "lead_time": 10, "piso": 0, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 30, "dias_transito": 10},
 }
 
 if "show_params" not in st.session_state: st.session_state.show_params = False
@@ -199,7 +199,7 @@ _DEFAULTS = {
     "grupo_sel": "(todos)", "subgrupo_sel": "(todos)", "produto_busca": "",
     "opcao_data": "1 ano atrás", "filial_param": "(todas)", "cobertura_opcao": "Para 30 dias",
     "lead_time": 10, "piso": 0, "reserva": 25, "atacado_piso": "Não",
-    "atacado_reserva": "Não", "anti_gangorra": 15, "dias_transito": 10,
+    "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 15, "dias_transito": 10,
 }
 for _k, _v in _DEFAULTS.items():
     if _k not in st.session_state: st.session_state[_k] = _v
@@ -296,9 +296,10 @@ if st.session_state.show_params:
         with r2c3: atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="atacado_piso")
         with r2c4: atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], key="atacado_reserva")
 
-        r3c1, r3c2 = st.columns(2)
+        r3c1, r3c2, r3c3 = st.columns(3)
         with r3c1: anti_gangorra = st.number_input("Reposição Recente (dias)", 0, 90, 15, key="anti_gangorra")
         with r3c2: dias_transito = st.number_input("Dias em Trânsito", 1, 60, 10, key="dias_transito")
+        with r3c3: atacado_min_compra = st.selectbox("Atacado tem Mínimo p/ Compra?", ["Não", "Sim"], key="atacado_min_compra", help="Se Sim, usa o valor do Piso Exposição como quantidade mínima para sugerir compra.")
 else:
     perfil_sel = st.session_state.get("perfil_sel", "Padrão")
     opcao_data = st.session_state.get("opcao_data", "1 ano atrás")
@@ -309,6 +310,7 @@ else:
     reserva = st.session_state.get("reserva", 25)
     atacado_piso = st.session_state.get("atacado_piso", "Não")
     atacado_reserva = st.session_state.get("atacado_reserva", "Não")
+    atacado_min_compra = st.session_state.get("atacado_min_compra", "Não")
     anti_gangorra = st.session_state.get("anti_gangorra", 15)
     dias_transito = st.session_state.get("dias_transito", 10)
 
@@ -480,7 +482,10 @@ if btn_consultar:
             with st.spinner("⏳ Calculando sugestões..."):
                 df_transito = carregar_transf_em_transito(data_ref.strftime("%Y-%m-%d"), dias_transito)
                 df_recebidas = carregar_transf_recebidas_recentes(data_ref.strftime("%Y-%m-%d"), anti_gangorra)
-                df_transf, df_compras = gerar_sugestoes(df_base, df_transito, df_recebidas, cobertura, lead_time, piso, reserva, (atacado_piso == "Sim"), (atacado_reserva == "Sim"))
+                df_transf, df_compras = gerar_sugestoes(
+                    df_base, df_transito, df_recebidas, cobertura, lead_time, piso, reserva, 
+                    (atacado_piso == "Sim"), (atacado_reserva == "Sim"), (atacado_min_compra == "Sim")
+                )
                 
                 st.session_state["df_transf"] = df_transf
                 st.session_state["df_compras"] = df_compras
@@ -495,7 +500,7 @@ if btn_pdf_global:
     else:
         df_atual = st.session_state["df_transf"]
         cod_pdf = codigos_filial[filial_pdf]
-        parametros_str = f"Cob: {cobertura}d | Lead: {lead_time}d | Res: {reserva}% | Piso: {piso} | Quarentena: {anti_gangorra}d | Trânsito: {dias_transito}d"
+        parametros_str = f"Cob: {cobertura}d | Lead: {lead_time}d | Res: {reserva}% | Piso: {piso} | Quarentena: {anti_gangorra}d | Trânsito: {dias_transito}d | Mín.Compra: {atacado_min_compra}"
         
         with st.spinner("Gerando PDF..."):
             try:
@@ -534,8 +539,7 @@ if "df_transf" in st.session_state:
         else:
             nomes = nomes_todos
 
-        # Nova aba de Compras
-        tabs = st.tabs(nomes + ["🛒 Compras (Rede)"])
+        tabs = st.tabs(nomes)
         
         for i, nome in enumerate(nomes):
             cod = codigos_filial[nome]
@@ -547,6 +551,12 @@ if "df_transf" in st.session_state:
                 df_desc = df_env_all[df_env_all["NomeFilialDestino"] == "DESCONTINUAR"].copy().reset_index(drop=True)
                 df_env = df_env_all[~df_env_all["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])].copy().reset_index(drop=True)
 
+                # Lógica para a tabela de compras na aba correta
+                if nome == "ATACADO":
+                    df_comp_view = df_compras.copy()
+                else:
+                    df_comp_view = df_compras[df_compras["NomeFilialDestino"] == nome].copy() if not df_compras.empty else pd.DataFrame()
+
                 html_metrics = f"""
                 <div class="metric-grid">
                     <div class="metric-card"><div class="metric-label">📤 Enviar (itens)</div><div class="metric-value">{len(df_env)}</div></div>
@@ -557,6 +567,8 @@ if "df_transf" in st.session_state:
                     <div class="metric-card"><div class="metric-label">🔥 Liquidar (un)</div><div class="metric-value">{int(df_liq["QtdTransferir"].sum()) if not df_liq.empty else 0}</div></div>
                     <div class="metric-card"><div class="metric-label">⏸️ Desc. (itens)</div><div class="metric-value">{len(df_desc)}</div></div>
                     <div class="metric-card"><div class="metric-label">⏸️ Desc. (un)</div><div class="metric-value">{int(df_desc["QtdTransferir"].sum()) if not df_desc.empty else 0}</div></div>
+                    <div class="metric-card"><div class="metric-label">🛒 Comprar (itens)</div><div class="metric-value">{len(df_comp_view)}</div></div>
+                    <div class="metric-card"><div class="metric-label">🛒 Comprar (un)</div><div class="metric-value">{int(df_comp_view["QtdSugerida"].sum()) if not df_comp_view.empty else 0}</div></div>
                 </div>
                 """
                 st.markdown(html_metrics, unsafe_allow_html=True)
@@ -604,21 +616,24 @@ if "df_transf" in st.session_state:
                     dfi.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Liq.", "Qtd Ideal", "Motivo"]
                     st.dataframe(dfi, use_container_width=True, hide_index=True, height=min(420, max(120, len(dfi) * 36 + 42)))
 
-        # ---- ABA DE COMPRAS ----
-        with tabs[-1]:
-            st.header("🛒 Sugestão de Compra (Atacado)")
-            st.markdown("Itens que precisam ser comprados pois a rede está sem estoque e não há excesso para transferir.")
-            if df_compras.empty:
-                st.info("Nenhuma compra sugerida no momento.")
-            else:
-                dfc = df_compras.copy()
-                dfc.insert(0, "#", range(1, len(dfc) + 1))
-                dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "FaltaLojas", "SaldoAtacado", "IdealAtacado", "QtdSugerida", "Motivo"]]
-                dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Falta Lojas", "Saldo Atacado", "Ideal Atacado", "Qtd Sugerida", "Motivo"]
-                st.dataframe(dfc.style.set_properties(subset=["Falta Lojas", "Saldo Atacado", "Ideal Atacado", "Qtd Sugerida"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
+                # ---- COMPRAR (NOVA SEÇÃO) ----
+                st.markdown('<div class="secao-titulo">🛒 COMPRAR</div>', unsafe_allow_html=True)
+                if df_comp_view.empty:
+                    st.caption("Nenhuma compra sugerida no momento")
+                else:
+                    dfc = df_comp_view.copy()
+                    dfc.insert(0, "#", range(1, len(dfc) + 1))
+                    if nome == "ATACADO":
+                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "QtdSugerida", "Motivo"]]
+                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd Sugerida", "Motivo"]
+                    else:
+                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "QtdSugerida", "Motivo"]]
+                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Qtd Sugerida", "Motivo"]
+                    st.dataframe(dfc.style.set_properties(subset=["Qtd Sugerida"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
+
 
 if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v2.1 — 2026-10-20</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v2.3 — 2026-10-20</div>', unsafe_allow_html=True)
