@@ -74,10 +74,10 @@ def excluir_descontinuados(df: pd.DataFrame) -> pd.DataFrame:
     return df[(vel_max >= 0.1) | (saldo_max > 0)].copy()
 
 
-def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
+def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_tem_minimo_compra: bool = False) -> tuple[list[dict], list[dict]]:
     vel_max = df_produto["VelocidadePeriodo"].max()
 
-    # === REGRA 1: LIQUIDAÇÃO (Velocidade exata zero) ===
+    # === REGRA 1: LIQUIDAÇÃO ===
     if vel_max == 0:
         alocacoes = []
         doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & (df_produto["SaldoAjustado"] > 0)]
@@ -94,9 +94,9 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
                     "DiasAteZerarDestino": None, "Motivo": "ESTOQUE PARADO",
                     "SaldoAjustado": int(doa["SaldoAjustado"]),
                 })
-        return alocacoes
+        return alocacoes, []
 
-    # === REGRA 2: DESCONTINUAÇÃO (Velocidade muito baixa) ===
+    # === REGRA 2: DESCONTINUAÇÃO ===
     elif vel_max < 0.1:
         alocacoes = []
         doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & (df_produto["SaldoAjustado"] > 0)]
@@ -113,9 +113,9 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
                     "DiasAteZerarDestino": None, "Motivo": "FIM DE CICLO",
                     "SaldoAjustado": int(doa["SaldoAjustado"]),
                 })
-        return alocacoes
+        return alocacoes, []
 
-    # --- Lógica normal de transferência ---
+    # --- Lógica normal ---
     receptoras = df_produto[df_produto["Falta"] >= 5].copy()
     receptoras = receptoras[receptoras["QtdRecebidaRecente"] < receptoras["Falta"]]
     receptoras = receptoras.sort_values(["VelocidadePeriodo", "VelocidadeAtiva", "DiasInativo"], ascending=[False, False, True])
@@ -123,11 +123,9 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
     doadoras = df_produto[df_produto["ExcessoTransferivel"] >= 5].copy()
     doadoras = doadoras.sort_values(["VelocidadePeriodo", "VelocidadeAtiva"], ascending=[True, True])
 
-    if receptoras.empty or doadoras.empty:
-        return []
-
     excesso_livre = dict(zip(doadoras["CodigoFilial"], doadoras["ExcessoTransferivel"]))
     alocacoes = []
+    compras = []
 
     for _, rec in receptoras.iterrows():
         precisa = rec["Falta"]
@@ -141,22 +139,14 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
             qtd = int(min(excesso_livre[cod_doador], precisa))
             if qtd < 5: break
 
-            if rec["SaldoAjustado"] <= 0:
-                motivo = "SEM ESTOQUE"
-            elif rec["SaldoProvavel"] <= 0 and rec["QtdEmTransito"] > 0:
-                motivo = "AGUARDANDO TRANSFERENCIA"
-            elif rec["QtdRecebidaRecente"] > 0:
-                motivo = f"RECEBIDO RECENTEMENTE ({int(rec['QtdRecebidaRecente'])} un)"
-            elif pd.notna(rec["DiasAteZerar"]) and rec["DiasAteZerar"] < 7:
-                motivo = f"URGENTE - zera em {int(rec['DiasAteZerar'])} dias"
-            elif doa["VelocidadePeriodo"] < 0.05 and rec["VelocidadePeriodo"] >= 0.1:
-                motivo = "Origem parada, destino vendendo"
-            elif rec["VelocidadePeriodo"] > doa["VelocidadePeriodo"] * 2:
-                motivo = "Alta rotacao no destino"
-            elif rec["VelocidadePeriodo"] > doa["VelocidadePeriodo"] * 1.5:
-                motivo = "Maior giro no destino"
-            else:
-                motivo = "Reposicao de ciclo"
+            if rec["SaldoAjustado"] <= 0: motivo = "SEM ESTOQUE"
+            elif rec["SaldoProvavel"] <= 0 and rec["QtdEmTransito"] > 0: motivo = "AGUARDANDO TRANSFERENCIA"
+            elif rec["QtdRecebidaRecente"] > 0: motivo = f"RECEBIDO RECENTEMENTE ({int(rec['QtdRecebidaRecente'])} un)"
+            elif pd.notna(rec["DiasAteZerar"]) and rec["DiasAteZerar"] < 7: motivo = f"URGENTE - zera em {int(rec['DiasAteZerar'])} dias"
+            elif doa["VelocidadePeriodo"] < 0.05 and rec["VelocidadePeriodo"] >= 0.1: motivo = "Origem parada, destino vendendo"
+            elif rec["VelocidadePeriodo"] > doa["VelocidadePeriodo"] * 2: motivo = "Alta rotacao no destino"
+            elif rec["VelocidadePeriodo"] > doa["VelocidadePeriodo"] * 1.5: motivo = "Maior giro no destino"
+            else: motivo = "Reposicao de ciclo"
 
             if pd.isna(rec["DiasAteZerar"]): prio = 3
             elif rec["DiasAteZerar"] < 7: prio = 1
@@ -172,47 +162,48 @@ def alocar_produto(df_produto: pd.DataFrame) -> list[dict]:
                 "QtdTransferir": qtd, "ReservaOrigem": int(doa["ReservaOrigem"]),
                 "IdealOrigem": int(doa["EstoqueIdeal"]), "IdealDestino": int(rec["EstoqueIdeal"]),
                 "DiasAteZerarDestino": round(rec["DiasAteZerar"], 1) if pd.notna(rec["DiasAteZerar"]) else None,
-                "Motivo": motivo,
-                "SaldoAjustado": int(rec["SaldoAjustado"]),
+                "Motivo": motivo, "SaldoAjustado": int(rec["SaldoAjustado"]),
             })
 
             excesso_livre[cod_doador] -= qtd
             precisa -= qtd
 
-    return alocacoes
+        # Se após todas as transferências a loja ainda precisa, gera a sugestão de COMPRA
+        if precisa > 0:
+            minimo = piso_exposicao if atacado_tem_minimo_compra else 1
+            if precisa >= minimo:
+                qtd_final = max(int(precisa), piso_exposicao) if atacado_tem_minimo_compra else int(precisa)
+                compras.append({
+                    "NomeFilialDestino": rec["Filial"],
+                    "CodigoProduto": rec["CodigoProduto"],
+                    "ReferenciaFabricante": rec["ReferenciaFabricante"],
+                    "Produto": rec["Produto"],
+                    "Fabricante": rec["Fabricante"],
+                    "Embalagem": rec["Embalagem"],
+                    "QtdSugerida": qtd_final,
+                    "Motivo": "Falta na rede sem excesso p/ transferir"
+                })
 
-
-def alocar_compra(df_produto: pd.DataFrame) -> list[dict]:
-    """Identifica itens que precisam ser comprados pois a rede está sem estoque."""
+    # Verifica se o próprio Atacado precisa comprar para si
     atacado = df_produto[df_produto["CodigoFilial"] == 5]
-    lojas = df_produto[df_produto["CodigoFilial"] != 5]
+    if not atacado.empty:
+        falta_atacado = atacado.iloc[0]["Falta"]
+        if falta_atacado > 0:
+            minimo = piso_exposicao if atacado_tem_minimo_compra else 1
+            if falta_atacado >= minimo:
+                qtd_final = max(int(falta_atacado), piso_exposicao) if atacado_tem_minimo_compra else int(falta_atacado)
+                compras.append({
+                    "NomeFilialDestino": "ATACADO",
+                    "CodigoProduto": atacado.iloc[0]["CodigoProduto"],
+                    "ReferenciaFabricante": atacado.iloc[0]["ReferenciaFabricante"],
+                    "Produto": atacado.iloc[0]["Produto"],
+                    "Fabricante": atacado.iloc[0]["Fabricante"],
+                    "Embalagem": atacado.iloc[0]["Embalagem"],
+                    "QtdSugerida": qtd_final,
+                    "Motivo": "Falta no Atacado"
+                })
 
-    saldo_atacado = atacado["SaldoAjustado"].sum() if not atacado.empty else 0
-    ideal_atacado = atacado["EstoqueIdeal"].sum() if not atacado.empty else 0
-
-    falta_lojas = lojas["Falta"].sum()
-    excesso_lojas = lojas["ExcessoTransferivel"].sum()
-
-    # Se a falta das lojas for maior que o excesso disponível para transferência,
-    # significa que precisamos comprar.
-    if falta_lojas > excesso_lojas:
-        qtd_necessaria = falta_lojas + ideal_atacado - saldo_atacado
-        
-        if qtd_necessaria >= 5:  # MOQ
-            info = df_produto.iloc[0]
-            return [{
-                "CodigoProduto": info["CodigoProduto"],
-                "ReferenciaFabricante": info["ReferenciaFabricante"],
-                "Produto": info["Produto"],
-                "Fabricante": info["Fabricante"],
-                "Embalagem": info["Embalagem"],
-                "FaltaLojas": int(falta_lojas),
-                "SaldoAtacado": int(saldo_atacado),
-                "IdealAtacado": int(ideal_atacado),
-                "QtdSugerida": int(qtd_necessaria),
-                "Motivo": "Falta na rede sem excesso p/ transferir"
-            }]
-    return []
+    return alocacoes, compras
 
 
 def gerar_sugestoes(
@@ -225,6 +216,7 @@ def gerar_sugestoes(
     reserva_pct: float = 25,
     atacado_tem_piso: bool = False,
     atacado_tem_reserva: bool = False,
+    atacado_tem_minimo_compra: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     df = df_base.copy()
 
@@ -240,16 +232,7 @@ def gerar_sugestoes(
     df["SaldoProvavel"] = pd.to_numeric(df["SaldoProvavel"], errors="coerce").fillna(0)
     df["SaldoAjustado"] = df["SaldoProvavel"] + df["QtdEmTransito"]
 
-    df = calcular_indicadores(
-        df,
-        cobertura_alvo=cobertura_alvo,
-        lead_time=lead_time,
-        piso_exposicao=piso_exposicao,
-        reserva_pct=reserva_pct,
-        atacado_tem_piso=atacado_tem_piso,
-        atacado_tem_reserva=atacado_tem_reserva,
-    )
-
+    df = calcular_indicadores(df, cobertura_alvo, lead_time, piso_exposicao, reserva_pct, atacado_tem_piso, atacado_tem_reserva)
     df = filtrar_recentes(df, df_recebidas_recentes)
     df = excluir_descontinuados(df)
 
@@ -257,8 +240,9 @@ def gerar_sugestoes(
     todas_compras = []
 
     for _, grupo in df.groupby("IdProduto"):
-        todas_transf.extend(alocar_produto(grupo))
-        todas_compras.extend(alocar_compra(grupo))
+        t, c = alocar_produto(grupo, piso_exposicao, atacado_tem_minimo_compra)
+        todas_transf.extend(t)
+        todas_compras.extend(c)
 
     df_transf = pd.DataFrame(todas_transf)
     if not df_transf.empty:
@@ -266,6 +250,6 @@ def gerar_sugestoes(
 
     df_compras = pd.DataFrame(todas_compras)
     if not df_compras.empty:
-        df_compras = df_compras.sort_values(["Produto", "Fabricante"]).reset_index(drop=True)
+        df_compras = df_compras.sort_values(["NomeFilialDestino", "Produto"]).reset_index(drop=True)
 
     return df_transf, df_compras
