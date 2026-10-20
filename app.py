@@ -274,13 +274,15 @@ with b3: btn_params = st.button("⚙️ Parâmetros", use_container_width=True)
 with b4: btn_manual = st.button("📖 Manual do Gestor", use_container_width=True)
 
 with b5:
-    # Seletor de filial para o PDF. O padrão é a primeira filial da lista.
-    filial_pdf = st.selectbox("Filial p/ PDF", ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"], label_visibility="collapsed")
+    filial_pdf = st.selectbox(
+        "Filial p/ PDF", 
+        ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"], 
+        help="Selecione qual filial você quer exportar e depois clique em 'Gerar PDF' ao lado."
+    )
     
 with b6:
-    # O botão fica desabilitado se não houver dados calculados na sessão
-    tem_dados = "df_transf" in st.session_state and not st.session_state["df_transf"].empty
-    btn_pdf_global = st.button("📄 Gerar PDF", use_container_width=True, disabled=not tem_dados)
+    st.write("") # Respiro para alinhar o botão
+    btn_pdf_global = st.button("📄 Gerar PDF", use_container_width=True)
 
 # ============================================================
 # AVISO — Busca por Produto ignora os outros filtros
@@ -519,20 +521,23 @@ if btn_consultar:
             st.error(f"❌ Erro: {e}")
 
 # ============================================================
-# AÇÃO DO BOTÃO GLOBAL DE PDF
+# AÇÃO DO BOTÃO GLOBAL DE PDF (CORRIGIDO)
 # ============================================================
-if btn_pdf_global and "df_transf" in st.session_state:
-    df_atual = st.session_state["df_transf"]
-    cod_pdf = codigos_filial[filial_pdf]
-    parametros_str = f"Cob: {cobertura}d | Lead: {lead_time}d | Res: {reserva}% | Piso: {piso} | Quarentena: {anti_gangorra}d | Trânsito: {dias_transito}d"
-    
-    with st.spinner("Gerando PDF..."):
-        try:
-            pdf_bytes, agora = gerar_pdf_filial(filial_pdf, cod_pdf, df_atual, st.session_state.get("perfil_sel", "Padrão"), parametros_str)
-            nome_file = filial_pdf.title().replace(" ", "")
-            st.session_state["pdf_bytes_global"] = (pdf_bytes, f"Reposicao {nome_file} {agora.strftime('%Y%m%d %H%M%S')}.pdf")
-        except Exception as e:
-            st.error(f"Erro ao gerar PDF: {e}")
+if btn_pdf_global:
+    if "df_transf" not in st.session_state or st.session_state["df_transf"].empty:
+        st.warning("⚠️ Faça uma consulta primeiro para depois gerar o PDF.")
+    else:
+        df_atual = st.session_state["df_transf"]
+        cod_pdf = codigos_filial[filial_pdf]
+        parametros_str = f"Cob: {cobertura}d | Lead: {lead_time}d | Res: {reserva}% | Piso: {piso} | Quarentena: {anti_gangorra}d | Trânsito: {dias_transito}d"
+        
+        with st.spinner("Gerando PDF..."):
+            try:
+                pdf_bytes, agora = gerar_pdf_filial(filial_pdf, cod_pdf, df_atual, st.session_state.get("perfil_sel", "Padrão"), parametros_str)
+                nome_file = filial_pdf.title().replace(" ", "")
+                st.session_state["pdf_bytes_global"] = (pdf_bytes, f"Reposicao {nome_file} {agora.strftime('%Y%m%d %H%M%S')}.pdf")
+            except Exception as e:
+                st.error(f"Erro ao gerar PDF: {e}")
 
 if "pdf_bytes_global" in st.session_state and st.session_state["pdf_bytes_global"][0] is not None:
     _pdf_data, _file_name = st.session_state["pdf_bytes_global"]
@@ -639,4 +644,4 @@ if btn_manual:
 # ============================================================
 # BADGE DE VERSÃO
 # ============================================================
-st.markdown('<div class="rodape">v1.5 — 2026-10-20</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v1.6 — 2026-10-20</div>', unsafe_allow_html=True)
