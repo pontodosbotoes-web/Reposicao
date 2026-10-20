@@ -36,6 +36,7 @@ def calcular_indicadores(
         return reserva_pct
 
     df["Piso"] = df["CodigoFilial"].apply(_piso)
+    # O Cálculo do Ideal: Velocidade x (Cobertura + Lead)
     df["EstoqueIdeal"] = np.maximum(df["Piso"], df["VelocidadePeriodo"] * dias).round(0).astype(int)
     df["Excesso"] = np.maximum(0, df["SaldoAjustado"] - df["EstoqueIdeal"])
     df["Falta"] = np.maximum(0, df["EstoqueIdeal"] - df["SaldoAjustado"])
@@ -181,7 +182,10 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "Fabricante": rec["Fabricante"],
                     "Embalagem": rec["Embalagem"],
                     "QtdSugerida": qtd_final,
-                    "Motivo": "Falta na rede sem excesso p/ transferir"
+                    "Motivo": "Falta na rede sem excesso p/ transferir",
+                    "Velocidade": rec["VelocidadePeriodo"],
+                    "Ideal": rec["EstoqueIdeal"],
+                    "Saldo": rec["SaldoAjustado"]
                 })
 
     # Verifica se o próprio Atacado precisa comprar para si
@@ -200,7 +204,10 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "Fabricante": atacado.iloc[0]["Fabricante"],
                     "Embalagem": atacado.iloc[0]["Embalagem"],
                     "QtdSugerida": qtd_final,
-                    "Motivo": "Falta no Atacado"
+                    "Motivo": "Falta no Atacado",
+                    "Velocidade": atacado.iloc[0]["VelocidadePeriodo"],
+                    "Ideal": atacado.iloc[0]["EstoqueIdeal"],
+                    "Saldo": atacado.iloc[0]["SaldoAjustado"]
                 })
 
     return alocacoes, compras
