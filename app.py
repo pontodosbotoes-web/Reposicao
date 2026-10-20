@@ -33,22 +33,24 @@ st.markdown("""
 
         /* --- ÁREA ÚTIL DO APP (Expandir ao máximo) --- */
         .block-container {
-            padding-top: 1rem !important;
+            padding-top: 1.5rem !important;
             padding-bottom: 2rem !important; /* Espaço para o rodapé */
             padding-left: 0.8rem !important;
             padding-right: 0.8rem !important;
             max-width: 100% !important; /* Força o uso de 100% da largura */
         }
 
+        /* --- CORREÇÃO DO TÍTULO (Sem pular linha) --- */
         .titulo-pagina {
-            font-size: 1.7rem;
-            font-weight: bold;
+            font-size: 1.6rem;
+            font-weight: 700;
             text-align: center;
-            margin: 0 0 22px 0;
-            padding: 6px 0;
+            margin: 0 0 15px 0; /* Margem apenas embaixo */
+            padding: 0;         /* Removeu o padding extra */
             color: #FAFAFA;
-            line-height: 1.6;
+            line-height: 1.2;   /* Reduziu o espaço entre linhas */
         }
+        
         .secao-titulo {
             font-size: 1.05rem;
             font-weight: bold;
@@ -713,4 +715,4 @@ if btn_manual:
 # ============================================================
 # BADGE DE VERSÃO
 # ============================================================
-st.markdown('<div class="rodape">v1.8 — 2026-10-20</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v1.9 — 2026-10-20</div>', unsafe_allow_html=True)
