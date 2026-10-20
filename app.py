@@ -25,30 +25,28 @@ st.set_page_config(page_title="Reposição de Produtos", layout="wide", page_ico
 
 st.markdown("""
     <style>
-        /* --- LIMPEZA DA TELA (Esconder cabeçalhos do Streamlit) --- */
-        #MainMenu {visibility: hidden;} /* Esconde o menu de 3 pontinhos */
-        header {visibility: hidden;}    /* Esconde a barra superior inteira */
-        footer {visibility: hidden;}    /* Esconde o rodapé ("Manage app") */
-        .stAppDeployButton {display: none;} /* Esconde o botão Deploy */
+        /* --- LIMPEZA DA TELA --- */
+        #MainMenu {visibility: hidden;}
+        header {visibility: hidden;}
+        footer {visibility: hidden;}
+        .stAppDeployButton {display: none;}
 
-        /* --- ÁREA ÚTIL DO APP (Expandir ao máximo) --- */
         .block-container {
             padding-top: 1.5rem !important;
-            padding-bottom: 2rem !important; /* Espaço para o rodapé */
+            padding-bottom: 2rem !important;
             padding-left: 0.8rem !important;
             padding-right: 0.8rem !important;
-            max-width: 100% !important; /* Força o uso de 100% da largura */
+            max-width: 100% !important;
         }
 
-        /* --- CORREÇÃO DO TÍTULO (Sem pular linha) --- */
         .titulo-pagina {
             font-size: 1.6rem;
             font-weight: 700;
             text-align: center;
-            margin: 0 0 15px 0; /* Margem apenas embaixo */
-            padding: 0;         /* Removeu o padding extra */
+            margin: 0 0 15px 0;
+            padding: 0;
             color: #FAFAFA;
-            line-height: 1.2;   /* Reduziu o espaço entre linhas */
+            line-height: 1.2;
         }
         
         .secao-titulo {
@@ -60,7 +58,6 @@ st.markdown("""
             border-bottom: 2px solid #334155;
         }
         
-        /* Badge de Versão no Rodapé */
         .rodape {
             position: fixed;
             bottom: 10px;
@@ -80,27 +77,30 @@ st.markdown("""
             padding: 8px 18px;
         }
 
-        /* Métricas centralizadas */
-        [data-testid="stMetric"] {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        /* --- GRID RESPONSIVO PARA MÉTRICAS --- */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+        .metric-card {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 10px;
             text-align: center;
         }
-        [data-testid="stMetricLabel"] {
-            display: flex;
-            justify-content: center;
-            text-align: center;
-            width: 100%;
+        .metric-label {
+            font-size: 0.85rem;
+            color: #94A3B8;
+            margin-bottom: 4px;
         }
-        [data-testid="stMetricLabel"] > div {
-            text-align: center;
-            width: 100%;
-        }
-        [data-testid="stMetricValue"] {
+        .metric-value {
             font-size: 1.3rem;
-            text-align: center;
-            width: 100%;
+            font-weight: bold;
+            color: #F8FAFC;
         }
 
         /* --- ESTILIZAÇÃO DOS BOTÕES --- */
@@ -115,73 +115,25 @@ st.markdown("""
             transition: all 0.2s;
         }
 
-        /* Consultar - Azul */
-        .st-key-btn_consultar button {
-            background-color: #2563EB !important;
-            color: #FFFFFF !important;
-            border: none !important;
-        }
-        .st-key-btn_consultar button:hover {
-            background-color: #1D4ED8 !important;
-        }
+        .st-key-btn_consultar button { background-color: #2563EB !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_consultar button:hover { background-color: #1D4ED8 !important; }
+        
+        .st-key-btn_limpar button { background-color: #DC2626 !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_limpar button:hover { background-color: #B91C1C !important; }
+        
+        .st-key-btn_parametros button { background-color: #7C3AED !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_parametros button:hover { background-color: #6D28D9 !important; }
+        
+        .st-key-btn_manual button { background-color: #059669 !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_manual button:hover { background-color: #047857 !important; }
+        
+        .st-key-btn_pdf button { background-color: #D97706 !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_pdf button:hover { background-color: #B45309 !important; }
+        .st-key-btn_pdf button:disabled { background-color: #334155 !important; color: #94A3B8 !important; cursor: not-allowed; }
+        
+        .st-key-btn_download_pdf button { background-color: #0891B2 !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_download_pdf button:hover { background-color: #0E7490 !important; }
 
-        /* Limpar - Vermelho */
-        .st-key-btn_limpar button {
-            background-color: #DC2626 !important;
-            color: #FFFFFF !important;
-            border: none !important;
-        }
-        .st-key-btn_limpar button:hover {
-            background-color: #B91C1C !important;
-        }
-
-        /* Parâmetros - Roxo */
-        .st-key-btn_parametros button {
-            background-color: #7C3AED !important;
-            color: #FFFFFF !important;
-            border: none !important;
-        }
-        .st-key-btn_parametros button:hover {
-            background-color: #6D28D9 !important;
-        }
-
-        /* Manual - Verde */
-        .st-key-btn_manual button {
-            background-color: #059669 !important;
-            color: #FFFFFF !important;
-            border: none !important;
-        }
-        .st-key-btn_manual button:hover {
-            background-color: #047857 !important;
-        }
-
-        /* Gerar PDF - Laranja */
-        .st-key-btn_pdf button {
-            background-color: #D97706 !important;
-            color: #FFFFFF !important;
-            border: none !important;
-        }
-        .st-key-btn_pdf button:hover {
-            background-color: #B45309 !important;
-        }
-        /* Estado desabilitado do PDF */
-        .st-key-btn_pdf button:disabled {
-            background-color: #334155 !important;
-            color: #94A3B8 !important;
-            cursor: not-allowed;
-        }
-
-        /* Baixar PDF - Ciano */
-        .st-key-btn_download_pdf button {
-            background-color: #0891B2 !important;
-            color: #FFFFFF !important;
-            border: none !important;
-        }
-        .st-key-btn_download_pdf button:hover {
-            background-color: #0E7490 !important;
-        }
-
-        /* Cabeçalhos das tabelas centralizados */
         div[data-testid="stDataFrame"] div[role="columnheader"] {
             justify-content: center !important;
             text-align: center !important;
@@ -207,7 +159,6 @@ def agora_br():
     return datetime.now(TZ_BR)
     
 def calcular_janela_analise(opcao: str) -> tuple[date, int]:
-    """Retorna (data_referencia, max_lookback)."""
     hoje = date.today()
     mapa_dias = {
         "1 ano atrás": 365, "6 meses atrás": 180, "3 meses atrás": 90,
@@ -217,7 +168,7 @@ def calcular_janela_analise(opcao: str) -> tuple[date, int]:
 
 
 # ============================================================
-# CARREGAR LISTAS
+# CARREGAR LISTAS E PERFIS
 # ============================================================
 filiais = carregar_filiais()
 fabricantes = carregar_fabricantes()
@@ -225,10 +176,6 @@ departamentos = carregar_departamentos()
 grupos = carregar_grupos()
 subgrupos = carregar_subgrupos()
 
-
-# ============================================================
-# PERFIS PRÉ-DEFINIDOS
-# ============================================================
 PERFIS = {
     "Padrão": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 0, "reserva": 25, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 15, "dias_transito": 10},
     "Lançamento": {"opcao_data": "30 dias atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 5, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 7, "dias_transito": 10},
@@ -240,19 +187,13 @@ PERFIS = {
     "Liquidação": {"opcao_data": "6 meses atrás", "cobertura_opcao": "Para 7 dias", "lead_time": 10, "piso": 0, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", "anti_gangorra": 30, "dias_transito": 10},
 }
 
-if "show_params" not in st.session_state:
-    st.session_state.show_params = False
-    
-if "view" not in st.session_state:
-    st.session_state["view"] = "calculadora"
+if "show_params" not in st.session_state: st.session_state.show_params = False
+if "view" not in st.session_state: st.session_state["view"] = "calculadora"
 
 if st.session_state["view"] == "manual":
     render_manual()
     st.stop()
 
-# ============================================================
-# VALORES PADRÃO DOS WIDGETS
-# ============================================================
 _DEFAULTS = {
     "perfil_sel": "Padrão", "fabricante_sel": "(todos)", "depto_sel": "(todos)",
     "grupo_sel": "(todos)", "subgrupo_sel": "(todos)", "produto_busca": "",
@@ -261,29 +202,24 @@ _DEFAULTS = {
     "atacado_reserva": "Não", "anti_gangorra": 15, "dias_transito": 10,
 }
 for _k, _v in _DEFAULTS.items():
-    if _k not in st.session_state:
-        st.session_state[_k] = _v
+    if _k not in st.session_state: st.session_state[_k] = _v
 
 COBERTURA_MAP = {
     "Para 7 dias": 7, "Para 15 dias": 15, "Para 30 dias": 30, "Para 2 meses": 60,
     "Para 3 meses": 90, "Para 6 meses": 180, "Para 1 ano": 365,
 }
 
-
 def _aplicar_perfil_do_session():
     perfil = st.session_state.get("perfil_sel", "Padrão")
     if perfil in PERFIS:
-        for chave, valor in PERFIS[perfil].items():
-            st.session_state[chave] = valor
+        for chave, valor in PERFIS[perfil].items(): st.session_state[chave] = valor
         st.session_state["_ultimo_perfil_aplicado"] = perfil
 
 def _limpar_filtros():
-    for _k, _v in _DEFAULTS.items():
-        st.session_state[_k] = _v
+    for _k, _v in _DEFAULTS.items(): st.session_state[_k] = _v
     st.session_state["_ultimo_perfil_aplicado"] = "Padrão"
     for _k in ("df_base", "df_transf", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
-        if _k in st.session_state:
-            del st.session_state[_k]
+        if _k in st.session_state: del st.session_state[_k]
 
 # ============================================================
 # LINHA 1: FILTROS
@@ -293,27 +229,7 @@ f0, f1, f2, f3, f4, f5 = st.columns([1.6, 1.9, 1.3, 1.3, 1.3, 1.8], vertical_ali
 with f0:
     st.selectbox(
         "Perfil de Análise", list(PERFIS.keys()), key="perfil_sel",
-        help=(
-            "**Perfil de Análise**\n\n"
-            "Escolha um perfil para ajustar automaticamente os 9 parâmetros. "
-            "**Um mesmo produto pode usar perfis diferentes dependendo do momento da análise.**\n\n"
-            "**🔹 Padrão** — Uso geral. *1 ano de histórico, cobertura 30d, reserva 25%.*\n"
-            "👉 *Ex: Materiais de escritório do dia a dia.*\n\n"
-            "**🔹 Lançamento** — Novidade na prateleira. *30 dias de histórico, piso 5, reserva 0%.*\n"
-            "👉 *Ex: Chegou a nova coleção de fitas de cetim de fim de ano. Mesmo sem histórico de venda, o piso garante a exposição.*\n\n"
-            "**🔹 Classe A** — O carro-chefe da loja. *3 meses de histórico, piso 10, reserva 40%.*\n"
-            "👉 *Ex: Papel kraft e fita adesiva básica. Não podem faltar nunca.*\n\n"
-            "**🔹 Alto Giro** — Venda rápida e constante. *3 meses de histórico, cobertura 15d, lead 7d.*\n"
-            "👉 *Ex: Bexigas de aniversário na primavera.*\n\n"
-            "**🔹 Sazonal Longo** — Campanhas longas (Natal/Carnaval). *2 meses de histórico, piso 5, cobertura 30d.*\n"
-            "👉 *Ex: Artigos de Natal em novembro. A demanda dura várias semanas.*\n\n"
-            "**🔹 Sazonal Curto** — Pico explosivo (Páscoa/Mães/Halloween). *1 mês de histórico, cobertura 15d, reserva 5%.*\n"
-            "👉 *Ex: Máscaras de Halloween. Vende tudo em uma semana, não pode estocar demais para não sobrar.*\n\n"
-            "**🔹 Baixo Giro** — Produtos encalhados. *1 ano de histórico, piso 3, reserva 30%.*\n"
-            "👉 *Ex: Tecido de seda específico que vende 1 rolo por mês.*\n\n"
-            "**🔹 Liquidação** — Fim de ciclo. *6 meses de histórico, cobertura 7d, reserva 0%.*\n"
-            "👉 *Ex: Itens de Halloween na primeira semana de novembro.*"
-        ),
+        help="**Perfil de Análise**\n\nEscolha um perfil para ajustar automaticamente os 9 parâmetros.",
         on_change=_aplicar_perfil_do_session,
     )
 with f1: fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel")
@@ -323,12 +239,7 @@ with f4: subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.ke
 with f5:
     produto_busca = st.text_input(
         "Produto", placeholder='Ex: CAIXA QUADRADA (E) | CAPA, CAPUZ (OU)', key="produto_busca",
-        help=(
-            "Busca por produto com E / OU:\n\n"
-            "• Espaço = E (AND): 'CAIXA QUADRADA' acha produtos que tenham as DUAS palavras.\n\n"
-            "• Vírgula = OU (OR): 'CAPA, CAPUZ' acha produtos com UMA ou OUTRA.\n\n"
-            "• Combine: 'CAIXA QUADRADA, CAPA' = (CAIXA E QUADRADA) OU CAPA."
-        ),
+        help="Busca por produto com E / OU. Se preenchido, ignora os outros filtros."
     )
 
 # ============================================================
@@ -346,18 +257,13 @@ with b5:
     filial_pdf = st.selectbox(
         "Filial p/ PDF", 
         ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"], 
-        index=None,
-        placeholder="Selecione a Filial p/ PDF...",
-        label_visibility="collapsed",
-        key="filial_pdf_sel"
+        index=None, placeholder="Selecione a Filial p/ PDF...",
+        label_visibility="collapsed", key="filial_pdf_sel"
     )
     
 with b6:
     btn_pdf_global = st.button("📄 Gerar PDF", use_container_width=True, disabled=(filial_pdf is None), key="btn_pdf")
 
-# ============================================================
-# AVISO — Busca por Produto ignora os outros filtros
-# ============================================================
 if produto_busca and produto_busca.strip():
     st.markdown(
         '<div style="background-color: rgba(59,130,246,0.12); border-left: 3px solid #3B82F6; padding: 6px 12px; margin-top: 8px; border-radius: 4px; font-size: 0.85rem; color: #93C5FD;">'
@@ -365,21 +271,16 @@ if produto_busca and produto_busca.strip():
         '</div>', unsafe_allow_html=True,
     )
 
-# ============================================================
-# APLICA O PERFIL NA PRIMEIRA CARGA
-# ============================================================
 if "_ultimo_perfil_aplicado" not in st.session_state:
     _perfil = st.session_state.get("perfil_sel", "Padrão")
     if _perfil in PERFIS:
-        for _chave, _valor in PERFIS[_perfil].items():
-            st.session_state[_chave] = _valor
+        for _chave, _valor in PERFIS[_perfil].items(): st.session_state[_chave] = _valor
     st.session_state["_ultimo_perfil_aplicado"] = _perfil
 
 # ============================================================
 # PARÂMETROS
 # ============================================================
-if btn_params:
-    st.session_state.show_params = not st.session_state.show_params
+if btn_params: st.session_state.show_params = not st.session_state.show_params
 
 if st.session_state.show_params:
     with st.container(border=True):
@@ -412,9 +313,6 @@ else:
     dias_transito = st.session_state.get("dias_transito", 10)
 
 
-# ============================================================
-# DERIVAÇÕES
-# ============================================================
 cobertura = COBERTURA_MAP.get(cobertura_opcao, 30)
 data_ref, lookback = calcular_janela_analise(opcao_data)
 
@@ -452,8 +350,7 @@ class HeaderFooterCanvas(canvas.Canvas):
         self.setFont("Helvetica", 8)
         self.setFillColor(colors.HexColor("#64748B"))
         self.drawString(15, 12, f"Gerado em {self.gerado_em}")
-        if self.parametros_texto:
-            self.drawCentredString(w / 2, 12, self.parametros_texto)
+        if self.parametros_texto: self.drawCentredString(w / 2, 12, self.parametros_texto)
         self.drawRightString(w - 15, 12, f"Página {self._pageNumber} de {page_count}")
 
 def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
@@ -558,7 +455,7 @@ def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
     return buffer, agora
 
 # ============================================================
-# CONSULTAR
+# CONSULTAR E EXPORTAR
 # ============================================================
 if btn_consultar:
     produto_preenchido = bool(produto_busca and produto_busca.strip())
@@ -591,9 +488,6 @@ if btn_consultar:
         except Exception as e:
             st.error(f"❌ Erro: {e}")
 
-# ============================================================
-# AÇÃO DO BOTÃO GLOBAL DE PDF
-# ============================================================
 if btn_pdf_global:
     if "df_transf" not in st.session_state or st.session_state["df_transf"].empty:
         st.warning("⚠️ Faça uma consulta primeiro para depois gerar o PDF.")
@@ -649,19 +543,23 @@ if "df_transf" in st.session_state:
                 df_desc = df_env_all[df_env_all["NomeFilialDestino"] == "DESCONTINUAR"].copy().reset_index(drop=True)
                 df_env = df_env_all[~df_env_all["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])].copy().reset_index(drop=True)
 
-                # ---- MÉTRICAS ----
-                m1, m2, m3, m4, m5, m6, m7, m8 = st.columns(8)
-                m1.metric("📤 Enviar (itens)", len(df_env))
-                m2.metric("📤 Enviar (un)", int(df_env["QtdTransferir"].sum()) if not df_env.empty else 0)
-                m3.metric("📥 Receber (itens)", len(df_rec))
-                m4.metric("📥 Receber (un)", int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0)
-                m5.metric("🔥 Liquidar (itens)", len(df_liq))
-                m6.metric("🔥 Liquidar (un)", int(df_liq["QtdTransferir"].sum()) if not df_liq.empty else 0)
-                m7.metric("⏸️ Desc. (itens)", len(df_desc))
-                m8.metric("⏸️ Desc. (un)", int(df_desc["QtdTransferir"].sum()) if not df_desc.empty else 0)
+                # ---- GRID RESPONSIVO DE MÉTRICAS ----
+                html_metrics = f"""
+                <div class="metric-grid">
+                    <div class="metric-card"><div class="metric-label">📤 Enviar (itens)</div><div class="metric-value">{len(df_env)}</div></div>
+                    <div class="metric-card"><div class="metric-label">📤 Enviar (un)</div><div class="metric-value">{int(df_env["QtdTransferir"].sum()) if not df_env.empty else 0}</div></div>
+                    <div class="metric-card"><div class="metric-label">📥 Receber (itens)</div><div class="metric-value">{len(df_rec)}</div></div>
+                    <div class="metric-card"><div class="metric-label">📥 Receber (un)</div><div class="metric-value">{int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0}</div></div>
+                    <div class="metric-card"><div class="metric-label">🔥 Liquidar (itens)</div><div class="metric-value">{len(df_liq)}</div></div>
+                    <div class="metric-card"><div class="metric-label">🔥 Liquidar (un)</div><div class="metric-value">{int(df_liq["QtdTransferir"].sum()) if not df_liq.empty else 0}</div></div>
+                    <div class="metric-card"><div class="metric-label">⏸️ Desc. (itens)</div><div class="metric-value">{len(df_desc)}</div></div>
+                    <div class="metric-card"><div class="metric-label">⏸️ Desc. (un)</div><div class="metric-value">{int(df_desc["QtdTransferir"].sum()) if not df_desc.empty else 0}</div></div>
+                </div>
+                """
+                st.markdown(html_metrics, unsafe_allow_html=True)
                 st.write("")
 
-                # ---- ENVIAR ----
+                # ---- TABELAS ----
                 st.markdown('<div class="secao-titulo">📤 ENVIAR</div>', unsafe_allow_html=True)
                 if df_env.empty:
                     st.caption("Nada a enviar")
@@ -673,7 +571,6 @@ if "df_transf" in st.session_state:
                     dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
                     st.dataframe(dfe.style.set_properties(subset=["Qtd Transf.", "Reserva", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfe) * 36 + 42)))
 
-                # ---- RECEBER ----
                 st.markdown('<div class="secao-titulo">📥 RECEBER</div>', unsafe_allow_html=True)
                 if df_rec.empty:
                     st.caption("Nada a receber")
@@ -685,7 +582,6 @@ if "df_transf" in st.session_state:
                     dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
                     st.dataframe(dfr, use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
 
-                # ---- DESCONTINUAR ----
                 st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR</div>', unsafe_allow_html=True)
                 if df_desc.empty:
                     st.caption("Nenhum produto para descontinuar")
@@ -696,7 +592,6 @@ if "df_transf" in st.session_state:
                     dfd.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Desc.", "Qtd Ideal", "Motivo"]
                     st.dataframe(dfd, use_container_width=True, hide_index=True, height=min(420, max(120, len(dfd) * 36 + 42)))
 
-                # ---- LIQUIDAR ----
                 st.markdown('<div class="secao-titulo">🔥 LIQUIDAR</div>', unsafe_allow_html=True)
                 if df_liq.empty:
                     st.caption("Nenhum produto para liquidar")
@@ -712,7 +607,4 @@ if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-# ============================================================
-# BADGE DE VERSÃO
-# ============================================================
 st.markdown('<div class="rodape">v1.9 — 2026-10-20</div>', unsafe_allow_html=True)
