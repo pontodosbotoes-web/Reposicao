@@ -167,14 +167,17 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
             precisa -= qtd
             qtd_recebida_transf += qtd
 
-        # CÁLCULO DE COMPRA BASEADO NO ESTOQUE IDEAL (Ignorando saldo negativo)
-        # Quanto a loja precisa para chegar no Ideal?
-        # Se o ideal é 15, e ela já vai receber 10 de transferência, ela precisa comprar 5.
         necessidade_ideal = rec["EstoqueIdeal"] - qtd_recebida_transf
         
         if necessidade_ideal > 0:
             minimo = piso_exposicao if atacado_tem_minimo_compra else 1
             if necessidade_ideal >= minimo:
+                # Definição do Motivo (Item 2 e 3)
+                if qtd_recebida_transf == 0 and rec["SaldoAjustado"] <= 0:
+                    motivo_compra = "SEM ESTOQUE"
+                else:
+                    motivo_compra = "ESTOQUE COMPLEMENTAR"
+                
                 compras.append({
                     "NomeFilialDestino": rec["Filial"],
                     "CodigoProduto": rec["CodigoProduto"],
@@ -183,18 +186,22 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "Fabricante": rec["Fabricante"],
                     "Embalagem": rec["Embalagem"],
                     "QtdSugerida": int(necessidade_ideal),
-                    "Motivo": "Sugestão de compra",
+                    "Motivo": motivo_compra,
                     "Velocidade": rec["VelocidadePeriodo"],
                     "Ideal": rec["EstoqueIdeal"]
                 })
 
-    # CÁLCULO DE COMPRA PARA O ATACADO (Repor o ideal dele próprio)
     atacado = df_produto[df_produto["CodigoFilial"] == 5]
     if not atacado.empty:
         falta_atacado_ideal = atacado.iloc[0]["EstoqueIdeal"] - atacado.iloc[0]["SaldoAjustado"]
         if falta_atacado_ideal > 0:
             minimo = piso_exposicao if atacado_tem_minimo_compra else 1
             if falta_atacado_ideal >= minimo:
+                if atacado.iloc[0]["SaldoAjustado"] <= 0:
+                    motivo_compra = "SEM ESTOQUE"
+                else:
+                    motivo_compra = "ESTOQUE COMPLEMENTAR"
+
                 compras.append({
                     "NomeFilialDestino": "ATACADO",
                     "CodigoProduto": atacado.iloc[0]["CodigoProduto"],
@@ -203,7 +210,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "Fabricante": atacado.iloc[0]["Fabricante"],
                     "Embalagem": atacado.iloc[0]["Embalagem"],
                     "QtdSugerida": int(falta_atacado_ideal),
-                    "Motivo": "Sugestão de compra",
+                    "Motivo": motivo_compra,
                     "Velocidade": atacado.iloc[0]["VelocidadePeriodo"],
                     "Ideal": atacado.iloc[0]["EstoqueIdeal"]
                 })
