@@ -136,7 +136,7 @@ def gerar(buffer=None):
     conteudo.append(Spacer(1, 0.5 * cm))
     conteudo.append(p("Manual do Gestor", ESTILO_CAPA_SUB))
     conteudo.append(Spacer(1, 3 * cm))
-    conteudo.append(p("Sistema de sugestao de transferencias e compras", ESTILO_CAPA_SUB))
+    conteudo.append(p("A Ciencia por tras da operacao", ESTILO_CAPA_SUB))
     conteudo.append(p("DRP - IST - MEIO", ESTILO_CAPA_SUB))
     conteudo.append(Spacer(1, 3 * cm))
     conteudo.append(p("Uso interno", ESTILO_CAPA_SUB))
@@ -144,217 +144,175 @@ def gerar(buffer=None):
 
     # ---------- SUMARIO ----------
     conteudo.append(h1("Sumario"))
-    conteudo.append(p("Este manual esta dividido em 10 partes:"))
+    conteudo.append(p("Este manual esta dividido em 5 Modulos de Imersao:"))
     conteudo.append(Spacer(1, 0.3 * cm))
     for num, titulo in [
-        ("Parte 1", "Introducao e o 'Porque'"),
-        ("Parte 2", "Como o sistema pensa (A Matematica)"),
-        ("Parte 3", "Primeiro acesso e Mapa Visual"),
-        ("Parte 4", "Dicionario de Filtros"),
-        ("Parte 5", "Dicionario de Parametros (Os 11 campos)"),
-        ("Parte 6", "Lendo os Resultados e os Cards"),
-        ("Parte 7", "O Livro dos Motivos (O que cada um significa)"),
-        ("Parte 8", "Cenarios Reais (O que fazer?)"),
-        ("Parte 9", "Perguntas frequentes e Ajustes"),
-        ("Parte 10", "Glossario de Termos"),
+        ("Modulo 1", "O Problema (A Dor)"),
+        ("Modulo 2", "A Ciencia (A Solucao)"),
+        ("Modulo 3", "As Ferramentas (O Que e e Para Que Serve)"),
+        ("Modulo 4", "A Inteligencia (Lendo a Tela)"),
+        ("Modulo 5", "O Protocolo (O Dia a Dia)"),
     ]:
         conteudo.append(p(f"<b>{num}</b> - {titulo}"))
     conteudo.append(PageBreak())
 
-    # ---------- PARTE 1 ----------
-    conteudo.append(h1("Parte 1 - Introducao e o 'Porque'"))
-    conteudo.append(h2("1.1 O problema que resolvemos"))
+    # ---------- MODULO 1 ----------
+    conteudo.append(h1("Modulo 1 - O Problema (A Dor)"))
+    conteudo.append(h2("1.1 O Custo da Ruptura (Prateleira Vazia)"))
     conteudo.append(p(
-        "Imagine o dia a dia de uma rede com <b>5 filiais</b> e <b>milhares de produtos</b>. "
-        "Todos os dias voce precisa responder:"
-    ))
-    conteudo.append(bullet("<b>Quanto</b> mandar de cada produto para cada loja?"))
-    conteudo.append(bullet("<b>Quando</b> mandar?"))
-    conteudo.append(bullet("Se uma loja tem <b>excesso</b> e outra tem <b>falta</b>, como fazer essa troca?"))
-    conteudo.append(bullet("E se <b>ninguem</b> na rede tiver o produto? Quando comprar?"))
-    conteudo.append(Spacer(1, 0.3 * cm))
-    conteudo.append(p(
-        "Antes deste sistema, essas decisoes eram tomadas por telefone, planilhas e intuicao. "
-        "Levava horas e gerava erros. <b>Com o sistema</b>, o motor faz essas perguntas para TODOS "
-        "os produtos em segundos e prioriza os mais urgentes."
-    ))
-
-    conteudo.append(h2("1.2 O que o sistema faz e NAO faz"))
-    conteudo.append(p("<b>O sistema FAZ:</b>"))
-    conteudo.append(bullet("Analisa historico de vendas e movimentacoes"))
-    conteudo.append(bullet("Calcula o estoque ideal de cada filial"))
-    conteudo.append(bullet("Identifica excessos e faltas"))
-    conteudo.append(bullet("Sugere transferencias e compras"))
-    conteudo.append(bullet("Prioriza por urgencia e gera PDFs"))
-    
-    conteudo.append(p("<b>O sistema NAO FAZ:</b>"))
-    conteudo.append(bullet("Nao substitui sua decisao - ele sugere, voce aprova"))
-    conteudo.append(bullet("Nao executa transferencias - voce cria a ordem no ERP"))
-    conteudo.append(bullet("Nao altera dados no banco - e somente leitura"))
-
-    conteudo.append(h2("1.3 De onde vem a inteligencia"))
-    conteudo.append(p("O motor foi construido com base em 3 praticas consolidadas no varejo mundial:"))
-    conteudo.append(h3("DRP - Distribution Requirements Planning"))
-    conteudo.append(p("Planejamento de reposicao baseado no <b>consumo real</b> de cada ponto de venda (Walmart, Carrefour)."))
-    conteudo.append(h3("IST - Inter-Store Transfers"))
-    conteudo.append(p("Transferencias entre lojas para corrigir desequilibrio enquanto a janela de venda esta aberta (Zara, H&M)."))
-    conteudo.append(h3("MEIO - Multi-Echelon Inventory Optimization"))
-    conteudo.append(p("Otimizacao de inventario em toda a rede, com <b>hub central</b> (Atacado) para consolidar estoque (Amazon, P&G)."))
-    conteudo.append(PageBreak())
-
-    # ---------- PARTE 2 ----------
-    conteudo.append(h1("Parte 2 - Como o sistema pensa"))
-    conteudo.append(h2("2.1 A metafora da caixa d'agua"))
-    conteudo.append(p("Imagine que cada filial e uma <b>caixa d'agua</b>. O sistema tenta manter cada caixa no nivel ideal:"))
-    caixa = [
-        ["Nivel", "Estado"],
-        ["100% (Ideal)", "Tudo perfeito"],
-        ["80%", "Atencao"],
-        ["40%", "Critico"],
-        ["0% (Ruptura)", "Urgente"],
-    ]
-    conteudo.append(tabela(caixa, col_widths=[6 * cm, 8 * cm]))
-
-    conteudo.append(h2("2.2 Calculando o Estoque Ideal"))
-    conteudo.append(p("<b>Formula:</b>"))
-    conteudo.append(p("Estoque Ideal = max(Piso Exposicao, Velocidade Periodo x (Cobertura + Tempo de Transporte))", ESTILO_CODIGO))
-    conteudo.append(nota(
-        "O <b>Piso Exposicao</b> garante um minimo na prateleira, mesmo que a velocidade seja baixa. "
-        "A velocidade usada e a <b>Periodo</b> (vendas / dias corridos)."
-    ))
-
-    conteudo.append(h3("Exemplo pratico"))
-    exemplo = [
-        ["Variavel", "Valor"],
-        ["Vendas nos ultimos 365 dias", "1.825 unidades"],
-        ["Velocidade Periodo", "1.825 / 365 = 5 un/dia"],
-        ["Cobertura + Transporte", "30 + 10 = 40 dias"],
-        ["Estoque Ideal", "5 x 40 = 200 unidades"],
-    ]
-    conteudo.append(tabela(exemplo, col_widths=[7 * cm, 7 * cm]))
-
-    conteudo.append(h2("2.3 Excesso, Falta e o Saldo Ajustado"))
-    conteudo.append(p(
-        "O sistema sempre usa o <b>Saldo Ajustado</b>, que e a soma do Saldo Fisico + o que ja esta <b>Em Transito</b>. "
-        "Isso evita sugerir transferencias duplicadas (efeito chicote)."
-    ))
-    conteudo.append(p("Excesso = Saldo Ajustado - Estoque Ideal (quando positivo)", ESTILO_CODIGO))
-    conteudo.append(p("Falta = Estoque Ideal - Saldo Ajustado (quando positivo)", ESTILO_CODIGO))
-
-    conteudo.append(h2("2.4 A Regra de Compra (COMPRAR)"))
-    conteudo.append(p(
-        "Quando uma loja precisa de produto, o sistema primeiro tenta transferir do Atacado ou de outras lojas. "
-        "Se ninguem na rede tiver o produto sobrando, o sistema cria uma sugestao de <b>COMPRA</b>."
+        "Quando o cliente quer comprar e nao encontra o produto, a venda e perdida. "
+        "No varejo brasileiro, falhas de abastecimento sao responsaveis por ate <b>42% das perdas de vendas</b>. "
+        "No setor de moda, a perda chega a <b>30%</b>."
     ))
     conteudo.append(nota(
-        "A quantidade de compra sugerida e o Estoque Ideal menos o que a loja ja tem e o que ja vai receber. "
-        "Se a loja ja recebeu transferencias e ainda falta, o sistema compra apenas o <b>ESTOQUE COMPLEMENTAR</b>."
+        "O sistema resolve isso calculando o Estoque Ideal para que a prateleira nunca fique vazia."
     ))
 
-    conteudo.append(h2("2.5 Regra do minimo de 5 unidades (MOQ)"))
+    conteudo.append(h2("1.2 O Custo do Excesso (Dinheiro Parado)"))
     conteudo.append(p(
-        "O motor ignora transferencias ou compras menores que 5 unidades. "
-        "Abaixo desse volume, o custo logistico supera o ganho de disponibilidade."
+        "Ter mais produto do que a loja consegue vender imobiliza capital, gera custo de armazenagem "
+        "e leva a perdas por validade ou obsolescencia."
     ))
-    conteudo.append(PageBreak())
+    conteudo.append(nota(
+        "O sistema identifica quem tem excesso (doador) e move o produto para onde ele esta vendendo."
+    ))
 
-    # ---------- PARTE 3 ----------
-    conteudo.append(h1("Parte 3 - Primeiro acesso"))
-    conteudo.append(p("1. Abra o navegador e digite: https://pb-reposicao.streamlit.app"))
-    conteudo.append(p("2. Se o app estiver 'dormindo', clique no botao 'Yes, get this app back up!'."))
-    conteudo.append(p("3. A tela principal possui 6 filtros no topo, 5 botoes de acao e os resultados abaixo."))
-    conteudo.append(PageBreak())
-
-    # ---------- PARTE 4 - DICIONARIO DE FILTROS ----------
-    conteudo.append(h1("Parte 4 - Dicionario de Filtros"))
-    conteudo.append(h2("4.1 Os filtros do topo"))
-    filtros = [
-        ["Filtro", "O que faz", "Exemplo"],
-        ["Perfil de Analise", "Configura os 9 parametros automaticamente.", "Padrao, Lancamento, Classe A..."],
-        ["Fabricante", "Filtra todos os produtos de uma marca.", "ADERE, 3M, TOYMASTER"],
-        ["Departamento", "Categoria principal.", "TECIDOS, AVIAMENTOS"],
-        ["Grupo", "Subdivisao da categoria.", "FITAS, PAPEIS"],
-        ["Subgrupo", "Nivel mais especifico.", "FITA CETIM, FITA ADESIVA"],
-        ["Produto", "Busca por nome, codigo ou referencia.", "CAIXA QUADRADA"],
-    ]
-    conteudo.append(tabela(filtros, col_widths=[3.5 * cm, 7 * cm, 3.5 * cm]))
-    conteudo.append(nota("Escolha pelo menos 1 filtro antes de consultar."))
-
-    conteudo.append(h2("4.2 Busca Avancada de Produto"))
+    conteudo.append(h2("1.3 A Rotina Manual vs. O Sistema"))
     conteudo.append(p(
-        "O campo <b>Produto</b> varre <b>4 fontes</b> e aceita as regras de <b>E</b> (espaco) e <b>OU</b> (virgula). "
-        "Se voce preencher este campo, o sistema <b>ignora</b> Fabricante, Departamento, Grupo, Subgrupo e Filial. "
-        "Ele busca em toda a rede."
+        "Antes: <b>4 a 6 horas por semana</b> montando planilhas, ligando para filiais e decidindo por intuicao. "
+        "Erros frequentes: esquecer produtos, calcular quantidade errada ou mandar de uma loja que tambem estava precisando."
+    ))
+    conteudo.append(p(
+        "Com o sistema: O motor faz o calculo para milhares de produtos em segundos. "
+        "O gestor foca apenas em aprovar as acoes criticas."
     ))
     conteudo.append(PageBreak())
 
-    # ---------- PARTE 5 - DICIONARIO DE PARAMETROS ----------
-    conteudo.append(h1("Parte 5 - Dicionario de Parametros (Os 11 campos)"))
-    conteudo.append(p("Ao clicar no botao <b>Parametros</b>, voce vera 11 campos. Veja o que cada um faz:"))
+    # ---------- MODULO 2 ----------
+    conteudo.append(h1("Modulo 2 - A Ciencia (A Solucao)"))
+    conteudo.append(p(
+        "O sistema aplica 3 praticas consolidadas no varejo mundial. Entender isso e o que diferencia "
+        "um gestor estrategico de um operador de tela."
+    ))
+
+    conteudo.append(h2("2.1 DRP (Distribution Requirements Planning)"))
+    conteudo.append(p(
+        "<b>O que e:</b> Planejamento de reposicao baseado no consumo real de cada ponto de venda.<br>"
+        "<b>Onde entra:</b> E a base do calculo do Estoque Ideal (Velocidade x Cobertura).<br>"
+        "<b>Quem usa:</b> Walmart, Carrefour, Pao de Acucar.<br>"
+        "<b>Literatura:</b> O DRP reduz faltas e melhora a pontualidade das entregas, alem de evitar "
+        "sobreinventario e desabastecimento."
+    ))
+
+    conteudo.append(h2("2.2 IST (Inter-Store Transfers)"))
+    conteudo.append(p(
+        "<b>O que e:</b> Transferencias entre lojas para corrigir desequilibrio enquanto a janela de venda esta aberta.<br>"
+        "<b>Onde entra:</b> E a Matriz de Proximidade. Quando a Zona Sul precisa, o sistema tenta o Atacado, depois o Alecrim, etc.<br>"
+        "<b>Quem usa:</b> Zara, H&M, Best Buy.<br>"
+        "<b>Caso real (Zara):</b> A Zara usa dados de PDV em tempo real e cross-docking para um ciclo de design "
+        "ate a loja de apenas 2 a 3 semanas. Transferir entre lojas e mais rapido e barato do que esperar o CD."
+    ))
+
+    conteudo.append(h2("2.3 MEIO (Multi-Echelon Inventory Optimization)"))
+    conteudo.append(p(
+        "<b>O que e:</b> Otimizacao de inventario em toda a rede, com um hub central (Atacado) para consolidar estoque.<br>"
+        "<b>Onde entra:</b> O Atacado e o primeiro doador e o consolidador de compras.<br>"
+        "<b>Quem usa:</b> Amazon, Coca-Cola, P&G.<br>"
+        "<b>Caso real (Amazon):</b> A otimizacao multi-echelon da Amazon reduziu o capital de giro imobilizado em "
+        "14% a 27% e melhorou o nivel de servico em ate 3,2%, alem de reduzir faltas em 30% a 50%."
+    ))
+
+    conteudo.append(h2("2.4 O Efeito Chicote (e como o sistema o combate)"))
+    conteudo.append(p(
+        "A P&G descobriu que, mesmo com as vendas de fraldas Pampers estaveis no varejo, os pedidos dos supermercados "
+        "flutuavam drasticamente. Isso inflava os custos de producao e estoque na cadeia inteira."
+    ))
+    conteudo.append(p(
+        "O sistema resolve isso com o parametro <b>Reposicao Recente</b>. Se a loja recebeu produto ha poucos dias, "
+        "o sistema bloqueia um novo pedido, mesmo que a falta ainda exista. Isso evita o pedido duplicado "
+        "e quebra o ciclo."
+    ))
+    conteudo.append(PageBreak())
+
+    # ---------- MODULO 3 ----------
+    conteudo.append(h1("Modulo 3 - As Ferramentas (O Que e e Para Que Serve)"))
+    conteudo.append(p(
+        "Aqui explicamos o 'Porque' de cada ferramenta e o risco de usa-la de forma errada."
+    ))
+
+    conteudo.append(h2("3.1 O Perfil de Analise (O Atalho Inteligente)"))
+    conteudo.append(p(
+        "O Perfil configura os 9 parametros automaticamente. Escolher o perfil errado pode custar caro. Veja:"
+    ))
     
+    perfis_tec = [
+        ["Perfil", "Quando usar (O MOTIVO)", "O que acontece se errar?"],
+        ["Padrao", "Produtos normais, que vendem o ano todo.", "Se usar em um sazonal, vai acumular estoque fora de epoca."],
+        ["Lancamento", "Produto novo, sem historico de venda.", "Se usar Padrao, o sistema acha que vende zero e nao manda nada (prateleira vazia)."],
+        ["Classe A", "Campeoes de venda. O carro-chefe.", "Se usar Baixo Giro, o sistema vai deixar faltar o produto mais importante."],
+        ["Alto Giro", "Venda rapida e constante.", "Se usar Padrao, a loja zera antes do caminhao chegar."],
+        ["Sazonal Longo", "Natal, Carnaval. Vende muito por semanas.", "Se usar Sazonal Curto, o estoque acaba no meio da campanha."],
+        ["Sazonal Curto", "Pascoa, Halloween. Pico de 1 semana.", "Se usar Sazonal Longo, sobra estoque apos a data (prejuizo)."],
+        ["Baixo Giro", "Produtos encalhados. Vende 1 por mes.", "Se usar Classe A, compra uma montanha de produto que ninguem quer."],
+        ["Liquidacao", "Fim de ciclo. Nao vende mais.", "Se usar Padrao, o sistema fica transferindo produto morto (gasta frete)."],
+    ]
+    est_tec = ParagraphStyle('Tec', parent=styles['Normal'], fontSize=8, leading=10)
+    for i, row in enumerate(perfis_tec):
+        if i > 0:
+            for j in range(1, len(row)):
+                perfis_tec[i][j] = Paragraph(perfis_tec[i][j], est_tec)
+    conteudo.append(tabela(perfis_tec, col_widths=[3 * cm, 5 * cm, 6 * cm]))
+
+    conteudo.append(h2("3.2 Os 11 Parametros (O que cada um resolve?)"))
     param1 = [
         ["Parametro", "O que e", "Impacto se aumentar"],
-        ["Periodo de Analise", "Janela historica para calcular a velocidade.", "Olha mais para tras (mais estavel)."],
+        ["Periodo de Analise", "Janela historica de vendas.", "Olha mais para tras (mais estavel)."],
         ["Filial", "Apenas visual (filtra abas).", "Nao altera o calculo, so a exibicao."],
         ["Cobertura de Vendas", "Dias de venda que o produto deve cobrir.", "Ideal maior. Loja pede mais."],
         ["Tempo de Transporte", "Dias entre envio e entrega.", "Ideal maior. Mais seguranca."],
         ["Piso Exposicao", "Minimo na prateleira.", "Garante que a prateleira nao fique vazia."],
-        ["Reserva Origem (%)", "% do excesso que fica na origem.", "Origem doa menos (mais conservadora)."],
+        ["Reserva Origem (%)", "% do excesso que fica na origem.", "Origem doa menos (conservadora)."],
         ["Atacado tem Piso?", "Se atacado respeita piso.", "Atacado segura mais produto."],
         ["Atacado tem Reserva?", "Se atacado guarda reserva.", "Atacado doa menos."],
         ["Reposicao Recente", "Quarentena pos-recebimento.", "Bloqueia por mais tempo (evita gangorra)."],
-        ["Dias em Transito", "Janela para ver o que esta a caminho.", "Considera envios mais antigos como em transito."],
-        ["Atacado tem Minimo p/ Compra?", "Usa Piso como qtd minima de compra.", "Evita comprar volumes muito pequenos."],
+        ["Dias em Transito", "Janela do que esta a caminho.", "Considera envios mais antigos como em transito."],
+        ["Minimo p/ Compra?", "Usa Piso como qtd minima de compra.", "Evita comprar volumes muito pequenos."],
     ]
-    est_tec = ParagraphStyle('Tec', parent=styles['Normal'], fontSize=8, leading=10)
+    est_tec = ParagraphStyle('Tec2', parent=styles['Normal'], fontSize=8, leading=10)
     for i, row in enumerate(param1):
         if i > 0:
             for j in range(1, len(row)):
                 param1[i][j] = Paragraph(param1[i][j], est_tec)
-    conteudo.append(tabela(param1, col_widths=[4 * cm, 6 * cm, 4 * cm]))
+    conteudo.append(tabela(param1, col_widths=[3.5 * cm, 6.5 * cm, 4 * cm]))
     conteudo.append(PageBreak())
 
-    # ---------- PARTE 6 - LENDO OS RESULTADOS ----------
-    conteudo.append(h1("Parte 6 - Lendo os Resultados e os Cards"))
-    conteudo.append(h2("6.1 Os Cards e as Abas"))
+    # ---------- MODULO 4 ----------
+    conteudo.append(h1("Modulo 4 - A Inteligencia (Lendo a Tela)"))
+    conteudo.append(h2("4.1 Ideal vs. Quantidade de Transferencia"))
     conteudo.append(p(
-        "Acima das tabelas, voce vera <b>5 cards</b>: Enviar, Receber, Liquidar, Desc. e Comprar. "
-        "Cada card mostra o total de <b>Itens</b> e de <b>Unidades</b>."
+        "Essa e a maior duvida dos gestores:\n"
+        "<b>Qtd Ideal:</b> E o tamanho do buraco (a meta).\n"
+        "<b>Qtd Transf.:</b> E a acao de hoje. O que falta para tapar o buraco.\n"
+        "Exemplo: Ideal 100, Saldo 40. Transfere 60. O Ideal e a meta, a transferencia e o passo."
     ))
-    conteudo.append(p("As abas representam as filiais: ATACADO, ALECRIM, VIA DIRETA, ZONA SUL, ZONA NORTE."))
 
-    conteudo.append(h2("6.2 As 5 Secoes de cada Aba"))
-    acoes_fim_linha = [
-        ["Acao", "O que significa?"],
-        ["ENVIAR", "A filial tem demais e vai doar."],
-        ["RECEBER", "A filial tem falta e vai receber."],
-        ["COMPRAR", "Ninguem na rede tem. Precisa comprar do fornecedor."],
-        ["DESCONTINUAR", "Produto de giro baixo (vende 1 a cada 12 dias). Deve sair do mix."],
-        ["LIQUIDAR", "Produto zerado de venda. Deve ser promovido ou devolvido."],
-    ]
-    conteudo.append(tabela(acoes_fim_linha, col_widths=[3 * cm, 11 * cm]))
-    conteudo.append(PageBreak())
-
-    # ---------- PARTE 7 - O LIVRO DOS MOTIVOS ----------
-    conteudo.append(h1("Parte 7 - O Livro dos Motivos"))
-    conteudo.append(p("O Motivo e o coracao do sistema. Ele te diz exatamente o que esta acontecendo."))
-    
+    conteudo.append(h2("4.2 O Livro dos Motivos"))
     motivos = [
         ["Motivo", "Significado"],
-        ["SEM ESTOQUE", "A loja esta zerada e <b>nao ha nada no caminhao</b>. Alarme vermelho. Acao imediata."],
-        ["AGUARDANDO TRANSFERENCIA", "A loja tem falta, <b>MAS</b> ja tem um caminhao cheio de produto indo para la. Nao mande de novo."],
+        ["SEM ESTOQUE", "A loja esta zerada e nao ha nada no caminhao. Alarme vermelho. Acao imediata."],
+        ["AGUARDANDO TRANSFERENCIA", "A loja tem falta, MAS ja tem um caminhao cheio de produto indo para la. Nao mande de novo."],
         ["RECEBIDO RECENTEMENTE", "A loja recebeu produto ha poucos dias. Esta de 'castigo' (quarentena) para nao pedir duplicado."],
         ["URGENTE - zera hoje", "O estoque acaba em menos de 24 horas."],
         ["URGENTE - zera em N dias", "Vai acabar logo. Voce tem alguns dias para agir."],
         ["Origem parada, destino vendendo", "A loja doadora quase nao vende, mas a receptora vende muito. O sistema move o produto para onde ele gira."],
         ["Alta rotacao no destino", "A loja receptora vende o dobro da doadora."],
         ["Maior giro no destino", "A loja receptora vende 1.5x mais que a doadora."],
-        ["Reposicao de ciclo", "Fluxo normal. Nada de errado, apenas mantendo a prateleira cheia."],
-        ["ESTOQUE COMPLEMENTAR", "<b>Motivo de compra.</b> A rede tem um pouco do produto, mas nao o suficiente para o Ideal. Compre so o que falta."],
-        ["ESTOQUE PARADO", "<b>Liquidar.</b> O produto tem estoque, mas a velocidade de venda e zero. Ninguem quer."],
-        ["FIM DE CICLO", "<b>Descontinuar.</b> O produto vende muito pouco (abaixo de 0.1/dia). Venda o estoque e tire do mix."],
+        ["Reposicao de ciclo", "Fluxo normal. Nada de errado."],
+        ["ESTOQUE COMPLEMENTAR", "Motivo de compra. A rede tem um pouco do produto, mas nao o suficiente. Compre so o que falta."],
+        ["ESTOQUE PARADO", "Liquidar. O produto tem estoque, mas a velocidade de venda e zero."],
+        ["FIM DE CICLO", "Descontinuar. O produto vende muito pouco. Venda o estoque e tire do mix."],
     ]
-    est_tec = ParagraphStyle('Tec', parent=styles['Normal'], fontSize=8, leading=10)
+    est_tec = ParagraphStyle('Tec3', parent=styles['Normal'], fontSize=8, leading=10)
     for i, row in enumerate(motivos):
         if i > 0:
             for j in range(1, len(row)):
@@ -362,73 +320,68 @@ def gerar(buffer=None):
     conteudo.append(tabela(motivos, col_widths=[4 * cm, 10 * cm]))
     conteudo.append(PageBreak())
 
-    # ---------- PARTE 8 - CENARIOS REAIS ----------
-    conteudo.append(h1("Parte 8 - Cenarios Reais (O que fazer?)"))
+    # ---------- MODULO 5 ----------
+    conteudo.append(h1("Modulo 5 - O Protocolo (O Dia a Dia)"))
+    conteudo.append(h2("5.1 Sua Rotina Semanal"))
+    conteudo.append(p(
+        "<b>Segunda-feira (10 min):</b><br>"
+        "1. Abra o app.<br>"
+        "2. Escolha o Perfil de Analise.<br>"
+        "3. Escolha o Fabricante.<br>"
+        "4. Clique em Consultar.<br>"
+        "5. Filtre por Prioridade Critica.<br><br>"
+        "<b>Terca a Quinta (Acao):</b><br>"
+        "1. Leia o Motivo.<br>"
+        "2. Confirme a Qtd.<br>"
+        "3. Gere o PDF.<br>"
+        "4. Crie a ordem no ERP.<br>"
+        "5. Se houver itens em COMPRAR, envie a lista para o time de Compras.<br><br>"
+        "<b>Sexta-feira (10 min):</b><br>"
+        "1. Reabra o app.<br>"
+        "2. Compare com a semana anterior.<br>"
+        "3. Ajuste parametros se necessario."
+    ))
+
+    conteudo.append(h2("5.2 Cenarios Reais (O que fazer?)"))
+    conteudo.append(p("<b>Cenario 1: Produto em falta critica (RECEBER)</b>"))
+    conteudo.append(p(
+        "O que vejo: Fita Adesiva, 85 un, Motivo: 'URGENTE - zera hoje'.\n"
+        "Acao: Gere o PDF, envie para o Atacado, crie a ordem no ERP."
+    ))
     
-    conteudo.append(h2("Caso 1 - Produto em falta critica (RECEBER)"))
-    conteudo.append(p("Voce ve a Fita Adesiva com Prioridade Critica e Motivo 'URGENTE - zera hoje'."))
-    conteudo.append(p("<b>Acao:</b> 1. Vejo o Motivo. 2. Confirmo a Origem (Atacado). 3. Clico em Gerar PDF. 4. Crio a ordem no ERP."))
+    conteudo.append(p("<b>Cenario 2: A rede inteira esta sem estoque (COMPRAR)</b>"))
+    conteudo.append(p(
+        "O que vejo: Fita Crepe na aba COMPRAR do Atacado, Sugestao 50.\n"
+        "Acao: Nenhuma loja tem. Envie a lista para o time de Compras."
+    ))
+    
+    conteudo.append(p("<b>Cenario 3: O produto ja esta a caminho (AGUARDANDO)</b>"))
+    conteudo.append(p(
+        "O que vejo: Papel Kraft, Em Transito: 20 un.\n"
+        "Acao: O caminhao ja saiu. Apenas aguarde a entrega."
+    ))
+    
+    conteudo.append(p("<b>Cenario 4: O produto esta encalhado (LIQUIDAR)</b>"))
+    conteudo.append(p(
+        "O que vejo: Squeeze Halloween, Motivo: 'ESTOQUE PARADO'.\n"
+        "Acao: O sistema NAO vai transferir. Acao comercial: promocao local ou devolucao."
+    ))
+    
+    conteudo.append(p("<b>Cenario 5: O produto tem giro baixo (DESCONTINUAR)</b>"))
+    conteudo.append(p(
+        "O que vejo: Fita Cetim Vermelha, Motivo: 'FIM DE CICLO'.\n"
+        "Acao: Vender ate o fim do estoque. Nao comprar mais."
+    ))
 
-    conteudo.append(h2("Caso 2 - A rede inteira esta sem estoque (COMPRAR)"))
-    conteudo.append(p("Voce ve a Fita Crepe na aba COMPRAR do Atacado com Sugestao de Compra 50."))
-    conteudo.append(p("<b>Acao:</b> Nenhuma loja tem o produto. Envio a lista para o time de Compras fazer o pedido ao fornecedor."))
-
-    conteudo.append(h2("Caso 3 - O produto ja esta a caminho (AGUARDANDO)"))
-    conteudo.append(p("Voce ve Papel Kraft com Em Transito 20 un."))
-    conteudo.append(p("<b>Acao:</b> O caminhao ja saiu. Nao faco nada, apenas aguardo a entrega."))
-
-    conteudo.append(h2("Caso 4 - O produto esta encalhado (LIQUIDAR)"))
-    conteudo.append(p("Voce ve o Squeeze Halloween com Motivo 'ESTOQUE PARADO'."))
-    conteudo.append(p("<b>Acao:</b> Acao comercial: promocao local, kit, ou devolver ao fornecedor."))
-
-    conteudo.append(PageBreak())
-
-    conteudo.append(h2("Caso 5 - Produto de giro baixo (DESCONTINUAR)"))
-    conteudo.append(p("Voce ve Fita Cetim Vermelha com Motivo 'FIM DE CICLO'."))
-    conteudo.append(p("<b>Acao:</b> Vender ate o fim do estoque. Nao comprar mais."))
-
-    conteudo.append(h2("Caso 6 - Produto recem-recebido (RECEBIDO RECENTEMENTE)"))
-    conteudo.append(p("Voce ve Papel Kraft com Motivo 'RECEBIDO RECENTEMENTE'."))
-    conteudo.append(p("<b>Acao:</b> A origem ja mandou algo nos ultimos 15 dias. Verifique se chegou. Se sim, nao faca nada. Se nao, acione a transportadora."))
-
-    conteudo.append(PageBreak())
-
-    # ---------- PARTE 9 - FAQ ----------------
-    conteudo.append(h1("Parte 9 - Perguntas frequentes e Ajustes"))
-    faq = [
-        ("A sugestao parece errada. O que faco?", "1. Leia o Motivo. 2. Confira o Saldo e o Em Transito. 3. Verifique movimentacoes estranhas. 4. Acione o TI."),
-        ("O sistema sugere menos de 5 unidades?", "Nao. O motor tem uma regra de MOQ. Transferencias ou compras abaixo de 5 un sao ignoradas."),
-        ("Como ajustar se estiver sugerindo MUITO?", "Aumente a Reposicao Recente (15->30) para bloquear mais. Aumente a Reserva Origem (25->40) para doar menos. Diminua a Cobertura (30->15)."),
-        ("Como ajustar se estiver sugerindo POUCO?", "Diminua a Reposicao Recente (15->7). Diminua a Reserva Origem (25->15). Aumente a Cobertura (30->45)."),
-        ("O Atacado compra para ele mesmo?", "Sim. Se ele estiver abaixo do Ideal, a aba COMPRAR dele sugere a compra para repor a propria prateleira do CD."),
-        ("Como sei se um produto e doador ou receptor?", "Doador: secao ENVIAR. Receptor: secao RECEBER."),
-        ("O que e 'RECEBIDO RECENTEMENTE'?", "A loja recebeu nos ultimos N dias (parametro Reposicao Recente). Esta em quarentena."),
-        ("Posso transferir tudo que o sistema sugere?", "Nao. O programa nao substitui o bom senso. Sempre confira o Motivo."),
-        ("Isso substitui o ERP?", "Nao. E uma ferramenta de decisao. A execucao continua no ERP."),
-    ]
-    for q, r in faq:
-        conteudo.append(p(f"<b>P:</b> {q}", ESTILO_H3))
-        conteudo.append(p(f"<b>R:</b> {r}"))
-    conteudo.append(PageBreak())
-
-    # ---------- PARTE 10 - GLOSSARIO ----------
-    conteudo.append(h1("Parte 10 - Glossario"))
-    glossario = [
-        ["Termo", "Definicao"],
-        ["Estoque Ideal", "max(Piso, VelocPeriodo x (Cob + Lead))"],
-        ["Excesso", "Saldo Ajustado acima do Ideal"],
-        ["Falta", "Saldo Ajustado abaixo do Ideal"],
-        ["Hub", "Filial central (Atacado)"],
-        ["Matriz de Proximidade", "Regra de quem ajuda quem"],
-        ["MOQ", "Minimum Order Quantity - minimo de 5 un"],
-        ["Piso Exposicao", "Quantidade minima na prateleira"],
-        ["Reposicao Recente", "Bloqueio parcial pos-recebimento"],
-        ["Reserva Origem", "% do excesso que fica na origem"],
-        ["Saldo Ajustado", "SaldoProvavel + QtdEmTransito"],
-        ["Velocidade Ativa", "Vendas / dias com venda"],
-        ["Velocidade Periodo", "Vendas / dias corridos"],
-    ]
-    conteudo.append(tabela(glossario, col_widths=[5 * cm, 9 * cm]))
+    conteudo.append(h2("5.3 Ajustes Frequentes"))
+    conteudo.append(p("<b>A sugestao parece errada. O que faco?</b>"))
+    conteudo.append(bullet("1. Leia o Motivo. 2. Confira o Saldo e o Em Transito. 3. Verifique movimentacoes estranhas. 4. Se nada explicar, acione o TI."))
+    
+    conteudo.append(p("<b>Como ajustar se estiver sugerindo MUITO?</b>"))
+    conteudo.append(bullet("Aumente a Reposicao Recente (15 -> 30). Aumente a Reserva Origem (25% -> 40%). Diminua a Cobertura (30 -> 15)."))
+    
+    conteudo.append(p("<b>Como ajustar se estiver sugerindo POUCO?</b>"))
+    conteudo.append(bullet("Diminua a Reposicao Recente (15 -> 7). Diminua a Reserva Origem (25% -> 15%). Aumente a Cobertura (30 -> 45)."))
 
     # ---------- GERAR ----------
     doc.build(conteudo, canvasmaker=ManualCanvas)
