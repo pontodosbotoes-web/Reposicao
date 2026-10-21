@@ -194,49 +194,54 @@ if st.session_state["view"] == "manual":
     render_manual()
     st.stop()
 
-# Inicialização do estado
-_DEFAULTS = {
-    "perfil_sel": "Padrão", "fabricante_sel": "(todos)", "depto_sel": "(todos)",
-    "grupo_sel": "(todos)", "subgrupo_sel": "(todos)", "produto_busca": "",
-    "opcao_data": "1 ano atrás", "filial_param": "(todas)", "cobertura_opcao": "Para 30 dias",
-    "lead_time": 10, "piso": 0, "reserva": 25, "atacado_piso": "Não",
-    "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 15, "dias_transito": 10,
-}
-for _k, _v in _DEFAULTS.items():
-    if _k not in st.session_state: st.session_state[_k] = _v
+# ============================================================
+# INICIALIZAÇÃO E SINCRONIA DE ESTADO (A PROVA DE FALHAS)
+# ============================================================
+if "perfil_sel" not in st.session_state:
+    st.session_state["perfil_sel"] = "Padrão"
 
-COBERTURA_LISTA = ["Para 7 dias", "Para 15 dias", "Para 30 dias", "Para 2 meses", "Para 3 meses", "Para 6 meses", "Para 1 ano"]
-PERIODO_LISTA = ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás", "30 dias atrás", "15 dias atrás", "7 dias atrás"]
+# Sincroniza parâmetros baseados no perfil atual
+if st.session_state.get("_ultimo_perfil_aplicado") != st.session_state["perfil_sel"]:
+    perfil_atual = st.session_state["perfil_sel"]
+    for k, v in PERFIS[perfil_atual].items():
+        st.session_state[k] = v
+    st.session_state["_ultimo_perfil_aplicado"] = perfil_atual
 
-COBERTURA_MAP = {
-    "Para 7 dias": 7, "Para 15 dias": 15, "Para 30 dias": 30, "Para 2 meses": 60,
-    "Para 3 meses": 90, "Para 6 meses": 180, "Para 1 ano": 365,
-}
+# Garante que todas as chaves existam (para o primeiro boot)
+for k, v in PERFIS["Padrão"].items():
+    if k not in st.session_state:
+        st.session_state[k] = v
+if "fabricante_sel" not in st.session_state: st.session_state["fabricante_sel"] = "(todos)"
+if "depto_sel" not in st.session_state: st.session_state["depto_sel"] = "(todos)"
+if "grupo_sel" not in st.session_state: st.session_state["grupo_sel"] = "(todos)"
+if "subgrupo_sel" not in st.session_state: st.session_state["subgrupo_sel"] = "(todos)"
+if "produto_busca" not in st.session_state: st.session_state["produto_busca"] = ""
+if "filial_param" not in st.session_state: st.session_state["filial_param"] = "(todas)"
 
 # ============================================================
-# SINCRONIA DE PERFIL
+# CALLBACKS
 # ============================================================
-if st.session_state.get("_ultimo_perfil_aplicado") != st.session_state.get("perfil_sel"):
-    _perfil_atual = st.session_state.get("perfil_sel", "Padrão")
-    if _perfil_atual in PERFIS:
-        for _k, _v in PERFIS[_perfil_atual].items():
-            st.session_state[_k] = _v
-    st.session_state["_ultimo_perfil_aplicado"] = _perfil_atual
-
 def _limpar_filtros():
-    _p = st.session_state.get("perfil_sel", "Padrão")
-    for _k, _v in PERFIS[_p].items():
-        st.session_state[_k] = _v
-    st.session_state["_ultimo_perfil_aplicado"] = _p
+    perfil_atual = st.session_state.get("perfil_sel", "Padrão")
+    for k, v in PERFIS[perfil_atual].items():
+        st.session_state[k] = v
+    st.session_state["_ultimo_perfil_aplicado"] = perfil_atual
     
     st.session_state["fabricante_sel"] = "(todos)"
     st.session_state["depto_sel"] = "(todos)"
     st.session_state["grupo_sel"] = "(todos)"
     st.session_state["subgrupo_sel"] = "(todos)"
     st.session_state["produto_busca"] = ""
+    st.session_state["filial_param"] = "(todas)"
     
     for _k in ("df_base", "df_transf", "df_compras", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
         if _k in st.session_state: del st.session_state[_k]
+
+def _mudar_perfil():
+    perfil_novo = st.session_state["perfil_sel"]
+    for k, v in PERFIS[perfil_novo].items():
+        st.session_state[k] = v
+    st.session_state["_ultimo_perfil_aplicado"] = perfil_novo
 
 # ============================================================
 # LINHA 1: FILTROS
@@ -246,7 +251,8 @@ f0, f1, f2, f3, f4, f5 = st.columns([1.6, 1.9, 1.3, 1.3, 1.3, 1.8], vertical_ali
 with f0:
     st.selectbox(
         "Perfil de Análise", list(PERFIS.keys()), key="perfil_sel",
-        help="**Perfil de Análise**\n\nEscolha um perfil para ajustar automaticamente os 9 parâmetros."
+        help="**Perfil de Análise**\n\nEscolha um perfil para ajustar automaticamente os 9 parâmetros.",
+        on_change=_mudar_perfil
     )
 with f1: fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel")
 with f2: depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel")
@@ -288,59 +294,97 @@ if produto_busca and produto_busca.strip():
     )
 
 # ============================================================
-# PARÂMETROS
+# PARÂMETROS (COM LEITURA SEGURA)
 # ============================================================
 if btn_params: st.session_state.show_params = not st.session_state.show_params
 
 if st.session_state.show_params:
     with st.container(border=True):
         r1c1, r1c2, r1c3, r1c4 = st.columns(4)
+        
+        # Período de Análise
         with r1c1: 
-            # Força o index correto baseado no que está no session_state
-            idx_opcao = PERIODO_LISTA.index(st.session_state["opcao_data"]) if st.session_state["opcao_data"] in PERIODO_LISTA else 0
-            opcao_data = st.selectbox("Período de Análise", PERIODO_LISTA, index=idx_opcao, key="opcao_data")
+            lista_periodo = ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás", "30 dias atrás", "15 dias atrás", "7 dias atrás"]
+            idx_p = lista_periodo.index(st.session_state.get("opcao_data", "1 ano atrás")) if st.session_state.get("opcao_data") in lista_periodo else 0
+            v_opcao = st.selectbox("Período de Análise", lista_periodo, index=idx_p)
+            st.session_state["opcao_data"] = v_opcao
+            
+        # Filial
         with r1c2: 
             lista_filial = ["(todas)"] + list(filiais.keys())
-            idx_filial = lista_filial.index(st.session_state["filial_param"]) if st.session_state["filial_param"] in lista_filial else 0
-            filial_sel = st.selectbox("Filial", lista_filial, index=idx_filial, key="filial_param", help="Apenas visual: o motor sempre analisa todas as filiais.")
+            idx_f = lista_filial.index(st.session_state.get("filial_param", "(todas)")) if st.session_state.get("filial_param") in lista_filial else 0
+            v_filial = st.selectbox("Filial", lista_filial, index=idx_f, help="Apenas visual: o motor sempre analisa todas as filiais.")
+            st.session_state["filial_param"] = v_filial
+            
+        # Cobertura de Vendas
         with r1c3: 
-            idx_cobertura = COBERTURA_LISTA.index(st.session_state["cobertura_opcao"]) if st.session_state["cobertura_opcao"] in COBERTURA_LISTA else 0
-            cobertura_opcao = st.selectbox("Cobertura de Vendas", COBERTURA_LISTA, index=idx_cobertura, key="cobertura_opcao")
+            lista_cob = ["Para 7 dias", "Para 15 dias", "Para 30 dias", "Para 2 meses", "Para 3 meses", "Para 6 meses", "Para 1 ano"]
+            idx_c = lista_cob.index(st.session_state.get("cobertura_opcao", "Para 30 dias")) if st.session_state.get("cobertura_opcao") in lista_cob else 2
+            v_cob = st.selectbox("Cobertura de Vendas", lista_cob, index=idx_c)
+            st.session_state["cobertura_opcao"] = v_cob
+            
+        # Tempo de Transporte
         with r1c4: 
-            lead_time = st.number_input("Tempo de Transporte (dias)", 0, 30, key="lead_time")
+            v_lead = st.number_input("Tempo de Transporte (dias)", 0, 30, value=int(st.session_state.get("lead_time", 10)))
+            st.session_state["lead_time"] = v_lead
 
         r2c1, r2c2, r2c3, r2c4 = st.columns(4)
-        with r2c1: piso = st.number_input("Piso Exposição (un)", 0, 50, key="piso")
-        with r2c2: reserva = st.number_input("Reserva Origem (%)", 0, 100, key="reserva")
+        
+        # Piso Exposição
+        with r2c1: 
+            v_piso = st.number_input("Piso Exposição (un)", 0, 50, value=int(st.session_state.get("piso", 0)))
+            st.session_state["piso"] = v_piso
+            
+        # Reserva Origem
+        with r2c2: 
+            v_reserva = st.number_input("Reserva Origem (%)", 0, 100, value=int(st.session_state.get("reserva", 25)))
+            st.session_state["reserva"] = v_reserva
+            
+        # Atacado tem Piso
         with r2c3: 
-            idx_atacado_piso = ["Não", "Sim"].index(st.session_state["atacado_piso"]) if st.session_state["atacado_piso"] in ["Não", "Sim"] else 0
-            atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], index=idx_atacado_piso, key="atacado_piso")
+            lista_sn = ["Não", "Sim"]
+            idx_ap = lista_sn.index(st.session_state.get("atacado_piso", "Não")) if st.session_state.get("atacado_piso") in lista_sn else 0
+            v_ap = st.selectbox("Atacado tem Piso?", lista_sn, index=idx_ap)
+            st.session_state["atacado_piso"] = v_ap
+            
+        # Atacado tem Reserva
         with r2c4: 
-            idx_atacado_res = ["Não", "Sim"].index(st.session_state["atacado_reserva"]) if st.session_state["atacado_reserva"] in ["Não", "Sim"] else 0
-            atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], index=idx_atacado_res, key="atacado_reserva")
+            idx_ar = lista_sn.index(st.session_state.get("atacado_reserva", "Não")) if st.session_state.get("atacado_reserva") in lista_sn else 0
+            v_ar = st.selectbox("Atacado tem Reserva?", lista_sn, index=idx_ar)
+            st.session_state["atacado_reserva"] = v_ar
 
         r3c1, r3c2, r3c3 = st.columns(3)
-        with r3c1: anti_gangorra = st.number_input("Reposição Recente (dias)", 0, 90, key="anti_gangorra")
-        with r3c2: dias_transito = st.number_input("Dias em Trânsito", 1, 60, key="dias_transito")
+        
+        # Reposição Recente
+        with r3c1: 
+            v_ag = st.number_input("Reposição Recente (dias)", 0, 90, value=int(st.session_state.get("anti_gangorra", 15)))
+            st.session_state["anti_gangorra"] = v_ag
+            
+        # Dias em Trânsito
+        with r3c2: 
+            v_dt = st.number_input("Dias em Trânsito", 1, 60, value=int(st.session_state.get("dias_transito", 10)))
+            st.session_state["dias_transito"] = v_dt
+            
+        # Atacado Mínimo Compra
         with r3c3: 
-            idx_min_compra = ["Não", "Sim"].index(st.session_state["atacado_min_compra"]) if st.session_state["atacado_min_compra"] in ["Não", "Sim"] else 0
-            atacado_min_compra = st.selectbox("Atacado tem Mínimo p/ Compra?", ["Não", "Sim"], index=idx_min_compra, key="atacado_min_compra", help="Se Sim, usa o valor do Piso Exposição como quantidade mínima para sugerir compra.")
-else:
-    perfil_sel = st.session_state.get("perfil_sel", "Padrão")
-    opcao_data = st.session_state.get("opcao_data", "1 ano atrás")
-    filial_sel = st.session_state.get("filial_param", "(todas)")
-    cobertura_opcao = st.session_state.get("cobertura_opcao", "Para 30 dias")
-    lead_time = st.session_state.get("lead_time", 10)
-    piso = st.session_state.get("piso", 0)
-    reserva = st.session_state.get("reserva", 25)
-    atacado_piso = st.session_state.get("atacado_piso", "Não")
-    atacado_reserva = st.session_state.get("atacado_reserva", "Não")
-    atacado_min_compra = st.session_state.get("atacado_min_compra", "Não")
-    anti_gangorra = st.session_state.get("anti_gangorra", 15)
-    dias_transito = st.session_state.get("dias_transito", 10)
+            idx_am = lista_sn.index(st.session_state.get("atacado_min_compra", "Não")) if st.session_state.get("atacado_min_compra") in lista_sn else 0
+            v_am = st.selectbox("Atacado tem Mínimo p/ Compra?", lista_sn, index=idx_am, help="Se Sim, usa o valor do Piso Exposição como quantidade mínima para sugerir compra.")
+            st.session_state["atacado_min_compra"] = v_am
 
+# Recupera os valores atualizados do session_state para uso no motor
+opcao_data = st.session_state["opcao_data"]
+filial_sel = st.session_state["filial_param"]
+cobertura_opcao = st.session_state["cobertura_opcao"]
+lead_time = st.session_state["lead_time"]
+piso = st.session_state["piso"]
+reserva = st.session_state["reserva"]
+atacado_piso = st.session_state["atacado_piso"]
+atacado_reserva = st.session_state["atacado_reserva"]
+anti_gangorra = st.session_state["anti_gangorra"]
+dias_transito = st.session_state["dias_transito"]
+atacado_min_compra = st.session_state["atacado_min_compra"]
 
-cobertura = COBERTURA_MAP.get(cobertura_opcao, 30)
+cobertura = {"Para 7 dias": 7, "Para 15 dias": 15, "Para 30 dias": 30, "Para 2 meses": 60, "Para 3 meses": 90, "Para 6 meses": 180, "Para 1 ano": 365}.get(cobertura_opcao, 30)
 data_ref, lookback = calcular_janela_analise(opcao_data)
 
 # ============================================================
@@ -662,4 +706,4 @@ if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v2.8 — 2026-10-21</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v2.9 — 2026-10-21</div>', unsafe_allow_html=True)
