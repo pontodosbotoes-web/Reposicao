@@ -198,18 +198,22 @@ def render_manual() -> None:
             ])
 
         st.subheader("Entendendo os Parâmetros no Detalhe")
-        st.markdown(
-            "**1. Período de Análise:** Janela de tempo (1 ano).\n"
-            "**2. Filial:** Apenas visual.\n"
-            "**3. Cobertura de Vendas:** Dias de estoque (30d). Aumentar = Ideal maior = mais pedidos.\n"
-            "**4. Tempo de Transporte:** Dias de viagem (10d). Se subestimar, zera antes do produto chegar.\n"
-            "**5. Piso Exposição:** Mínimo na prateleira (0). Evita prateleira vazia em produtos de baixo giro.\n"
-            "**6. Reserva Origem:** % que a origem guarda (25%). Evita que ela zere após doar.\n"
-            "**7 e 8. Atacado tem Piso/Reserva:** O Atacado é hub. Deixe 'Não'.\n"
-            "**9. Reposição Recente:** Quarentena (15d). Bloqueia pedidos duplicados.\n"
-            "**10. Dias em Trânsito:** Janela do que está a caminho (10d).\n"
-            "**11. Atacado tem Mínimo p/ Compra?:** Se Sim, usa o Piso como MOQ de compra."
-        )
+        
+        parametros_dict = {
+            "1. Período de Análise": "Janela de tempo (1 ano).",
+            "2. Filial": "Apenas visual (filtra abas).",
+            "3. Cobertura de Vendas": "Dias de estoque (30d). Aumentar = Ideal maior = mais pedidos.",
+            "4. Tempo de Transporte": "Dias de viagem (10d). Se subestimar, zera antes do produto chegar.",
+            "5. Piso Exposição": "Mínimo na prateleira (0). Evita prateleira vazia em produtos de baixo giro.",
+            "6. Reserva Origem": "% que a origem guarda (25%). Evita que ela zere após doar.",
+            "7 e 8. Atacado tem Piso/Reserva?": "O Atacado é hub. Deixe 'Não'.",
+            "9. Reposição Recente": "Quarentena (15d). Bloqueia pedidos duplicados.",
+            "10. Dias em Trânsito": "Janela do que está a caminho (10d).",
+            "11. Atacado tem Mínimo p/ Compra?": "Se Sim, usa o Piso como MOQ de compra."
+        }
+        
+        for titulo, descricao in parametros_dict.items():
+            st.markdown(f"**{titulo}:** {descricao}")
 
     # ---------------- ABA 6 - Resultados ----------------
     with tab6:
@@ -218,9 +222,9 @@ def render_manual() -> None:
         st.subheader("O Grande Segredo: Ideal vs. Quantidade de Transferência")
         st.markdown(
             "Essa é a maior dúvida:\n"
-            "- **Qtd Ideal:** É o tamanho do buraco (a meta).\n"
-            "- **Qtd Transf.:** É a ação de hoje. O que falta para tapar o buraco.\n\n"
-            "*Exemplo:* Ideal 100, Saldo 40. Transfere 60. O Ideal é a meta, a transferência é o passo."
+            "- **Qtd Ideal:** É a quantidade para satisfazer o período.\n"
+            "- **Qtd Transf.:** É a ação de hoje. O que falta para cobrir o saldo mais o necessário para o período.\n\n"
+            "*Exemplo:* Ideal 100, Saldo 40. Transfere 60. O Ideal é o necessário para o período; a transferência cobre o saldo atual e a necessidade projetada."
         )
 
         st.subheader("Os 5 Cards e as 5 Seções")
