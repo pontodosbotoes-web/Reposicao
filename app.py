@@ -610,12 +610,10 @@ if "df_transf" in st.session_state:
                 # Lógica para a tabela de compras na aba correta
                 if nome == "ATACADO":
                     if not df_compras.empty:
-                        # Agrupando e consolidando as compras para o Atacado
                         df_comp_view = df_compras.groupby(["CodigoProduto", "Produto", "Embalagem", "Fabricante"], as_index=False).agg({
                             "QtdSugerida": "sum",
                             "Ideal": "sum"
                         })
-                        # Define o motivo consolidado
                         df_comp_view["Motivo"] = df_comp_view.apply(
                             lambda r: "SEM ESTOQUE" if r["QtdSugerida"] == r["Ideal"] else "ESTOQUE COMPLEMENTAR", 
                             axis=1
@@ -650,9 +648,10 @@ if "df_transf" in st.session_state:
                     dfe = df_env.copy(); dfe.insert(0, "#", range(1, len(dfe) + 1))
                     dfe["Qtd Ideal"] = dfe["IdealDestino"] if cod == 5 else dfe["IdealOrigem"]
                     dfe["Prioridade"] = dfe["Prioridade"].map(PRIO_TXT).fillna("-")
-                    dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "SaldoAjustado", "QtdTransferir", "ReservaOrigem", "Qtd Ideal", "Motivo"]]
-                    dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Saldo Atual", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
-                    st.dataframe(dfe.style.set_properties(subset=["Saldo Atual", "Qtd Transf.", "Reserva", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfe) * 36 + 42)))
+                    # Saldo Atual removido
+                    dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "QtdTransferir", "ReservaOrigem", "Qtd Ideal", "Motivo"]]
+                    dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
+                    st.dataframe(dfe.style.set_properties(subset=["Qtd Transf.", "Reserva", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfe) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">📥 RECEBER</div>', unsafe_allow_html=True)
                 if df_rec.empty:
@@ -661,9 +660,10 @@ if "df_transf" in st.session_state:
                     dfr = df_rec.copy(); dfr.insert(0, "#", range(1, len(dfr) + 1))
                     dfr["Qtd Ideal"] = dfr["IdealDestino"]; dfr["Prioridade"] = dfr["Prioridade"].map(PRIO_TXT).fillna("-")
                     dfr["Dias p/ Zerar"] = dfr["DiasAteZerarDestino"].apply(lambda x: 0 if pd.isna(x) or x is None else int(x)).astype(int)
-                    dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "SaldoAjustado", "QtdTransferir", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
-                    dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Saldo Atual", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
-                    st.dataframe(dfr.style.set_properties(subset=["Saldo Atual", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
+                    # Saldo Atual removido
+                    dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "QtdTransferir", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
+                    dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
+                    st.dataframe(dfr.style.set_properties(subset=["Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR</div>', unsafe_allow_html=True)
                 if df_desc.empty:
@@ -693,10 +693,10 @@ if "df_transf" in st.session_state:
                     dfc.insert(0, "#", range(1, len(dfc) + 1))
                     
                     if nome == "ATACADO":
-                        # Não exibe Destino no Atacado (consolidado)
-                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "QtdSugerida", "Motivo"]]
-                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Sugestão", "Motivo"]
-                        st.dataframe(dfc.style.set_properties(subset=["Sugestão"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
+                        # Coluna Ideal adicionada, Destino removido
+                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Ideal", "QtdSugerida", "Motivo"]]
+                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Ideal", "Sugestão", "Motivo"]
+                        st.dataframe(dfc.style.set_properties(subset=["Ideal", "Sugestão"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
                     else:
                         dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "Motivo"]]
                         dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Velocidade", "Ideal", "Sugestão", "Motivo"]
@@ -708,4 +708,4 @@ if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v3.0 — 2026-10-21</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v3.1 — 2026-10-21</div>', unsafe_allow_html=True)
