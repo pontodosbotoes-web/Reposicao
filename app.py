@@ -208,18 +208,24 @@ COBERTURA_MAP = {
     "Para 7 dias": 7, "Para 15 dias": 15, "Para 30 dias": 30, "Para 2 meses": 60,
     "Para 3 meses": 90, "Para 6 meses": 180, "Para 1 ano": 365,
 }
+COBERTURA_LISTA = ["Para 7 dias", "Para 15 dias", "Para 30 dias", "Para 2 meses", "Para 3 meses", "Para 6 meses", "Para 1 ano"]
 
 def _aplicar_perfil_do_session():
     perfil = st.session_state.get("perfil_sel", "Padrão")
     if perfil in PERFIS:
-        for chave, valor in PERFIS[perfil].items(): st.session_state[chave] = valor
+        for chave, valor in PERFIS[perfil].items(): 
+            st.session_state[chave] = valor
         st.session_state["_ultimo_perfil_aplicado"] = perfil
 
 def _limpar_filtros():
-    for _k, _v in _DEFAULTS.items(): st.session_state[_k] = _v
+    # DELETA as chaves para forçar o Streamlit a reconstruir os widgets com os valores padrão
+    for _k in _DEFAULTS.keys():
+        if _k in st.session_state: 
+            del st.session_state[_k]
     st.session_state["_ultimo_perfil_aplicado"] = "Padrão"
     for _k in ("df_base", "df_transf", "df_compras", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
-        if _k in st.session_state: del st.session_state[_k]
+        if _k in st.session_state: 
+            del st.session_state[_k]
 
 # ============================================================
 # LINHA 1: FILTROS
@@ -285,20 +291,29 @@ if btn_params: st.session_state.show_params = not st.session_state.show_params
 if st.session_state.show_params:
     with st.container(border=True):
         r1c1, r1c2, r1c3, r1c4 = st.columns(4)
-        with r1c1: opcao_data = st.selectbox("Período de Análise", ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás", "30 dias atrás", "15 dias atrás", "7 dias atrás"], key="opcao_data")
-        with r1c2: filial_sel = st.selectbox("Filial", ["(todas)"] + list(filiais.keys()), key="filial_param", help="Apenas visual: o motor sempre analisa todas as filiais.")
-        with r1c3: cobertura_opcao = st.selectbox("Cobertura de Vendas", ["Para 7 dias", "Para 15 dias", "Para 30 dias", "Para 2 meses", "Para 3 meses", "Para 6 meses", "Para 1 ano"], key="cobertura_opcao")
-        with r1c4: lead_time = st.number_input("Tempo de Transporte (dias)", 0, 30, 10, key="lead_time")
+        with r1c1: 
+            opcao_data = st.selectbox("Período de Análise", ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás", "30 dias atrás", "15 dias atrás", "7 dias atrás"], key="opcao_data")
+        with r1c2: 
+            filial_sel = st.selectbox("Filial", ["(todas)"] + list(filiais.keys()), key="filial_param", help="Apenas visual: o motor sempre analisa todas as filiais.")
+        with r1c3: 
+            cobertura_opcao = st.selectbox(
+                "Cobertura de Vendas", 
+                COBERTURA_LISTA, 
+                index=COBERTURA_LISTA.index(st.session_state.get("cobertura_opcao", "Para 30 dias")),
+                key="cobertura_opcao"
+            )
+        with r1c4: 
+            lead_time = st.number_input("Tempo de Transporte (dias)", 0, 30, key="lead_time")
 
         r2c1, r2c2, r2c3, r2c4 = st.columns(4)
-        with r2c1: piso = st.number_input("Piso Exposição (un)", 0, 50, 0, key="piso")
-        with r2c2: reserva = st.number_input("Reserva Origem (%)", 0, 100, 25, key="reserva")
+        with r2c1: piso = st.number_input("Piso Exposição (un)", 0, 50, key="piso")
+        with r2c2: reserva = st.number_input("Reserva Origem (%)", 0, 100, key="reserva")
         with r2c3: atacado_piso = st.selectbox("Atacado tem Piso?", ["Não", "Sim"], key="atacado_piso")
         with r2c4: atacado_reserva = st.selectbox("Atacado tem Reserva?", ["Não", "Sim"], key="atacado_reserva")
 
         r3c1, r3c2, r3c3 = st.columns(3)
-        with r3c1: anti_gangorra = st.number_input("Reposição Recente (dias)", 0, 90, 15, key="anti_gangorra")
-        with r3c2: dias_transito = st.number_input("Dias em Trânsito", 1, 60, 10, key="dias_transito")
+        with r3c1: anti_gangorra = st.number_input("Reposição Recente (dias)", 0, 90, key="anti_gangorra")
+        with r3c2: dias_transito = st.number_input("Dias em Trânsito", 1, 60, key="dias_transito")
         with r3c3: atacado_min_compra = st.selectbox("Atacado tem Mínimo p/ Compra?", ["Não", "Sim"], key="atacado_min_compra", help="Se Sim, usa o valor do Piso Exposição como quantidade mínima para sugerir compra.")
 else:
     perfil_sel = st.session_state.get("perfil_sel", "Padrão")
@@ -639,4 +654,4 @@ if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v2.5 — 2026-10-20</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v2.6 — 2026-10-21</div>', unsafe_allow_html=True)
