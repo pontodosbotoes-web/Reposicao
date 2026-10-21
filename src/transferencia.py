@@ -139,15 +139,17 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
             qtd = int(min(excesso_livre[cod_doador], precisa))
             if qtd < 5: break
 
-            # --- NOVA LÓGICA DE MOTIVO (PRIORIZA O TRÂNSITO) ---
-            if rec["QtdEmTransito"] > 0:
+            if rec["QtdEmTransito"] > 0: 
                 motivo = "AGUARDANDO TRANSFERENCIA"
             elif rec["SaldoAjustado"] <= 0: 
                 motivo = "SEM ESTOQUE"
             elif rec["QtdRecebidaRecente"] > 0: 
                 motivo = f"RECEBIDO RECENTEMENTE ({int(rec['QtdRecebidaRecente'])} un)"
             elif pd.notna(rec["DiasAteZerar"]) and rec["DiasAteZerar"] < 7: 
-                motivo = f"URGENTE - zera em {int(rec['DiasAteZerar'])} dias"
+                if rec["DiasAteZerar"] < 1:
+                    motivo = "URGENTE - zera hoje"
+                else:
+                    motivo = f"URGENTE - zera em {int(rec['DiasAteZerar'])} dias"
             elif doa["VelocidadePeriodo"] < 0.05 and rec["VelocidadePeriodo"] >= 0.1: 
                 motivo = "Origem parada, destino vendendo"
             elif rec["VelocidadePeriodo"] > doa["VelocidadePeriodo"] * 2: 
