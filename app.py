@@ -195,19 +195,17 @@ if st.session_state["view"] == "manual":
     st.stop()
 
 # ============================================================
-# INICIALIZAÇÃO E SINCRONIA DE ESTADO (A PROVA DE FALHAS)
+# INICIALIZAÇÃO E SINCRONIA DE ESTADO
 # ============================================================
 if "perfil_sel" not in st.session_state:
     st.session_state["perfil_sel"] = "Padrão"
 
-# Sincroniza parâmetros baseados no perfil atual
 if st.session_state.get("_ultimo_perfil_aplicado") != st.session_state["perfil_sel"]:
     perfil_atual = st.session_state["perfil_sel"]
     for k, v in PERFIS[perfil_atual].items():
         st.session_state[k] = v
     st.session_state["_ultimo_perfil_aplicado"] = perfil_atual
 
-# Garante que todas as chaves existam (para o primeiro boot)
 for k, v in PERFIS["Padrão"].items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -294,7 +292,7 @@ if produto_busca and produto_busca.strip():
     )
 
 # ============================================================
-# PARÂMETROS (COM LEITURA SEGURA)
+# PARÂMETROS
 # ============================================================
 if btn_params: st.session_state.show_params = not st.session_state.show_params
 
@@ -302,52 +300,44 @@ if st.session_state.show_params:
     with st.container(border=True):
         r1c1, r1c2, r1c3, r1c4 = st.columns(4)
         
-        # Período de Análise
         with r1c1: 
             lista_periodo = ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás", "30 dias atrás", "15 dias atrás", "7 dias atrás"]
             idx_p = lista_periodo.index(st.session_state.get("opcao_data", "1 ano atrás")) if st.session_state.get("opcao_data") in lista_periodo else 0
             v_opcao = st.selectbox("Período de Análise", lista_periodo, index=idx_p)
             st.session_state["opcao_data"] = v_opcao
             
-        # Filial
         with r1c2: 
             lista_filial = ["(todas)"] + list(filiais.keys())
             idx_f = lista_filial.index(st.session_state.get("filial_param", "(todas)")) if st.session_state.get("filial_param") in lista_filial else 0
             v_filial = st.selectbox("Filial", lista_filial, index=idx_f, help="Apenas visual: o motor sempre analisa todas as filiais.")
             st.session_state["filial_param"] = v_filial
             
-        # Cobertura de Vendas
         with r1c3: 
             lista_cob = ["Para 7 dias", "Para 15 dias", "Para 30 dias", "Para 2 meses", "Para 3 meses", "Para 6 meses", "Para 1 ano"]
             idx_c = lista_cob.index(st.session_state.get("cobertura_opcao", "Para 30 dias")) if st.session_state.get("cobertura_opcao") in lista_cob else 2
             v_cob = st.selectbox("Cobertura de Vendas", lista_cob, index=idx_c)
             st.session_state["cobertura_opcao"] = v_cob
             
-        # Tempo de Transporte
         with r1c4: 
             v_lead = st.number_input("Tempo de Transporte (dias)", 0, 30, value=int(st.session_state.get("lead_time", 10)))
             st.session_state["lead_time"] = v_lead
 
         r2c1, r2c2, r2c3, r2c4 = st.columns(4)
         
-        # Piso Exposição
         with r2c1: 
             v_piso = st.number_input("Piso Exposição (un)", 0, 50, value=int(st.session_state.get("piso", 0)))
             st.session_state["piso"] = v_piso
             
-        # Reserva Origem
         with r2c2: 
             v_reserva = st.number_input("Reserva Origem (%)", 0, 100, value=int(st.session_state.get("reserva", 25)))
             st.session_state["reserva"] = v_reserva
             
-        # Atacado tem Piso
         with r2c3: 
             lista_sn = ["Não", "Sim"]
             idx_ap = lista_sn.index(st.session_state.get("atacado_piso", "Não")) if st.session_state.get("atacado_piso") in lista_sn else 0
             v_ap = st.selectbox("Atacado tem Piso?", lista_sn, index=idx_ap)
             st.session_state["atacado_piso"] = v_ap
             
-        # Atacado tem Reserva
         with r2c4: 
             idx_ar = lista_sn.index(st.session_state.get("atacado_reserva", "Não")) if st.session_state.get("atacado_reserva") in lista_sn else 0
             v_ar = st.selectbox("Atacado tem Reserva?", lista_sn, index=idx_ar)
@@ -355,23 +345,20 @@ if st.session_state.show_params:
 
         r3c1, r3c2, r3c3 = st.columns(3)
         
-        # Reposição Recente
         with r3c1: 
             v_ag = st.number_input("Reposição Recente (dias)", 0, 90, value=int(st.session_state.get("anti_gangorra", 15)))
             st.session_state["anti_gangorra"] = v_ag
             
-        # Dias em Trânsito
         with r3c2: 
             v_dt = st.number_input("Dias em Trânsito", 1, 60, value=int(st.session_state.get("dias_transito", 10)))
             st.session_state["dias_transito"] = v_dt
             
-        # Atacado Mínimo Compra
         with r3c3: 
             idx_am = lista_sn.index(st.session_state.get("atacado_min_compra", "Não")) if st.session_state.get("atacado_min_compra") in lista_sn else 0
             v_am = st.selectbox("Atacado tem Mínimo p/ Compra?", lista_sn, index=idx_am, help="Se Sim, usa o valor do Piso Exposição como quantidade mínima para sugerir compra.")
             st.session_state["atacado_min_compra"] = v_am
 
-# Recupera os valores atualizados do session_state para uso no motor
+# Recupera os valores
 opcao_data = st.session_state["opcao_data"]
 filial_sel = st.session_state["filial_param"]
 cobertura_opcao = st.session_state["cobertura_opcao"]
@@ -620,8 +607,22 @@ if "df_transf" in st.session_state:
                 df_desc = df_env_all[df_env_all["NomeFilialDestino"] == "DESCONTINUAR"].copy().reset_index(drop=True)
                 df_env = df_env_all[~df_env_all["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])].copy().reset_index(drop=True)
 
+                # Lógica para a tabela de compras na aba correta
                 if nome == "ATACADO":
-                    df_comp_view = df_compras.copy()
+                    if not df_compras.empty:
+                        # Agrupando e consolidando as compras para o Atacado
+                        df_comp_view = df_compras.groupby(["CodigoProduto", "Produto", "Embalagem", "Fabricante"], as_index=False).agg({
+                            "QtdSugerida": "sum",
+                            "Ideal": "sum"
+                        })
+                        # Define o motivo consolidado
+                        df_comp_view["Motivo"] = df_comp_view.apply(
+                            lambda r: "SEM ESTOQUE" if r["QtdSugerida"] == r["Ideal"] else "ESTOQUE COMPLEMENTAR", 
+                            axis=1
+                        )
+                        df_comp_view = df_comp_view.sort_values("Produto").reset_index(drop=True)
+                    else:
+                        df_comp_view = pd.DataFrame()
                 else:
                     df_comp_view = df_compras[df_compras["NomeFilialDestino"] == nome].copy() if not df_compras.empty else pd.DataFrame()
 
@@ -690,20 +691,21 @@ if "df_transf" in st.session_state:
                 else:
                     dfc = df_comp_view.copy()
                     dfc.insert(0, "#", range(1, len(dfc) + 1))
+                    
                     if nome == "ATACADO":
-                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "Velocidade", "Ideal", "QtdSugerida", "Motivo"]]
-                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Velocidade", "Ideal", "Sugestão de Compra", "Motivo"]
+                        # Não exibe Destino no Atacado (consolidado)
+                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "QtdSugerida", "Motivo"]]
+                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Sugestão", "Motivo"]
+                        st.dataframe(dfc.style.set_properties(subset=["Sugestão"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
                     else:
                         dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "Motivo"]]
-                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Velocidade", "Ideal", "Sugestão de Compra", "Motivo"]
-                    
-                    dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
-                    
-                    st.dataframe(dfc.style.set_properties(subset=["Velocidade", "Ideal", "Sugestão de Compra"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
+                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Velocidade", "Ideal", "Sugestão", "Motivo"]
+                        dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
+                        st.dataframe(dfc.style.set_properties(subset=["Velocidade", "Ideal", "Sugestão"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
 
 
 if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v2.9 — 2026-10-21</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v3.0 — 2026-10-21</div>', unsafe_allow_html=True)
