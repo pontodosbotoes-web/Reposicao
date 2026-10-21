@@ -181,7 +181,7 @@ def calcular_janela_analise(opcao: str) -> tuple[date, int]:
 
 
 # ============================================================
-# CARREGAR LISTAS E PERFIS
+# CARREGAR LISTAS E PERFIS (ATUALIZADO)
 # ============================================================
 filiais = carregar_filiais()
 fabricantes = carregar_fabricantes()
@@ -517,7 +517,6 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, nome_perfil, parametros_t
     df_env = df[df["CodigoFilialOrigem"] == cod].copy()
     df_rec = df[df["CodigoFilialDestino"] == cod].copy()
     
-    # Preparar dados de compras
     if not df_compras.empty:
         if cod == 5:
             df_comp = df_compras.groupby(["CodigoProduto", "Produto", "Embalagem", "Fabricante"], as_index=False).agg({"QtdSugerida": "sum", "Ideal": "sum"})
@@ -535,7 +534,6 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, nome_perfil, parametros_t
         buffer.seek(0)
         return buffer, agora
 
-    # Resumo
     env_totais = df_env[~df_env["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])]
     liq_totais = df_env[df_env["NomeFilialDestino"] == "LIQUIDAR"]
     desc_totais = df_env[df_env["NomeFilialDestino"] == "DESCONTINUAR"]
@@ -560,7 +558,6 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, nome_perfil, parametros_t
     df_desc = df_env[df_env["NomeFilialDestino"] == "DESCONTINUAR"].copy()
     df_env = df_env[~df_env["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])].copy()
 
-    # Tabelas
     if not df_env.empty:
         df_env = df_env.reset_index(drop=True); df_env.insert(0, "#", range(1, len(df_env) + 1))
         df_env["Qtd Ideal"] = df_env["IdealDestino"] if cod == 5 else df_env["IdealOrigem"]
@@ -819,4 +816,4 @@ if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v3.4 — 2026-10-21</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v3.5 — 2026-10-21</div>', unsafe_allow_html=True)
