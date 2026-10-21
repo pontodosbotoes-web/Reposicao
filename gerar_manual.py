@@ -264,8 +264,10 @@ def gerar(buffer=None):
     est_tec = ParagraphStyle('Tec', parent=styles['Normal'], fontSize=7, leading=9)
     for i, row in enumerate(perfis_tec):
         if i > 0:
-            for j in range(1, 10):
+            # CORREÇÃO AQUI: Usa o tamanho real da linha para evitar IndexError
+            for j in range(1, len(row)):
                 perfis_tec[i][j] = Paragraph(perfis_tec[i][j], est_tec)
+                
     conteudo.append(tabela(perfis_tec, col_widths=[2.5 * cm, 1.7 * cm, 1.7 * cm, 1.8 * cm, 1.9 * cm, 2.0 * cm, 2.0 * cm, 2.0 * cm, 1.4 * cm]))
 
     conteudo.append(PageBreak())
