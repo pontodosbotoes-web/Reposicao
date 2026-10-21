@@ -616,7 +616,7 @@ if "df_transf" in st.session_state:
                     dfi.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Liq.", "Qtd Ideal", "Motivo"]
                     st.dataframe(dfi, use_container_width=True, hide_index=True, height=min(420, max(120, len(dfi) * 36 + 42)))
 
-                # ---- COMPRAR (NOVA SEÇÃO COM CÁLCULO) ----
+                # ---- COMPRAR (BASEADO NO IDEAL) ----
                 st.markdown('<div class="secao-titulo">🛒 COMPRAR</div>', unsafe_allow_html=True)
                 if df_comp_view.empty:
                     st.caption("Nenhuma compra sugerida no momento")
@@ -624,20 +624,19 @@ if "df_transf" in st.session_state:
                     dfc = df_comp_view.copy()
                     dfc.insert(0, "#", range(1, len(dfc) + 1))
                     if nome == "ATACADO":
-                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "Velocidade", "Ideal", "Saldo", "QtdSugerida", "Motivo"]]
-                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Velocidade", "Ideal", "Saldo", "Qtd Sugerida", "Motivo"]
+                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "Velocidade", "Ideal", "QtdSugerida", "Motivo"]]
+                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Velocidade", "Ideal", "Sugestão de Compra", "Motivo"]
                     else:
-                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "Saldo", "QtdSugerida", "Motivo"]]
-                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Velocidade", "Ideal", "Saldo", "Qtd Sugerida", "Motivo"]
+                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "Motivo"]]
+                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Velocidade", "Ideal", "Sugestão de Compra", "Motivo"]
                     
-                    # Formatação para 2 casas decimais na velocidade
                     dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
                     
-                    st.dataframe(dfc.style.set_properties(subset=["Velocidade", "Ideal", "Saldo", "Qtd Sugerida"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
+                    st.dataframe(dfc.style.set_properties(subset=["Velocidade", "Ideal", "Sugestão de Compra"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
 
 
 if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v2.4 — 2026-10-20</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v2.5 — 2026-10-20</div>', unsafe_allow_html=True)
