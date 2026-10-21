@@ -80,7 +80,7 @@ st.markdown("""
         /* --- GRID RESPONSIVO PARA MÉTRICAS --- */
         .metric-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 10px;
             margin-bottom: 15px;
             margin-top: 10px;
@@ -92,13 +92,25 @@ st.markdown("""
             padding: 10px;
             text-align: center;
         }
-        .metric-label {
-            font-size: 0.85rem;
+        .metric-card-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #F8FAFC;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 4px;
+        }
+        .metric-card-row {
+            display: flex;
+            justify-content: space-around;
+            font-size: 0.75rem;
             color: #94A3B8;
             margin-bottom: 4px;
         }
-        .metric-value {
-            font-size: 1.3rem;
+        .metric-card-values {
+            display: flex;
+            justify-content: space-around;
+            font-size: 1.2rem;
             font-weight: bold;
             color: #F8FAFC;
         }
@@ -147,6 +159,7 @@ st.markdown('<div class="titulo-pagina">Reposição de Produtos</div>', unsafe_a
 
 PRIO_TXT = {1: "Crítica", 2: "Alta", 3: "Normal"}
 codigos_filial = {"ATACADO": 5, "ALECRIM": 1, "VIA DIRETA": 2, "ZONA SUL": 3, "ZONA NORTE": 4}
+icones_filial = {"ATACADO": "🏢", "ALECRIM": "🌿", "VIA DIRETA": "🚗", "ZONA SUL": "🏖️", "ZONA NORTE": "🏔️"}
 
 try:
     TZ_BR = ZoneInfo("America/Sao_Paulo")
@@ -426,13 +439,13 @@ def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
     def _build(df_part, tipo):
         if df_part.empty: return Paragraph("<i>Nenhum item.</i>", cell_style)
         if tipo == "ENV":
-            heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Saldo", "Qtd", "Res.", "Ideal", "Motivo"]
-            widths = [28, 34, 45, 200, 30, 120, 55, 40, 36, 40, 36, 150]
-            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialDestino"], "C"), (int(r["SaldoAjustado"]), "R"), (int(r["QtdTransferir"]), "R"), (int(r["ReservaOrigem"]), "R"), (int(r["Qtd Ideal"]), "R"), (r["Motivo"], "L")]
+            heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Trans.", "Res.", "Ideal", "Motivo"]
+            widths = [28, 34, 45, 180, 30, 120, 55, 36, 40, 40, 36, 150]
+            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialDestino"], "C"), (int(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["ReservaOrigem"]), "R"), (int(r["Qtd Ideal"]), "R"), (r["Motivo"], "L")]
         else:
-            heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Saldo", "Qtd", "Dias", "Ideal", "Motivo"]
-            widths = [28, 34, 45, 200, 30, 120, 55, 40, 36, 40, 36, 150]
-            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (int(r["SaldoAjustado"]), "R"), (int(r["QtdTransferir"]), "R"), (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"), (int(r["Qtd Ideal"]), "R"), (r["Motivo"], "L")]
+            heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd", "Trans.", "Dias", "Ideal", "Motivo"]
+            widths = [28, 34, 45, 180, 30, 120, 55, 36, 40, 40, 36, 150]
+            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (int(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"), (int(r["Qtd Ideal"]), "R"), (r["Motivo"], "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
         for _, row in df_part.iterrows():
@@ -595,7 +608,9 @@ if "df_transf" in st.session_state:
         else:
             nomes = nomes_todos
 
-        tabs = st.tabs(nomes)
+        # Aplica os emojis nas abas
+        nomes_com_icone = [f"{icones_filial[n]} {n}" for n in nomes]
+        tabs = st.tabs(nomes_com_icone)
         
         for i, nome in enumerate(nomes):
             cod = codigos_filial[nome]
@@ -607,7 +622,6 @@ if "df_transf" in st.session_state:
                 df_desc = df_env_all[df_env_all["NomeFilialDestino"] == "DESCONTINUAR"].copy().reset_index(drop=True)
                 df_env = df_env_all[~df_env_all["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])].copy().reset_index(drop=True)
 
-                # Lógica para a tabela de compras na aba correta
                 if nome == "ATACADO":
                     if not df_compras.empty:
                         df_comp_view = df_compras.groupby(["CodigoProduto", "Produto", "Embalagem", "Fabricante"], as_index=False).agg({
@@ -624,18 +638,49 @@ if "df_transf" in st.session_state:
                 else:
                     df_comp_view = df_compras[df_compras["NomeFilialDestino"] == nome].copy() if not df_compras.empty else pd.DataFrame()
 
+                # Cálculos para os Cards
+                env_itens = len(df_env)
+                env_unid = int(df_env["QtdTransferir"].sum()) if not df_env.empty else 0
+                
+                rec_itens = len(df_rec)
+                rec_unid = int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0
+                
+                liq_itens = len(df_liq)
+                liq_unid = int(df_liq["QtdTransferir"].sum()) if not df_liq.empty else 0
+                
+                desc_itens = len(df_desc)
+                desc_unid = int(df_desc["QtdTransferir"].sum()) if not df_desc.empty else 0
+                
+                comp_itens = len(df_comp_view)
+                comp_unid = int(df_comp_view["QtdSugerida"].sum()) if not df_comp_view.empty else 0
+
                 html_metrics = f"""
                 <div class="metric-grid">
-                    <div class="metric-card"><div class="metric-label">📤 Enviar (itens)</div><div class="metric-value">{len(df_env)}</div></div>
-                    <div class="metric-card"><div class="metric-label">📤 Enviar (un)</div><div class="metric-value">{int(df_env["QtdTransferir"].sum()) if not df_env.empty else 0}</div></div>
-                    <div class="metric-card"><div class="metric-label">📥 Receber (itens)</div><div class="metric-value">{len(df_rec)}</div></div>
-                    <div class="metric-card"><div class="metric-label">📥 Receber (un)</div><div class="metric-value">{int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0}</div></div>
-                    <div class="metric-card"><div class="metric-label">🔥 Liquidar (itens)</div><div class="metric-value">{len(df_liq)}</div></div>
-                    <div class="metric-card"><div class="metric-label">🔥 Liquidar (un)</div><div class="metric-value">{int(df_liq["QtdTransferir"].sum()) if not df_liq.empty else 0}</div></div>
-                    <div class="metric-card"><div class="metric-label">⏸️ Desc. (itens)</div><div class="metric-value">{len(df_desc)}</div></div>
-                    <div class="metric-card"><div class="metric-label">⏸️ Desc. (un)</div><div class="metric-value">{int(df_desc["QtdTransferir"].sum()) if not df_desc.empty else 0}</div></div>
-                    <div class="metric-card"><div class="metric-label">🛒 Comprar (itens)</div><div class="metric-value">{len(df_comp_view)}</div></div>
-                    <div class="metric-card"><div class="metric-label">🛒 Comprar (un)</div><div class="metric-value">{int(df_comp_view["QtdSugerida"].sum()) if not df_comp_view.empty else 0}</div></div>
+                    <div class="metric-card">
+                        <div class="metric-card-title">📤 Enviar</div>
+                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
+                        <div class="metric-card-values"><div>{env_itens}</div><div>{env_unid}</div></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-card-title">📥 Receber</div>
+                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
+                        <div class="metric-card-values"><div>{rec_itens}</div><div>{rec_unid}</div></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-card-title">🔥 Liquidar</div>
+                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
+                        <div class="metric-card-values"><div>{liq_itens}</div><div>{liq_unid}</div></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-card-title">⏸️ Desc.</div>
+                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
+                        <div class="metric-card-values"><div>{desc_itens}</div><div>{desc_unid}</div></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-card-title">🛒 Comprar</div>
+                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
+                        <div class="metric-card-values"><div>{comp_itens}</div><div>{comp_unid}</div></div>
+                    </div>
                 </div>
                 """
                 st.markdown(html_metrics, unsafe_allow_html=True)
@@ -648,10 +693,9 @@ if "df_transf" in st.session_state:
                     dfe = df_env.copy(); dfe.insert(0, "#", range(1, len(dfe) + 1))
                     dfe["Qtd Ideal"] = dfe["IdealDestino"] if cod == 5 else dfe["IdealOrigem"]
                     dfe["Prioridade"] = dfe["Prioridade"].map(PRIO_TXT).fillna("-")
-                    # Saldo Atual removido
-                    dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "QtdTransferir", "ReservaOrigem", "Qtd Ideal", "Motivo"]]
-                    dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd Transf.", "Reserva", "Qtd Ideal", "Motivo"]
-                    st.dataframe(dfe.style.set_properties(subset=["Qtd Transf.", "Reserva", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfe) * 36 + 42)))
+                    dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "QtdTransferir", "QtdEmTransito", "ReservaOrigem", "Qtd Ideal", "Motivo"]]
+                    dfe.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd Transf.", "Em Trânsito", "Reserva", "Qtd Ideal", "Motivo"]
+                    st.dataframe(dfe.style.set_properties(subset=["Qtd Transf.", "Em Trânsito", "Reserva", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfe) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">📥 RECEBER</div>', unsafe_allow_html=True)
                 if df_rec.empty:
@@ -660,10 +704,9 @@ if "df_transf" in st.session_state:
                     dfr = df_rec.copy(); dfr.insert(0, "#", range(1, len(dfr) + 1))
                     dfr["Qtd Ideal"] = dfr["IdealDestino"]; dfr["Prioridade"] = dfr["Prioridade"].map(PRIO_TXT).fillna("-")
                     dfr["Dias p/ Zerar"] = dfr["DiasAteZerarDestino"].apply(lambda x: 0 if pd.isna(x) or x is None else int(x)).astype(int)
-                    # Saldo Atual removido
-                    dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "QtdTransferir", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
-                    dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
-                    st.dataframe(dfr.style.set_properties(subset=["Qtd Transf.", "Dias p/ Zerar", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
+                    dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "QtdTransferir", "QtdEmTransito", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
+                    dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd Transf.", "Em Trânsito", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
+                    st.dataframe(dfr.style.set_properties(subset=["Qtd Transf.", "Em Trânsito", "Dias p/ Zerar", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR</div>', unsafe_allow_html=True)
                 if df_desc.empty:
@@ -693,7 +736,6 @@ if "df_transf" in st.session_state:
                     dfc.insert(0, "#", range(1, len(dfc) + 1))
                     
                     if nome == "ATACADO":
-                        # Coluna Ideal adicionada, Destino removido
                         dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Ideal", "QtdSugerida", "Motivo"]]
                         dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Ideal", "Sugestão", "Motivo"]
                         st.dataframe(dfc.style.set_properties(subset=["Ideal", "Sugestão"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
@@ -708,4 +750,4 @@ if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v3.1 — 2026-10-21</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v3.2 — 2026-10-21</div>', unsafe_allow_html=True)
