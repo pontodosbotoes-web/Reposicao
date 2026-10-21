@@ -197,27 +197,27 @@ def gerar(buffer=None):
 
     conteudo.append(h2("2.1 DRP (Distribution Requirements Planning)"))
     conteudo.append(p(
-        "<b>O que e:</b> Planejamento de reposicao baseado no consumo real de cada ponto de venda.<br>"
-        "<b>Onde entra:</b> E a base do calculo do Estoque Ideal (Velocidade x Cobertura).<br>"
-        "<b>Quem usa:</b> Walmart, Carrefour, Pao de Acucar.<br>"
+        "<b>O que e:</b> Planejamento de reposicao baseado no consumo real de cada ponto de venda.<br/>"
+        "<b>Onde entra:</b> E a base do calculo do Estoque Ideal (Velocidade x Cobertura).<br/>"
+        "<b>Quem usa:</b> Walmart, Carrefour, Pao de Acucar.<br/>"
         "<b>Literatura:</b> O DRP reduz faltas e melhora a pontualidade das entregas, alem de evitar "
         "sobreinventario e desabastecimento."
     ))
 
     conteudo.append(h2("2.2 IST (Inter-Store Transfers)"))
     conteudo.append(p(
-        "<b>O que e:</b> Transferencias entre lojas para corrigir desequilibrio enquanto a janela de venda esta aberta.<br>"
-        "<b>Onde entra:</b> E a Matriz de Proximidade. Quando a Zona Sul precisa, o sistema tenta o Atacado, depois o Alecrim, etc.<br>"
-        "<b>Quem usa:</b> Zara, H&M, Best Buy.<br>"
+        "<b>O que e:</b> Transferencias entre lojas para corrigir desequilibrio enquanto a janela de venda esta aberta.<br/>"
+        "<b>Onde entra:</b> E a Matriz de Proximidade. Quando a Zona Sul precisa, o sistema tenta o Atacado, depois o Alecrim, etc.<br/>"
+        "<b>Quem usa:</b> Zara, H&M, Best Buy.<br/>"
         "<b>Caso real (Zara):</b> A Zara usa dados de PDV em tempo real e cross-docking para um ciclo de design "
         "ate a loja de apenas 2 a 3 semanas. Transferir entre lojas e mais rapido e barato do que esperar o CD."
     ))
 
     conteudo.append(h2("2.3 MEIO (Multi-Echelon Inventory Optimization)"))
     conteudo.append(p(
-        "<b>O que e:</b> Otimizacao de inventario em toda a rede, com um hub central (Atacado) para consolidar estoque.<br>"
-        "<b>Onde entra:</b> O Atacado e o primeiro doador e o consolidador de compras.<br>"
-        "<b>Quem usa:</b> Amazon, Coca-Cola, P&G.<br>"
+        "<b>O que e:</b> Otimizacao de inventario em toda a rede, com um hub central (Atacado) para consolidar estoque.<br/>"
+        "<b>Onde entra:</b> O Atacado e o primeiro doador e o consolidador de compras.<br/>"
+        "<b>Quem usa:</b> Amazon, Coca-Cola, P&G.<br/>"
         "<b>Caso real (Amazon):</b> A otimizacao multi-echelon da Amazon reduziu o capital de giro imobilizado em "
         "14% a 27% e melhorou o nivel de servico em ate 3,2%, alem de reduzir faltas em 30% a 50%."
     ))
@@ -290,9 +290,9 @@ def gerar(buffer=None):
     conteudo.append(h1("Modulo 4 - A Inteligencia (Lendo a Tela)"))
     conteudo.append(h2("4.1 Ideal vs. Quantidade de Transferencia"))
     conteudo.append(p(
-        "Essa e a maior duvida dos gestores:\n"
-        "<b>Qtd Ideal:</b> E o tamanho do buraco (a meta).\n"
-        "<b>Qtd Transf.:</b> E a acao de hoje. O que falta para tapar o buraco.\n"
+        "Essa e a maior duvida dos gestores:<br/>"
+        "<b>Qtd Ideal:</b> E o tamanho do buraco (a meta).<br/>"
+        "<b>Qtd Transf.:</b> E a acao de hoje. O que falta para tapar o buraco.<br/>"
         "Exemplo: Ideal 100, Saldo 40. Transfere 60. O Ideal e a meta, a transferencia e o passo."
     ))
 
@@ -324,52 +324,52 @@ def gerar(buffer=None):
     conteudo.append(h1("Modulo 5 - O Protocolo (O Dia a Dia)"))
     conteudo.append(h2("5.1 Sua Rotina Semanal"))
     conteudo.append(p(
-        "<b>Segunda-feira (10 min):</b><br>"
-        "1. Abra o app.<br>"
-        "2. Escolha o Perfil de Analise.<br>"
-        "3. Escolha o Fabricante.<br>"
-        "4. Clique em Consultar.<br>"
-        "5. Filtre por Prioridade Critica.<br><br>"
-        "<b>Terca a Quinta (Acao):</b><br>"
-        "1. Leia o Motivo.<br>"
-        "2. Confirme a Qtd.<br>"
-        "3. Gere o PDF.<br>"
-        "4. Crie a ordem no ERP.<br>"
-        "5. Se houver itens em COMPRAR, envie a lista para o time de Compras.<br><br>"
-        "<b>Sexta-feira (10 min):</b><br>"
-        "1. Reabra o app.<br>"
-        "2. Compare com a semana anterior.<br>"
+        "<b>Segunda-feira (10 min):</b><br/>"
+        "1. Abra o app.<br/>"
+        "2. Escolha o Perfil de Analise.<br/>"
+        "3. Escolha o Fabricante.<br/>"
+        "4. Clique em Consultar.<br/>"
+        "5. Filtre por Prioridade Critica.<br/><br/>"
+        "<b>Terca a Quinta (Acao):</b><br/>"
+        "1. Leia o Motivo.<br/>"
+        "2. Confirme a Qtd.<br/>"
+        "3. Gere o PDF.<br/>"
+        "4. Crie a ordem no ERP.<br/>"
+        "5. Se houver itens em COMPRAR, envie a lista para o time de Compras.<br/><br/>"
+        "<b>Sexta-feira (10 min):</b><br/>"
+        "1. Reabra o app.<br/>"
+        "2. Compare com a semana anterior.<br/>"
         "3. Ajuste parametros se necessario."
     ))
 
     conteudo.append(h2("5.2 Cenarios Reais (O que fazer?)"))
     conteudo.append(p("<b>Cenario 1: Produto em falta critica (RECEBER)</b>"))
     conteudo.append(p(
-        "O que vejo: Fita Adesiva, 85 un, Motivo: 'URGENTE - zera hoje'.\n"
+        "O que vejo: Fita Adesiva, 85 un, Motivo: 'URGENTE - zera hoje'.<br/>"
         "Acao: Gere o PDF, envie para o Atacado, crie a ordem no ERP."
     ))
     
     conteudo.append(p("<b>Cenario 2: A rede inteira esta sem estoque (COMPRAR)</b>"))
     conteudo.append(p(
-        "O que vejo: Fita Crepe na aba COMPRAR do Atacado, Sugestao 50.\n"
+        "O que vejo: Fita Crepe na aba COMPRAR do Atacado, Sugestao 50.<br/>"
         "Acao: Nenhuma loja tem. Envie a lista para o time de Compras."
     ))
     
     conteudo.append(p("<b>Cenario 3: O produto ja esta a caminho (AGUARDANDO)</b>"))
     conteudo.append(p(
-        "O que vejo: Papel Kraft, Em Transito: 20 un.\n"
+        "O que vejo: Papel Kraft, Em Transito: 20 un.<br/>"
         "Acao: O caminhao ja saiu. Apenas aguarde a entrega."
     ))
     
     conteudo.append(p("<b>Cenario 4: O produto esta encalhado (LIQUIDAR)</b>"))
     conteudo.append(p(
-        "O que vejo: Squeeze Halloween, Motivo: 'ESTOQUE PARADO'.\n"
+        "O que vejo: Squeeze Halloween, Motivo: 'ESTOQUE PARADO'.<br/>"
         "Acao: O sistema NAO vai transferir. Acao comercial: promocao local ou devolucao."
     ))
     
     conteudo.append(p("<b>Cenario 5: O produto tem giro baixo (DESCONTINUAR)</b>"))
     conteudo.append(p(
-        "O que vejo: Fita Cetim Vermelha, Motivo: 'FIM DE CICLO'.\n"
+        "O que vejo: Fita Cetim Vermelha, Motivo: 'FIM DE CICLO'.<br/>"
         "Acao: Vender ate o fim do estoque. Nao comprar mais."
     ))
 
