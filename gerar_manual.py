@@ -290,7 +290,7 @@ def gerar(buffer=None):
 
     # ---------- PARTE 5 - DICIONARIO DE PARAMETROS ----------
     conteudo.append(h1("Parte 5 - Dicionario de Parametros (Os 11 campos)"))
-    st.markdown("Ao clicar no botao **Parametros**, voce vera 11 campos. Veja o que cada um faz:")
+    conteudo.append(p("Ao clicar no botao <b>Parametros</b>, voce vera 11 campos. Veja o que cada um faz:"))
     
     param1 = [
         ["Parametro", "O que e", "Impacto se aumentar"],
