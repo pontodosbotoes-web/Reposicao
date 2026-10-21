@@ -194,6 +194,7 @@ if st.session_state["view"] == "manual":
     render_manual()
     st.stop()
 
+# Inicialização do estado
 _DEFAULTS = {
     "perfil_sel": "Padrão", "fabricante_sel": "(todos)", "depto_sel": "(todos)",
     "grupo_sel": "(todos)", "subgrupo_sel": "(todos)", "produto_busca": "",
@@ -210,22 +211,33 @@ COBERTURA_MAP = {
 }
 COBERTURA_LISTA = ["Para 7 dias", "Para 15 dias", "Para 30 dias", "Para 2 meses", "Para 3 meses", "Para 6 meses", "Para 1 ano"]
 
-def _aplicar_perfil_do_session():
-    perfil = st.session_state.get("perfil_sel", "Padrão")
-    if perfil in PERFIS:
-        for chave, valor in PERFIS[perfil].items(): 
-            st.session_state[chave] = valor
-        st.session_state["_ultimo_perfil_aplicado"] = perfil
+# ============================================================
+# SINCRONIA DE PERFIL (A CORREÇÃO ESTÁ AQUI)
+# ============================================================
+# Se o usuário mudou o perfil no dropdown, atualiza a memória ANTES de desenhar os parâmetros
+if st.session_state.get("_ultimo_perfil_aplicado") != st.session_state.get("perfil_sel"):
+    _perfil_atual = st.session_state.get("perfil_sel", "Padrão")
+    if _perfil_atual in PERFIS:
+        for _k, _v in PERFIS[_perfil_atual].items():
+            st.session_state[_k] = _v
+    st.session_state["_ultimo_perfil_aplicado"] = _perfil_atual
 
 def _limpar_filtros():
-    # DELETA as chaves para forçar o Streamlit a reconstruir os widgets com os valores padrão
-    for _k in _DEFAULTS.keys():
-        if _k in st.session_state: 
-            del st.session_state[_k]
-    st.session_state["_ultimo_perfil_aplicado"] = "Padrão"
+    _p = st.session_state.get("perfil_sel", "Padrão")
+    for _k, _v in PERFIS[_p].items():
+        st.session_state[_k] = _v
+    st.session_state["_ultimo_perfil_aplicado"] = _p
+    
+    # Limpa filtros visuais
+    st.session_state["fabricante_sel"] = "(todos)"
+    st.session_state["depto_sel"] = "(todos)"
+    st.session_state["grupo_sel"] = "(todos)"
+    st.session_state["subgrupo_sel"] = "(todos)"
+    st.session_state["produto_busca"] = ""
+    
+    # Limpa resultados
     for _k in ("df_base", "df_transf", "df_compras", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
-        if _k in st.session_state: 
-            del st.session_state[_k]
+        if _k in st.session_state: del st.session_state[_k]
 
 # ============================================================
 # LINHA 1: FILTROS
@@ -235,8 +247,7 @@ f0, f1, f2, f3, f4, f5 = st.columns([1.6, 1.9, 1.3, 1.3, 1.3, 1.8], vertical_ali
 with f0:
     st.selectbox(
         "Perfil de Análise", list(PERFIS.keys()), key="perfil_sel",
-        help="**Perfil de Análise**\n\nEscolha um perfil para ajustar automaticamente os 9 parâmetros.",
-        on_change=_aplicar_perfil_do_session,
+        help="**Perfil de Análise**\n\nEscolha um perfil para ajustar automaticamente os 9 parâmetros."
     )
 with f1: fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel")
 with f2: depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel")
@@ -277,12 +288,6 @@ if produto_busca and produto_busca.strip():
         '</div>', unsafe_allow_html=True,
     )
 
-if "_ultimo_perfil_aplicado" not in st.session_state:
-    _perfil = st.session_state.get("perfil_sel", "Padrão")
-    if _perfil in PERFIS:
-        for _chave, _valor in PERFIS[_perfil].items(): st.session_state[_chave] = _valor
-    st.session_state["_ultimo_perfil_aplicado"] = _perfil
-
 # ============================================================
 # PARÂMETROS
 # ============================================================
@@ -296,12 +301,7 @@ if st.session_state.show_params:
         with r1c2: 
             filial_sel = st.selectbox("Filial", ["(todas)"] + list(filiais.keys()), key="filial_param", help="Apenas visual: o motor sempre analisa todas as filiais.")
         with r1c3: 
-            cobertura_opcao = st.selectbox(
-                "Cobertura de Vendas", 
-                COBERTURA_LISTA, 
-                index=COBERTURA_LISTA.index(st.session_state.get("cobertura_opcao", "Para 30 dias")),
-                key="cobertura_opcao"
-            )
+            cobertura_opcao = st.selectbox("Cobertura de Vendas", COBERTURA_LISTA, key="cobertura_opcao")
         with r1c4: 
             lead_time = st.number_input("Tempo de Transporte (dias)", 0, 30, key="lead_time")
 
@@ -566,7 +566,6 @@ if "df_transf" in st.session_state:
                 df_desc = df_env_all[df_env_all["NomeFilialDestino"] == "DESCONTINUAR"].copy().reset_index(drop=True)
                 df_env = df_env_all[~df_env_all["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])].copy().reset_index(drop=True)
 
-                # Lógica para a tabela de compras na aba correta
                 if nome == "ATACADO":
                     df_comp_view = df_compras.copy()
                 else:
@@ -631,7 +630,6 @@ if "df_transf" in st.session_state:
                     dfi.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Liq.", "Qtd Ideal", "Motivo"]
                     st.dataframe(dfi, use_container_width=True, hide_index=True, height=min(420, max(120, len(dfi) * 36 + 42)))
 
-                # ---- COMPRAR (BASEADO NO IDEAL) ----
                 st.markdown('<div class="secao-titulo">🛒 COMPRAR</div>', unsafe_allow_html=True)
                 if df_comp_view.empty:
                     st.caption("Nenhuma compra sugerida no momento")
@@ -654,4 +652,4 @@ if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v2.6 — 2026-10-21</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v2.7 — 2026-10-21</div>', unsafe_allow_html=True)
