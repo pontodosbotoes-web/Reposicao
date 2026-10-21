@@ -136,7 +136,7 @@ def gerar(buffer=None):
     conteudo.append(Spacer(1, 0.5 * cm))
     conteudo.append(p("Manual do Gestor", ESTILO_CAPA_SUB))
     conteudo.append(Spacer(1, 3 * cm))
-    conteudo.append(p("Sistema de sugestao de transferencias e compras", ESTILO_CAPA_SUB))
+    conteudo.append(p("Sistema de sugestao de transferencias entre filiais", ESTILO_CAPA_SUB))
     conteudo.append(p("DRP - IST - MEIO", ESTILO_CAPA_SUB))
     conteudo.append(Spacer(1, 3 * cm))
     conteudo.append(p("Uso interno", ESTILO_CAPA_SUB))
@@ -147,14 +147,14 @@ def gerar(buffer=None):
     conteudo.append(p("Este manual esta dividido em 10 partes:"))
     conteudo.append(Spacer(1, 0.3 * cm))
     for num, titulo in [
-        ("Parte 1", "Introducao e o 'Porque'"),
+        ("Parte 1", "Introducao ao projeto"),
         ("Parte 2", "Como o sistema pensa"),
         ("Parte 3", "Primeiro acesso"),
         ("Parte 4", "Filtros e Parametros"),
         ("Parte 5", "Como ler o resultado"),
         ("Parte 6", "Rotina semanal"),
         ("Parte 7", "Ajustes finos"),
-        ("Parte 8", "Perguntas frequentes"),
+        ("Parte 8", "Perguntas frequentes (20)"),
         ("Parte 9", "Glossario"),
         ("Parte 10", "Casos praticos"),
     ]:
@@ -162,8 +162,8 @@ def gerar(buffer=None):
     conteudo.append(PageBreak())
 
     # ---------- PARTE 1 ----------
-    conteudo.append(h1("Parte 1 - Introducao e o 'Porque'"))
-    conteudo.append(h2("1.1 O problema que resolvemos"))
+    conteudo.append(h1("Parte 1 - Introducao ao projeto"))
+    conteudo.append(h2("1.1 Por que este sistema existe"))
     conteudo.append(p(
         "Imagine o dia a dia de uma rede com <b>5 filiais</b> e <b>milhares de produtos</b>. "
         "Todos os dias voce precisa responder:"
@@ -171,35 +171,48 @@ def gerar(buffer=None):
     conteudo.append(bullet("<b>Quanto</b> mandar de cada produto para cada loja?"))
     conteudo.append(bullet("<b>Quando</b> mandar?"))
     conteudo.append(bullet("Se uma loja tem <b>excesso</b> e outra tem <b>falta</b>, como fazer essa troca?"))
-    conteudo.append(bullet("E se <b>ninguem</b> na rede tiver o produto? Quando comprar?"))
+    conteudo.append(bullet("Como evitar que o Atacado mande produto demais para uma loja e de menos para outra?"))
+    conteudo.append(bullet("Como nao deixar prateleiras vazias sem inflar o estoque?"))
     conteudo.append(Spacer(1, 0.3 * cm))
     conteudo.append(p(
-        "Antes deste sistema, essas decisoes eram tomadas por telefone, planilhas e intuicao. "
-        "Levava horas e gerava erros. <b>Com o sistema</b>, o motor faz essas perguntas para TODOS "
-        "os produtos em segundos e prioriza os mais urgentes."
+        "Antes deste sistema, essas decisoes eram tomadas manualmente: telefonemas, planilhas, "
+        "calculos por intuicao. Levava horas por semana e gerava erros frequentes. "
+        "Com este sistema, o motor faz essas perguntas para <b>todos os produtos</b> em segundos "
+        "e prioriza os mais urgentes."
     ))
 
-    conteudo.append(h2("1.2 O que o sistema faz e NAO faz"))
-    conteudo.append(p("<b>O sistema FAZ:</b>"))
-    conteudo.append(bullet("Analisa historico de vendas e movimentacoes"))
-    conteudo.append(bullet("Calcula o estoque ideal de cada filial"))
-    conteudo.append(bullet("Identifica excessos e faltas"))
-    conteudo.append(bullet("Sugere transferencias e compras"))
-    conteudo.append(bullet("Prioriza por urgencia e gera PDFs"))
-    
-    conteudo.append(p("<b>O sistema NAO FAZ:</b>"))
-    conteudo.append(bullet("Nao substitui sua decisao - ele sugere, voce aprova"))
-    conteudo.append(bullet("Nao executa transferencias - voce cria a ordem no ERP"))
-    conteudo.append(bullet("Nao altera dados no banco - e somente leitura"))
+    conteudo.append(h2("1.2 O que o sistema faz"))
+    conteudo.append(p("<b>1. Analisa</b> o historico de vendas e movimentacoes de todas as filiais"))
+    conteudo.append(p("<b>2. Calcula</b> o estoque ideal que cada filial deveria ter"))
+    conteudo.append(p("<b>3. Identifica</b> quem tem <b>excesso</b> e quem tem <b>falta</b>"))
+    conteudo.append(p("<b>4. Sugere</b> qual filial envia, para quem, e em qual quantidade"))
+    conteudo.append(p("<b>5. Sugere Compras</b> caso o produto falte na rede inteira"))
+    conteudo.append(p("<b>6. Prioriza</b> por urgencia e <b>7. Gera</b> relatorios em PDF"))
 
-    conteudo.append(h2("1.3 De onde vem a inteligencia"))
+    conteudo.append(h2("1.3 O que o sistema NAO faz"))
+    conteudo.append(bullet("<b>Nao substitui sua decisao</b> - ele sugere, voce aprova"))
+    conteudo.append(bullet("<b>Nao executa transferencias</b> - voce cria a ordem no ERP"))
+    conteudo.append(bullet("<b>Nao altera dados</b> no banco - e somente leitura"))
+
+    conteudo.append(h2("1.4 Em 1 paragrafo"))
+    conteudo.append(nota(
+        "O sistema olha os ultimos <b>365 dias</b> de cada produto, calcula o <b>ritmo de venda</b> "
+        "de cada filial, define <b>quanto cada uma precisa ter em estoque</b> para cobrir <b>30 dias</b> "
+        "de venda + <b>10 dias</b> de transporte, e cruza tudo: quem tem demais vira <b>doador</b>, "
+        "quem tem de menos vira <b>receptor</b>. O <b>Atacado</b> entra como hub principal."
+    ))
+
+    conteudo.append(h2("1.5 De onde vem a inteligencia"))
     conteudo.append(p("O motor foi construido com base em 3 praticas consolidadas no varejo mundial:"))
     conteudo.append(h3("DRP - Distribution Requirements Planning"))
-    conteudo.append(p("Planejamento de reposicao baseado no <b>consumo real</b> de cada ponto de venda (Walmart, Carrefour)."))
+    conteudo.append(p("Planejamento de reposicao baseado no <b>consumo real</b> de cada ponto de venda."))
+    conteudo.append(p("<i>Empresas que usam: Walmart, Carrefour, Pao de Acucar.</i>"))
     conteudo.append(h3("IST - Inter-Store Transfers"))
-    conteudo.append(p("Transferencias entre lojas para corrigir desequilibrio enquanto a janela de venda esta aberta (Zara, H&M)."))
+    conteudo.append(p("Transferencias entre lojas para corrigir desequilibrio enquanto a janela de venda esta aberta."))
+    conteudo.append(p("<i>Empresas que usam: Zara, H&M, Best Buy.</i>"))
     conteudo.append(h3("MEIO - Multi-Echelon Inventory Optimization"))
-    conteudo.append(p("Otimizacao de inventario em toda a rede, com <b>hub central</b> (Atacado) para consolidar estoque (Amazon, P&G)."))
+    conteudo.append(p("Otimizacao de inventario em toda a rede, com <b>hub central</b> para consolidar estoque."))
+    conteudo.append(p("<i>Empresas que usam: Amazon, Coca-Cola, P&G.</i>"))
     conteudo.append(PageBreak())
 
     # ---------- PARTE 2 ----------
@@ -214,34 +227,91 @@ def gerar(buffer=None):
         ["0% (Ruptura)", "Urgente"],
     ]
     conteudo.append(tabela(caixa, col_widths=[6 * cm, 8 * cm]))
+    conteudo.append(Spacer(1, 0.3 * cm))
 
-    conteudo.append(h2("2.2 Calculando o Estoque Ideal"))
+    conteudo.append(h2("2.2 Como se calcula o Estoque Ideal"))
     conteudo.append(p("<b>Formula:</b>"))
-    conteudo.append(p("Estoque Ideal = max(Piso Exposicao, Velocidade Periodo x (Cobertura + Tempo de Transporte))", ESTILO_CODIGO))
+    conteudo.append(p(
+        "Estoque Ideal = max(Piso Exposicao, Velocidade Periodo x (Cobertura + Tempo de Transporte))",
+        ESTILO_CODIGO
+    ))
     conteudo.append(nota(
-        "O <b>Piso Exposicao</b> garante um minimo na prateleira, mesmo que a velocidade seja baixa. "
-        "A velocidade usada e a <b>Periodo</b> (vendas / dias corridos)."
+        "Dois pontos importantes: (a) o <b>Piso Exposicao</b> garante um minimo na prateleira, "
+        "mesmo que a velocidade seja baixa; (b) a velocidade usada e a <b>Periodo</b> "
+        "(vendas / dias corridos), nao a Ativa."
     ))
 
     conteudo.append(h3("Exemplo pratico"))
+    conteudo.append(p("Produto: Fita Adesiva 3M"))
     exemplo = [
         ["Variavel", "Valor"],
         ["Vendas nos ultimos 365 dias", "1.825 unidades"],
         ["Velocidade Periodo", "1.825 / 365 = 5 un/dia"],
-        ["Cobertura + Transporte", "30 + 10 = 40 dias"],
-        ["Estoque Ideal", "5 x 40 = 200 unidades"],
+        ["Cobertura de Vendas", "30 dias"],
+        ["Tempo de Transporte", "10 dias"],
+        ["Soma", "40 dias"],
+        ["Estoque Ideal (sem Piso)", "5 x 40 = 200 unidades"],
     ]
     conteudo.append(tabela(exemplo, col_widths=[7 * cm, 7 * cm]))
-
-    conteudo.append(h2("2.3 Excesso, Falta e o Saldo Ajustado"))
-    conteudo.append(p(
-        "O sistema sempre usa o <b>Saldo Ajustado</b>, que e a soma do Saldo Fisico + o que ja esta <b>Em Transito</b>. "
-        "Isso evita sugerir transferencias duplicadas (efeito chicote)."
+    conteudo.append(Spacer(1, 0.2 * cm))
+    conteudo.append(nota(
+        "A loja deveria ter 200 unidades para cobrir 30 dias de venda + 10 de transporte. "
+        "Se o Piso Exposicao for maior que isso, o Ideal sera o Piso."
     ))
-    conteudo.append(p("Excesso = Saldo Ajustado - Estoque Ideal (quando positivo)", ESTILO_CODIGO))
-    conteudo.append(p("Falta = Estoque Ideal - Saldo Ajustado (quando positivo)", ESTILO_CODIGO))
 
-    conteudo.append(h2("2.4 A Regra de Compra (COMPRAR)"))
+    conteudo.append(h2("2.3 Como se calculam Excesso e Falta"))
+    conteudo.append(p("<b>Formula:</b>"))
+    conteudo.append(p("Excesso = Saldo Ajustado - Estoque Ideal   (quando positivo)", ESTILO_CODIGO))
+    conteudo.append(p("Falta   = Estoque Ideal - Saldo Ajustado   (quando positivo)", ESTILO_CODIGO))
+    conteudo.append(p(
+        "<b>Saldo Ajustado</b> = Saldo Provavel + Qtd Em Transito. O sistema <b>sempre</b> usa o "
+        "Saldo Ajustado - nunca o saldo puro - para nao sugerir transferencia duplicada."
+    ))
+
+    conteudo.append(h3("Exemplo com 5 filiais"))
+    exemplo2 = [
+        ["Filial", "Saldo", "Ideal", "Excesso", "Falta"],
+        ["Atacado", "500", "100", "400", "0"],
+        ["Alecrim", "30", "50", "0", "20"],
+        ["Via Direta", "80", "40", "40", "0"],
+        ["Zona Sul", "15", "60", "0", "45"],
+        ["Zona Norte", "70", "55", "15", "0"],
+    ]
+    conteudo.append(tabela(exemplo2, col_widths=[3.5 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm, 3 * cm]))
+    conteudo.append(Spacer(1, 0.3 * cm))
+    conteudo.append(bullet("<b>Atacado</b> tem 400 un de excesso - doador principal"))
+    conteudo.append(bullet("<b>Zona Sul</b> tem 45 un de falta - receptor urgente"))
+    conteudo.append(bullet("<b>Alecrim</b> tem 20 un de falta - receptor"))
+    conteudo.append(bullet("<b>Via Direta</b> tem 40 un de excesso - doador secundario"))
+
+    conteudo.append(h2("2.4 Os 3 tipos de transferencia que o motor faz"))
+    conteudo.append(h3("Tipo 1 - Atacado -> Loja (a mais comum)"))
+    conteudo.append(p("O Atacado e o <b>hub central</b>. Sempre aparece como primeiro doador."))
+    conteudo.append(h3("Tipo 2 - Loja -> Loja (proximidade)"))
+    conteudo.append(p("Quando o Atacado nao tem excesso suficiente, as lojas proximas se ajudam."))
+    conteudo.append(h3("Tipo 3 - Multiplas origens"))
+    conteudo.append(p("O motor combina origens para cobrir a falta total de uma filial."))
+
+    conteudo.append(h2("2.5 A matriz de proximidade"))
+    matriz = [
+        ["Destino", "Ordem de prioridade dos doadores"],
+        ["Alecrim", "1o Atacado, 2o Via Direta, 3o Zona Sul, 4o Zona Norte"],
+        ["Via Direta", "1o Atacado, 2o Alecrim, 3o Zona Sul"],
+        ["Zona Sul", "1o Atacado, 2o Alecrim, 3o Via Direta"],
+        ["Zona Norte", "1o Atacado, 2o Alecrim"],
+        ["Atacado", "Nunca recebe"],
+    ]
+    conteudo.append(tabela(matriz, col_widths=[4 * cm, 10 * cm]))
+
+    conteudo.append(h2("2.6 Regra do minimo de 5 unidades"))
+    conteudo.append(p(
+        "O motor <b>ignora transferencias menores que 5 unidades</b> em todas as regras: "
+        "so sugere se a Falta for >= 5 e se o Excesso Transferivel for >= 5. "
+        "Esse e um <b>MOQ interno</b> (Minimum Order Quantity): abaixo desse volume, "
+        "o custo logistico da transferencia supera o ganho de disponibilidade."
+    ))
+    
+    conteudo.append(h2("2.7 Como o sistema decide a Compra (COMPRAR)"))
     conteudo.append(p(
         "Quando uma loja precisa de produto, o sistema primeiro tenta transferir do Atacado ou de outras lojas. "
         "Se ninguem na rede tiver o produto sobrando, o sistema cria uma sugestao de <b>COMPRA</b>."
@@ -250,42 +320,73 @@ def gerar(buffer=None):
         "A quantidade de compra sugerida e o Estoque Ideal menos o que a loja ja tem e o que ja vai receber. "
         "Se a loja ja recebeu transferencias e ainda falta, o sistema compra apenas o <b>ESTOQUE COMPLEMENTAR</b>."
     ))
-
-    conteudo.append(h2("2.5 Regra do minimo de 5 unidades (MOQ)"))
-    conteudo.append(p(
-        "O motor ignora transferencias ou compras menores que 5 unidades. "
-        "Abaixo desse volume, o custo logistico supera o ganho de disponibilidade."
-    ))
     conteudo.append(PageBreak())
 
     # ---------- PARTE 3 ----------
     conteudo.append(h1("Parte 3 - Primeiro acesso"))
-    conteudo.append(p("1. Abra o navegador e digite: https://pb-reposicao.streamlit.app"))
-    conteudo.append(p("2. Se o app estiver 'dormindo', clique no botao 'Yes, get this app back up!'."))
-    conteudo.append(p("3. A tela principal possui 6 filtros no topo, 5 botoes de acao e os resultados abaixo."))
+    conteudo.append(h2("3.1 Como abrir"))
+    conteudo.append(p("1. Abra o navegador (Chrome, Edge ou Firefox)"))
+    conteudo.append(p("2. Digite na barra de endereco:"))
+    conteudo.append(p("https://pb-reposicao.streamlit.app", ESTILO_CODIGO))
+    conteudo.append(p("3. Pressione <b>Enter</b>"))
+    conteudo.append(h3("Primeira vez do dia"))
+    conteudo.append(p(
+        "Se o app estiver 'dormindo', voce vera o botao <b>'Yes, get this app back up!'</b>. "
+        "Clique e aguarde ~30 segundos."
+    ))
+
+    conteudo.append(h2("3.2 Mapa visual da tela"))
+    layout = [
+        ["Area", "O que tem"],
+        ["Topo", "Titulo 'Reposicao de Produtos'"],
+        ["Linha 1", "6 filtros: Perfil, Fabricante, Departamento, Grupo, Subgrupo, Produto"],
+        ["Botoes", "Consultar, Limpar, Parametros, Manual e Gerar PDF"],
+        ["Cards", "Enviar, Receber, Liquidar, Desc., Comprar"],
+        ["Resultados", "Aparece apos consultar (5 abas por filial)"],
+    ]
+    conteudo.append(tabela(layout, col_widths=[3.5 * cm, 10.5 * cm]))
+
+    conteudo.append(h2("3.3 Problemas comuns"))
+    problemas = [
+        ["Problema", "Solucao"],
+        ["App 'dormindo'", "Clicar em 'Yes, get this app back up!'"],
+        ["Tela em branco", "Atualizar navegador"],
+        ["Erro de conexao", "Testar em outra rede"],
+        ["Consulta nao retorna", "Aguardar 5 min e tentar"],
+    ]
+    conteudo.append(tabela(problemas, col_widths=[5 * cm, 9 * cm]))
     conteudo.append(PageBreak())
 
     # ---------- PARTE 4 ----------
     conteudo.append(h1("Parte 4 - Filtros e Parametros"))
     conteudo.append(h2("4.1 Perfil de Analise"))
     conteudo.append(p(
-        "O Perfil configura automaticamente os 9 parametros do motor. Um mesmo produto pode ser analisado "
-        "com perfis diferentes, dependendo do seu momento de vida (lancamento, alta temporada, fim de ciclo)."
+        "O <b>Perfil de Analise</b> configura automaticamente os 9 parametros do motor. "
+        "Um mesmo produto pode ser analisado com perfis diferentes, dependendo do seu "
+        "momento de vida (lancamento, alta temporada, fim de ciclo)."
     ))
+    conteudo.append(h3("Como ele interage com os Parametros?"))
+    conteudo.append(p(
+        "Ao trocar o Perfil, o sistema sobrescreve os 9 parametros no painel. "
+        "Se voce mudar manualmente um parametro, o sistema respeitara sua alteracao e o nome "
+        "do perfil continua o mesmo. Para voltar ao padrao, clique em <b>Limpar</b>."
+    ))
+
+    conteudo.append(h3("Perfis disponiveis"))
     perfis_desc = [
         ["Perfil", "Quando usar", "Exemplo do Dia a Dia"],
         ["Padrao", "Uso geral", "Materiais continuos."],
         ["Lancamento", "Produto novo/colecao", "Nova colecao de tecidos."],
-        ["Classe A", "Maior faturamento", "Fita adesiva basica."],
+        ["Classe A", "Maior faturamento", "Fita adesiva basica, papel kraft."],
         ["Alto Giro", "Venda rapida constante", "Bexigas de aniversario."],
-        ["Sazonal Longo", "Campanhas longas", "Artigos de Natal."],
-        ["Sazonal Curto", "Pico explosivo", "Mascaras de Halloween."],
-        ["Baixo Giro", "Produtos encalhados", "Tecido de seda."],
-        ["Liquidacao", "Fim de ciclo", "Itens de Halloween em nov."],
+        ["Sazonal Longo", "Campanhas longas (Natal/Carnaval)", "Artigos de Natal em novembro."],
+        ["Sazonal Curto", "Pico explosivo (Pascoa/Maes/Halloween)", "Mascaras de Halloween."],
+        ["Baixo Giro", "Produtos encalhados", "Tecido de seda que vende 1 rolo/mes."],
+        ["Liquidacao", "Fim de ciclo / queima", "Itens de Halloween na 1a semana de nov."],
     ]
     conteudo.append(tabela(perfis_desc, col_widths=[2.5 * cm, 4.5 * cm, 7 * cm]))
-    conteudo.append(Spacer(1, 0.3 * cm))
 
+    conteudo.append(h3("Os 9 parametros de cada perfil (tabela tecnica)"))
     perfis_tec = [
         ["Parametro", "Padrao", "Lanc.", "Classe A", "Alto Giro", "Saz.Longo", "Saz.Curto", "Baixo Giro", "Liquid."],
         ["Periodo analise", "1 ano", "30d", "3m", "3m", "2m", "30d", "1 ano", "6m"],
@@ -293,8 +394,8 @@ def gerar(buffer=None):
         ["Lead time", "10", "10", "7", "7", "10", "7", "10", "10"],
         ["Piso Exposicao", "0", "5", "10", "5", "5", "3", "3", "0"],
         ["Reserva Origem", "25%", "0%", "25%", "15%", "15%", "5%", "30%", "0%"],
-        ["Atacado Piso?", "Nao", "Nao", "Nao", "Nao", "Nao", "Nao", "Nao", "Nao"],
-        ["Atacado Reserva?", "Nao", "Nao", "Nao", "Nao", "Nao", "Nao", "Nao", "Nao"],
+        ["Atacado tem Piso?", "Nao", "Nao", "Nao", "Nao", "Nao", "Nao", "Nao", "Nao"],
+        ["Atacado tem Reserva?", "Nao", "Nao", "Nao", "Nao", "Nao", "Nao", "Nao", "Nao"],
         ["Reposicao Recente", "15", "7", "7", "7", "7", "5", "20", "30"],
         ["Dias em Transito", "10", "10", "7", "7", "10", "7", "10", "10"],
         ["Min. Compra", "Nao", "Nao", "Sim", "Nao", "Sim", "Nao", "Nao", "Nao"],
@@ -306,20 +407,68 @@ def gerar(buffer=None):
                 perfis_tec[i][j] = Paragraph(perfis_tec[i][j], est_tec)
     conteudo.append(tabela(perfis_tec, col_widths=[2.5 * cm, 1.7 * cm, 1.7 * cm, 1.8 * cm, 1.9 * cm, 2.0 * cm, 2.0 * cm, 2.0 * cm, 1.4 * cm]))
 
-    conteudo.append(h2("4.2 Parametros em detalhe"))
+    conteudo.append(Spacer(1, 0.3 * cm))
+    conteudo.append(h2("4.2 Filtros do topo"))
+    filtros = [
+        ["Filtro", "O que faz"],
+        ["Fabricante", "Nome do fabricante"],
+        ["Departamento", "Categoria macro"],
+        ["Grupo", "Subdivisao da categoria"],
+        ["Subgrupo", "Nivel mais especifico"],
+        ["Produto", "Busca por codigo, referencia, nome ou codigo de barras. Aceita E / OU"],
+    ]
+    conteudo.append(tabela(filtros, col_widths=[4 * cm, 10 * cm]))
+    conteudo.append(nota("Escolha pelo menos 1 filtro antes de consultar."))
+
+    conteudo.append(h2("4.3 Busca Avancada de Produto"))
+    conteudo.append(p(
+        "O campo <b>Produto</b> varre <b>4 fontes</b>: codigo interno, referencia do fabricante, "
+        "nome/descricao e codigo de barras (GTIN). Aceita E (espaco) e OU (virgula)."
+    ))
+    sintaxe = [
+        ["Voce digita", "O que o sistema faz"],
+        ["CAIXA QUADRADA", "Acha produtos que tenham CAIXA E QUADRADA"],
+        ["CAPA, CAPUZ", "Acha produtos com CAPA OU CAPUZ"],
+        ["CAIXA QUADRADA, CAPA", "Acha (CAIXA E QUADRADA) OU CAPA"],
+    ]
+    conteudo.append(tabela(sintaxe, col_widths=[5 * cm, 9 * cm]))
+
+    conteudo.append(h3("Regra especial - Produto e exclusivo"))
+    conteudo.append(p(
+        "Quando voce digita algo em <b>Produto</b>, o sistema <b>ignora</b> Fabricante, "
+        "Departamento, Grupo, Subgrupo e <b>Filial</b>. Busca em <b>toda a rede</b>. "
+        "Um aviso azul aparece abaixo dos filtros avisando que essa regra esta ativa."
+    ))
+
+    conteudo.append(h2("4.4 Parametros em detalhe"))
+    conteudo.append(h3("Linha 1 - Janela de Analise"))
     param1 = [
         ["Parametro", "O que e", "Padrao"],
         ["Periodo de Analise", "Janela historica", "1 ano atras"],
         ["Filial", "Filtrar uma filial (apenas visual)", "(todas)"],
         ["Cobertura de Vendas", "Dias de estoque", "Para 30 dias"],
         ["Tempo de Transporte", "Dias entre envio e entrega", "10 dias"],
-        ["Piso Exposicao (un)", "Minimo na prateleira", "0"],
-        ["Reserva Origem (%)", "% do excesso que fica na origem", "25%"],
-        ["Reposicao Recente (dias)", "Bloqueio pos-recebimento", "15"],
-        ["Dias em Transito", "Janela de envio a caminho", "10"],
-        ["Min. Compra", "Usa Piso como qtd minima", "Nao"],
     ]
     conteudo.append(tabela(param1, col_widths=[4 * cm, 6 * cm, 4 * cm]))
+
+    conteudo.append(h3("Linha 2 - Protecao das Origens"))
+    param2 = [
+        ["Parametro", "O que e", "Padrao"],
+        ["Piso Exposicao (un)", "Minimo na prateleira", "0"],
+        ["Reserva Origem (%)", "% do excesso que fica na origem", "25%"],
+        ["Atacado tem Piso?", "Atacado respeita piso", "Nao"],
+        ["Atacado tem Reserva?", "Atacado guarda reserva", "Nao"],
+    ]
+    conteudo.append(tabela(param2, col_widths=[4 * cm, 6 * cm, 4 * cm]))
+
+    conteudo.append(h3("Linha 3 - Travas de Seguranca"))
+    param3 = [
+        ["Parametro", "O que e", "Padrao"],
+        ["Reposicao Recente (dias)", "Bloqueio pos-recebimento", "15"],
+        ["Dias em Transito", "Janela de envio a caminho", "10"],
+        ["Atacado tem Minimo p/ Compra?", "Usa Piso como qtd minima", "Nao"],
+    ]
+    conteudo.append(tabela(param3, col_widths=[4 * cm, 6 * cm, 4 * cm]))
     conteudo.append(PageBreak())
 
     # ---------- PARTE 5 ----------
@@ -331,7 +480,36 @@ def gerar(buffer=None):
     ))
     conteudo.append(p("As abas representam as filiais: ATACADO, ALECRIM, VIA DIRETA, ZONA SUL, ZONA NORTE."))
 
-    conteudo.append(h2("5.2 Motivos possiveis"))
+    conteudo.append(h2("5.2 As colunas essenciais"))
+    colunas = [
+        ["Coluna", "Significado"],
+        ["Prioridade", "Critica / Alta / Normal"],
+        ["Cod", "Codigo interno do produto"],
+        ["Produto", "Descricao do produto"],
+        ["Destino / Origem", "Filial parceira"],
+        ["Qtd Transf.", "Quanto transferir (ou comprar)"],
+        ["Em Transito", "Quantidade que ja esta a caminho"],
+        ["Reserva", "Quanto a origem guarda"],
+        ["Dias p/ Zerar", "Dias ate acabar"],
+        ["Qtd Ideal", "Estoque ideal da filial"],
+        ["Motivo", "Por que foi sugerido"],
+    ]
+    conteudo.append(tabela(colunas, col_widths=[4 * cm, 10 * cm]))
+
+    conteudo.append(h2("5.3 Prioridades"))
+    prioridades = [
+        ["Prioridade", "Criterio", "Acao"],
+        ["Critica", "Zera em menos de 7 dias", "Transferir hoje"],
+        ["Alta", "Zera de 7 a 14 dias", "Esta semana"],
+        ["Normal", "Zera em 15 dias ou mais (ou sem projecao)", "Fluxo regular"],
+    ]
+    conteudo.append(tabela(prioridades, col_widths=[3 * cm, 7 * cm, 4 * cm]))
+    conteudo.append(nota(
+        "<b>Dias p/ Zerar</b> usa a Velocidade <b>Ativa</b> (dias em que efetivamente vendeu). "
+        "Isso projeta ruptura mais cedo que a media simples e avisa antes."
+    ))
+
+    conteudo.append(h2("5.4 Motivos possiveis"))
     motivos = [
         ["Motivo", "Significado"],
         ["SEM ESTOQUE", "Loja zerada e sem produto em transito. Precisa de acao imediata."],
@@ -347,41 +525,99 @@ def gerar(buffer=None):
     ]
     conteudo.append(tabela(motivos, col_widths=[6 * cm, 8 * cm]))
 
-    conteudo.append(h2("5.3 Acoes de Fim de Linha (LIQUIDAR e DESCONTINUAR)"))
+    conteudo.append(h2("5.5 Acoes de Fim de Linha - Liquidar e Descontinuar"))
     conteudo.append(p(
-        "Quando um produto nao vende em nenhuma filial, transferi-lo gera custo de frete e nao resolve a venda. "
-        "O sistema cria duas secoes exclusivas de acao comercial."
+        "Quando um produto nao vende (ou vende muito pouco) em <b>nenhuma filial</b>, "
+        "transferi-lo gera custo de frete e nao resolve a venda. O sistema cria duas secoes "
+        "exclusivas de acao comercial."
     ))
     acoes_fim_linha = [
         ["Acao", "Quando acontece?", "O que o gestor deve fazer?"],
-        ["LIQUIDAR", "Velocidade ZERO em toda a rede, mas ha estoque.", "Promocao, queima ou devolver ao fornecedor."],
-        ["DESCONTINUAR", "Velocidade > 0 mas < 0.1 (fim de ciclo).", "Vender ate o fim do estoque. Nao repor."],
+        ["LIQUIDAR", "Velocidade exata ZERO em toda a rede, mas ha estoque.", "Nao transferir. Promocao, queima ou devolver ao fornecedor."],
+        ["DESCONTINUAR", "Velocidade > 0 mas < 0.1 (fim de ciclo), com estoque.", "Vender ate o fim do estoque. Nao repor e retirar do mix."],
     ]
     conteudo.append(tabela(acoes_fim_linha, col_widths=[3 * cm, 6 * cm, 5 * cm]))
+    conteudo.append(nota(
+        "O Atacado <b>nunca</b> entra em LIQUIDAR/DESCONTINUAR - apenas as lojas (filiais 1 a 4). "
+        "O sistema tambem <b>nao</b> sugere transferir itens de liquidacao/descontinuacao entre lojas."
+    ))
+
+    conteudo.append(h2("5.6 Reposicao Recente (anti-gangorra) - bloqueio inteligente"))
+    conteudo.append(p(
+        "A <b>Reposicao Recente</b> nao bloqueia cegamente toda nova transferencia. "
+        "Ela bloqueia apenas quando o que ja foi recebido <b>cobre ou supera</b> a falta atual. "
+        "Se recebeu 20 un e a falta continua em 50 un, o produto <b>volta a ser elegivel</b>."
+    ))
     conteudo.append(PageBreak())
 
     # ---------- PARTE 6 ----------
     conteudo.append(h1("Parte 6 - Rotina semanal"))
     conteudo.append(h2("6.1 Segunda-feira (10 min)"))
-    conteudo.append(p("1. Abra o app. 2. Escolha o Perfil. 3. Escolha um Fabricante. 4. Clique em Consultar."))
+    conteudo.append(p("1. Abra o app"))
+    conteudo.append(p("2. Clique em Parametros"))
+    conteudo.append(p("3. Confira os padroes:"))
+    conteudo.append(bullet("Periodo = '1 ano atras'"))
+    conteudo.append(bullet("Cobertura = 'Para 30 dias'"))
+    conteudo.append(bullet("Tempo de Transporte = 10"))
+    conteudo.append(p("4. Escolha um Fabricante no topo"))
+    conteudo.append(p("5. Clique em Consultar"))
+    conteudo.append(p("6. Filtre por Prioridade = Critica"))
+
     conteudo.append(h2("6.2 Terca a Quinta (acao)"))
-    conteudo.append(p(
-        "Para cada produto critico: leia o Motivo, confirme a Qtd, gere o PDF e crie a ordem no ERP. "
-        "Se houver itens em COMPRAR, envie a lista para o time de Compras."
-    ))
+    conteudo.append(p("Para cada produto critico:"))
+    conteudo.append(p("1. Veja o <b>Motivo</b>"))
+    conteudo.append(p("2. Confirme a <b>Qtd Transf.</b>"))
+    conteudo.append(p("3. Verifique a <b>Origem</b>"))
+    conteudo.append(p("4. Clique em <b>Gerar PDF</b>"))
+    conteudo.append(p("5. Crie a ordem no ERP"))
+    conteudo.append(p("6. Se houver itens em <b>COMPRAR</b>, envie a lista para o time de Compras."))
+
     conteudo.append(h2("6.3 Sexta-feira (10 min)"))
-    conteudo.append(p("Reabra o app, compare com a semana anterior e ajuste parametros se necessario."))
+    conteudo.append(p("1. Reabra o app"))
+    conteudo.append(p("2. Compare com a semana anterior"))
+    conteudo.append(p("3. Ajuste parametros se necessario"))
     conteudo.append(PageBreak())
 
     # ---------- PARTE 7 ----------
     conteudo.append(h1("Parte 7 - Ajustes finos"))
-    conteudo.append(p("Cenario A: Sugerindo transferencia demais. Aumente a Reposicao Recente ou a Reserva Origem."))
-    conteudo.append(p("Cenario B: Sugerindo transferencia de menos. Diminua a Reposicao Recente ou a Reserva Origem."))
-    conteudo.append(p("Cenario C: Produto sempre zerado. Aumente o Piso Exposicao ou a Cobertura."))
-    conteudo.append(p("Cenario D: Duplicidade de envio. Aumente os Dias em Transito ou a Reposicao Recente."))
+    conteudo.append(h2("Cenario A - Sugerindo transferencia demais"))
+    ajuste_a = [
+        ["Ajuste", "Efeito"],
+        ["Aumentar Reposicao Recente (15 -> 30)", "Bloqueia por mais tempo"],
+        ["Aumentar Reserva Origem (25% -> 40%)", "Origem doa menos"],
+        ["Diminuir Cobertura (30 -> 15)", "Ideal menor"],
+    ]
+    conteudo.append(tabela(ajuste_a, col_widths=[8 * cm, 6 * cm]))
+
+    conteudo.append(h2("Cenario B - Sugerindo transferencia de menos"))
+    ajuste_b = [
+        ["Ajuste", "Efeito"],
+        ["Diminuir Reposicao Recente (15 -> 7)", "Bloqueia menos"],
+        ["Diminuir Reserva Origem (25% -> 15%)", "Origem doa mais"],
+        ["Aumentar Cobertura (30 -> 45)", "Ideal maior"],
+    ]
+    conteudo.append(tabela(ajuste_b, col_widths=[8 * cm, 6 * cm]))
+
+    conteudo.append(h2("Cenario C - Produto sempre zerado"))
+    ajuste_c = [
+        ["Ajuste", "Efeito"],
+        ["Aumentar Piso Exposicao (0 -> 5)", "Minimo maior na prateleira"],
+        ["Aumentar Cobertura", "Ideal maior"],
+        ["Verificar Tempo de Transporte", "Corrigir se subestimado"],
+    ]
+    conteudo.append(tabela(ajuste_c, col_widths=[8 * cm, 6 * cm]))
+
+    conteudo.append(h2("Cenario D - Duplicidade de envio"))
+    ajuste_d = [
+        ["Ajuste", "Efeito"],
+        ["Aumentar Dias em Transito (10 -> 15)", "Cobre mais tempo"],
+        ["Aumentar Reposicao Recente (15 -> 25)", "Quarentena maior"],
+    ]
+    conteudo.append(tabela(ajuste_d, col_widths=[8 * cm, 6 * cm]))
+    conteudo.append(nota("Nunca mude 2 parametros ao mesmo tempo. Assim voce nao sabe qual causou o efeito."))
     conteudo.append(PageBreak())
 
-    # ---------- PARTE 8 ----------
+    # ---------- PARTE 8 - FAQ 20 ----------
     conteudo.append(h1("Parte 8 - Perguntas frequentes (20)"))
     faq = [
         ("O sistema demora quanto para carregar?", "Com filtro de fabricante: 30-60 segundos. Sem filtro: pode demorar mais."),
@@ -422,13 +658,15 @@ def gerar(buffer=None):
         ["Falta", "Saldo Ajustado abaixo do Ideal"],
         ["Hub", "Filial central (Atacado)"],
         ["Matriz de Proximidade", "Regra de quem ajuda quem"],
-        ["MOQ", "Minimum Order Quantity - minimo de 5 un"],
+        ["MOQ", "Minimum Order Quantity - minimo de 5 un por transferencia"],
         ["Piso Exposicao", "Quantidade minima na prateleira"],
         ["Reposicao Recente", "Bloqueio parcial pos-recebimento"],
-        ["Reserva Origem", "% do excesso que fica na origem"],
+        ["Reserva Origem", "% do excesso que fica na origem (ceil)"],
         ["Saldo Ajustado", "SaldoProvavel + QtdEmTransito"],
-        ["Velocidade Ativa", "Vendas / dias com venda"],
-        ["Velocidade Periodo", "Vendas / dias corridos"],
+        ["Saldo Provavel", "Estoque calculado (compras + recebidas - enviadas - vendidas)"],
+        ["Tempo de Transporte", "Dias entre envio e entrega"],
+        ["Velocidade Ativa", "Vendas / dias com venda (usada em Dias p/ Zerar)"],
+        ["Velocidade Periodo", "Vendas / dias corridos (usada no Estoque Ideal)"],
     ]
     conteudo.append(tabela(glossario, col_widths=[5 * cm, 9 * cm]))
     conteudo.append(PageBreak())
@@ -439,39 +677,88 @@ def gerar(buffer=None):
     conteudo.append(h2("Caso 1 - Produto em falta critica (RECEBER)"))
     conteudo.append(p("Aba Zona Sul (RECEBER):"))
     caso1 = [
-        ["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Motivo"],
-        ["1", "Critica", "562351", "FITA ADESIVA", "Atacado", "85", "URGENTE - zera hoje"],
+        ["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Dias", "Motivo"],
+        ["1", "Critica", "562351", "FITA ADESIVA", "Atacado", "85", "3", "URGENTE - zera em 3 dias"],
     ]
-    conteudo.append(tabela(caso1, col_widths=[1 * cm, 2 * cm, 2 * cm, 4 * cm, 2 * cm, 1.5 * cm, 3.5 * cm]))
+    conteudo.append(tabela(caso1, col_widths=[1 * cm, 2 * cm, 2 * cm, 3.5 * cm, 2 * cm, 1.5 * cm, 1.5 * cm, 2.5 * cm]))
+    conteudo.append(Spacer(1, 0.2 * cm))
     conteudo.append(p("<b>Acao</b>: gerar PDF, enviar para o Atacado, criar ordem no ERP."))
 
-    conteudo.append(h2("Caso 2 - Produto que precisa ser COMPRADO"))
-    conteudo.append(p("Aba Alecrim (COMPRAR):"))
+    conteudo.append(h2("Caso 2 - Produto com excesso (ENVIAR)"))
+    conteudo.append(p("Aba Atacado (ENVIAR):"))
     caso2 = [
-        ["#", "Cod", "Produto", "Velocidade", "Ideal", "Sugestao", "Motivo"],
-        ["1", "563551", "FITA ADESIVA", "0.58", "23", "2", "ESTOQUE COMPLEMENTAR"],
-        ["2", "627885", "FITA CREPE", "0.33", "13", "13", "SEM ESTOQUE"],
+        ["#", "Prior.", "Cod", "Produto", "Destino", "Qtd", "Reserva"],
+        ["1", "Normal", "627893", "FITA PAPEL", "Alecrim", "50", "20"],
+        ["2", "Normal", "627893", "FITA PAPEL", "Via Direta", "30", "20"],
     ]
-    conteudo.append(tabela(caso2, col_widths=[1 * cm, 2 * cm, 4 * cm, 2 * cm, 1.5 * cm, 1.5 * cm, 4 * cm]))
-    conteudo.append(p("<b>Acao</b>: enviar a lista para o time de Compras do Atacado."))
+    conteudo.append(tabela(caso2, col_widths=[1 * cm, 2 * cm, 2 * cm, 3.5 * cm, 3 * cm, 1.5 * cm, 2 * cm]))
+    conteudo.append(Spacer(1, 0.2 * cm))
+    conteudo.append(p("<b>Acao</b>: confirmar rota, gerar PDF, criar 2 ordens (uma por destino)."))
 
     conteudo.append(h2("Caso 3 - Transferencia entre lojas (sem passar pelo Atacado)"))
     conteudo.append(p("Aba Zona Sul (RECEBER):"))
     caso3 = [
-        ["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Motivo"],
-        ["5", "Alta", "612202", "SUSPENSORIO", "Via Direta", "20", "Reposicao de ciclo"],
+        ["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Dias"],
+        ["5", "Alta", "612202", "SUSPENSORIO", "Via Direta", "20", "10"],
     ]
-    conteudo.append(tabela(caso3, col_widths=[1 * cm, 2 * cm, 2 * cm, 4 * cm, 3 * cm, 1.5 * cm, 3.5 * cm]))
+    conteudo.append(tabela(caso3, col_widths=[1 * cm, 2 * cm, 2 * cm, 3.5 * cm, 3 * cm, 1.5 * cm, 2 * cm]))
+    conteudo.append(Spacer(1, 0.2 * cm))
     conteudo.append(p("<b>Acao</b>: confirmar com a Via Direta, gerar PDF, criar ordem no ERP."))
 
-    conteudo.append(h2("Caso 4 - Aguardando Transferencia (Caminhao na estrada)"))
-    conteudo.append(p("Aba Zona Sul (RECEBER):"))
-    caso4 = [
-        ["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Em Transito", "Motivo"],
-        ["3", "Alta", "889900", "PAPEL KRAFT", "Atacado", "40", "20", "AGUARDANDO TRANSFERENCIA"],
+    conteudo.append(h2("Caso 4 - Nenhuma sugestao encontrada"))
+    conteudo.append(p("Mensagem: <b>'Nenhuma sugestao encontrada'</b>"))
+    conteudo.append(p("Significa que nenhum produto atendeu aos criterios. O que fazer:"))
+    conteudo.append(bullet("Confirmar se os produtos estao equilibrados"))
+    conteudo.append(bullet("Tentar afrouxar a Cobertura (ex.: 15 dias)"))
+    conteudo.append(bullet("Tentar outro periodo de analise (ex.: 6 meses)"))
+    conteudo.append(bullet("Verificar se o filtro de Fabricante nao esta muito restritivo"))
+
+    conteudo.append(PageBreak())
+
+    conteudo.append(h2("Caso 5 - Produto parado: LIQUIDAR"))
+    conteudo.append(p("Aba Zona Norte (LIQUIDAR):"))
+    caso5 = [
+        ["#", "Prior.", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Liq.", "Motivo"],
+        ["1", "Normal", "771234", "SQUEEZE HALLOWEEN", "UN", "CASA FESTA", "15", "ESTOQUE PARADO"],
     ]
-    conteudo.append(tabela(caso4, col_widths=[1 * cm, 2 * cm, 2 * cm, 4 * cm, 2 * cm, 1.5 * cm, 1.5 * cm, 4 * cm]))
-    conteudo.append(p("<b>Acao</b>: O produto ja esta a caminho. Verificar se o caminhao chegou."))
+    conteudo.append(tabela(caso5, col_widths=[1 * cm, 2 * cm, 2 * cm, 3.5 * cm, 1.5 * cm, 3 * cm, 2 * cm, 2 * cm]))
+    conteudo.append(Spacer(1, 0.2 * cm))
+    conteudo.append(p("<b>Por que caiu aqui?</b> O produto nao teve <b>NENHUMA</b> venda (velocidade zero) nos ultimos 365 dias em toda a rede, mas a Zona Norte tem 15 unidades no estoque."))
+    conteudo.append(p("<b>O que o sistema faz:</b> Nao sugere transferir para outras lojas. Transferir um produto que nao vende so gasta frete e nao gera receita."))
+    conteudo.append(p("<b>Acao</b>: Criar uma promocao local, fazer um kit com outro produto, ou devolver ao fornecedor."))
+
+    conteudo.append(Spacer(1, 0.3 * cm))
+    conteudo.append(h2("Caso 6 - Produto de fim de ciclo: DESCONTINUAR"))
+    conteudo.append(p("Aba Alecrim (DESCONTINUAR):"))
+    caso6 = [
+        ["#", "Prior.", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Desc.", "Motivo"],
+        ["1", "Normal", "554433", "FITA CETIM VERMELHA", "UN", "ADERE", "8", "FIM DE CICLO"],
+    ]
+    conteudo.append(tabela(caso6, col_widths=[1 * cm, 2 * cm, 2 * cm, 3.5 * cm, 1.5 * cm, 3 * cm, 2 * cm, 2 * cm]))
+    conteudo.append(Spacer(1, 0.2 * cm))
+    conteudo.append(p("<b>Por que caiu aqui?</b> O produto tem uma velocidade de venda muito baixa (ex: 0.08 un/dia, ou seja, 1 unidade a cada 12 dias) na rede inteira. O ciclo de vida dele acabou."))
+    conteudo.append(p("<b>O que o sistema faz:</b> Nao sugere reposicao. Voce deve vender o que tem e nao comprar mais."))
+    conteudo.append(p("<b>Acao</b>: Vender ate o fim do estoque atual. Nao fazer novas compras e retirar o item do mix da loja quando zerar."))
+
+    conteudo.append(PageBreak())
+
+    conteudo.append(h2("Caso 7 - Produto recem-recebido: AGUARDANDO QUARENTENA"))
+    conteudo.append(p("Aba Zona Sul (RECEBER):"))
+    caso7 = [
+        ["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Dias", "Motivo"],
+        ["3", "Alta", "889900", "PAPEL KRAFT", "Atacado", "40", "5", "RECEBIDO RECENTEMENTE"],
+    ]
+    conteudo.append(tabela(caso7, col_widths=[1 * cm, 2 * cm, 2 * cm, 3.5 * cm, 2 * cm, 1.5 * cm, 1.5 * cm, 2.5 * cm]))
+    conteudo.append(Spacer(1, 0.2 * cm))
+    conteudo.append(p("<b>Por que caiu aqui?</b> A Zona Sul ainda tem uma falta projetada, mas recebeu uma transferencia deste produto nos ultimos 15 dias (parametro Reposicao Recente)."))
+    conteudo.append(p("<b>O que o sistema faz:</b> Mostra o alerta para voce saber que a falta existe, mas a origem ja mandou algo recentemente. Ele evita mandar de novo (efeito gangorra)."))
+    conteudo.append(p("<b>Acao</b>: Verificar fisicamente na loja. Se a transferencia anterior ja cobre a falta, nao fazer nada. Se nao chegou, acionar a transportadora."))
+
+    conteudo.append(Spacer(1, 0.3 * cm))
+    conteudo.append(h2("Caso 8 - Falta pequena: A REGRA DO MINIMO DE 5"))
+    conteudo.append(p("Voce consulta e nota que o produto 'Fita Refletiva' tem falta de 3 unidades na Zona Norte, mas ele <b>nao aparece</b> no sistema."))
+    conteudo.append(p("<b>Por que nao aparece?</b> O motor ignora transferencias menores que 5 unidades em todas as regras. E o MOQ (Minimum Order Quantity)."))
+    conteudo.append(p("<b>O que fazer:</b> O custo logistico (frete, separacao, embalagem) para mover 3 unidades e maior que o beneficio. Deixe o produto seguir o fluxo natural ou aguarde acumular uma falta maior."))
 
     # ---------- GERAR ----------
     doc.build(conteudo, canvasmaker=ManualCanvas)
