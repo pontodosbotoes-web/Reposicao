@@ -424,7 +424,7 @@ class HeaderFooterCanvas(canvas.Canvas):
         if self.parametros_texto: self.drawCentredString(w / 2, 12, self.parametros_texto)
         self.drawRightString(w - 15, 12, f"Página {self._pageNumber} de {page_count}")
 
-def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
+def gerar_pdf_filial(nome_filial, cod, df, df_compras, nome_perfil, parametros_texto):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=15, leftMargin=15, topMargin=35, bottomMargin=25)
     elements = []
@@ -438,14 +438,26 @@ def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
 
     def _build(df_part, tipo):
         if df_part.empty: return Paragraph("<i>Nenhum item.</i>", cell_style)
+        
         if tipo == "ENV":
             heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Trans.", "Res.", "Ideal", "Motivo"]
             widths = [28, 34, 45, 180, 30, 120, 55, 36, 40, 40, 36, 150]
             mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialDestino"], "C"), (int(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["ReservaOrigem"]), "R"), (int(r["Qtd Ideal"]), "R"), (r["Motivo"], "L")]
-        else:
+        
+        elif tipo == "REC":
             heads = ["#", "Pr.", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd", "Trans.", "Dias", "Ideal", "Motivo"]
             widths = [28, 34, 45, 180, 30, 120, 55, 36, 40, 40, 36, 150]
             mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (int(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"), (int(r["Qtd Ideal"]), "R"), (r["Motivo"], "L")]
+
+        elif tipo == "COMP":
+            if cod == 5:
+                heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Ideal", "Sugestão", "Motivo"]
+                widths = [28, 45, 250, 30, 140, 50, 50, 150]
+                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (r["Motivo"], "L")]
+            else:
+                heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Velocidade", "Ideal", "Sugestão", "Motivo"]
+                widths = [28, 45, 200, 30, 120, 50, 40, 50, 150]
+                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (r["Motivo"], "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
         for _, row in df_part.iterrows():
@@ -469,24 +481,37 @@ def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
 
     df_env = df[df["CodigoFilialOrigem"] == cod].copy()
     df_rec = df[df["CodigoFilialDestino"] == cod].copy()
+    
+    # Preparar dados de compras
+    if not df_compras.empty:
+        if cod == 5:
+            df_comp = df_compras.groupby(["CodigoProduto", "Produto", "Embalagem", "Fabricante"], as_index=False).agg({"QtdSugerida": "sum", "Ideal": "sum"})
+            df_comp["Motivo"] = df_comp.apply(lambda r: "SEM ESTOQUE" if r["QtdSugerida"] == r["Ideal"] else "ESTOQUE COMPLEMENTAR", axis=1)
+            df_comp = df_comp.sort_values("Produto").reset_index(drop=True)
+        else:
+            df_comp = df_compras[df_compras["NomeFilialDestino"] == nome_filial].copy()
+    else:
+        df_comp = pd.DataFrame()
 
-    if df_env.empty and df_rec.empty:
+    if df_env.empty and df_rec.empty and df_comp.empty:
         elements.append(Paragraph(f"<b>Sem movimentações para {nome_filial.title()}</b>", filial_style))
         agora = agora_br()
         doc.build(elements, canvasmaker=lambda *a, **kw: HeaderFooterCanvas(*a, titulo=f"Relatorio de Reposicao - {nome_perfil} - {nome_filial.title()}", gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), parametros_texto=parametros_texto, **kw))
         buffer.seek(0)
         return buffer, agora
 
+    # Resumo
     env_totais = df_env[~df_env["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])]
     liq_totais = df_env[df_env["NomeFilialDestino"] == "LIQUIDAR"]
     desc_totais = df_env[df_env["NomeFilialDestino"] == "DESCONTINUAR"]
+    comp_totais = df_comp
 
     resumo_data = [
-        ["", "ENVIAR", "RECEBER", "DESCONTINUAR", "LIQUIDAR"],
-        ["Itens", str(len(env_totais)), str(len(df_rec)), str(len(desc_totais)), str(len(liq_totais))],
-        ["Unidades", str(int(env_totais["QtdTransferir"].sum()) if not env_totais.empty else 0), str(int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0), str(int(desc_totais["QtdTransferir"].sum()) if not desc_totais.empty else 0), str(int(liq_totais["QtdTransferir"].sum()) if not liq_totais.empty else 0)]
+        ["", "ENVIAR", "RECEBER", "DESCONTINUAR", "LIQUIDAR", "COMPRAR"],
+        ["Itens", str(len(env_totais)), str(len(df_rec)), str(len(desc_totais)), str(len(liq_totais)), str(len(comp_totais))],
+        ["Unidades", str(int(env_totais["QtdTransferir"].sum()) if not env_totais.empty else 0), str(int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0), str(int(desc_totais["QtdTransferir"].sum()) if not desc_totais.empty else 0), str(int(liq_totais["QtdTransferir"].sum()) if not liq_totais.empty else 0), str(int(comp_totais["QtdSugerida"].sum()) if not comp_totais.empty else 0)]
     ]
-    t_resumo = Table(resumo_data, colWidths=[70, 70, 70, 90, 70], hAlign='LEFT')
+    t_resumo = Table(resumo_data, colWidths=[70, 70, 70, 90, 70, 70], hAlign='LEFT')
     t_resumo.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E293B')), ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'), ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
@@ -500,25 +525,33 @@ def gerar_pdf_filial(nome_filial, cod, df, nome_perfil, parametros_texto):
     df_desc = df_env[df_env["NomeFilialDestino"] == "DESCONTINUAR"].copy()
     df_env = df_env[~df_env["NomeFilialDestino"].isin(["LIQUIDAR", "DESCONTINUAR"])].copy()
 
+    # Tabelas
     if not df_env.empty:
         df_env = df_env.reset_index(drop=True); df_env.insert(0, "#", range(1, len(df_env) + 1))
         df_env["Qtd Ideal"] = df_env["IdealDestino"] if cod == 5 else df_env["IdealOrigem"]
         df_env["Prioridade"] = df_env["Prioridade"].map(PRIO_TXT).fillna("-")
         elements.append(Paragraph("<b>ENVIAR</b>", filial_style)); elements.append(_build(df_env, "ENV")); elements.append(Spacer(1, 14))
+    
     if not df_rec.empty:
         df_rec = df_rec.reset_index(drop=True); df_rec.insert(0, "#", range(1, len(df_rec) + 1))
         df_rec["Qtd Ideal"] = df_rec["IdealDestino"]; df_rec["Prioridade"] = df_rec["Prioridade"].map(PRIO_TXT).fillna("-")
         elements.append(Paragraph("<b>RECEBER</b>", filial_style)); elements.append(_build(df_rec, "REC")); elements.append(Spacer(1, 14))
+    
     if not df_desc.empty:
         df_desc = df_desc.reset_index(drop=True); df_desc.insert(0, "#", range(1, len(df_desc) + 1))
         df_desc["Prioridade"] = df_desc["Prioridade"].map(PRIO_TXT).fillna("-"); df_desc["Qtd Ideal"] = 0
         df_desc["NomeFilialDestino"] = df_desc["NomeFilialOrigem"]
         elements.append(Paragraph("<b>DESCONTINUAR</b>", filial_style)); elements.append(_build(df_desc, "ENV")); elements.append(Spacer(1, 14))
+    
     if not df_liq.empty:
         df_liq = df_liq.reset_index(drop=True); df_liq.insert(0, "#", range(1, len(df_liq) + 1))
         df_liq["Prioridade"] = df_liq["Prioridade"].map(PRIO_TXT).fillna("-"); df_liq["Qtd Ideal"] = 0
         df_liq["NomeFilialDestino"] = df_liq["NomeFilialOrigem"]
-        elements.append(Paragraph("<b>LIQUIDAR</b>", filial_style)); elements.append(_build(df_liq, "ENV"))
+        elements.append(Paragraph("<b>LIQUIDAR</b>", filial_style)); elements.append(_build(df_liq, "ENV")); elements.append(Spacer(1, 14))
+
+    if not df_comp.empty:
+        df_comp = df_comp.reset_index(drop=True); df_comp.insert(0, "#", range(1, len(df_comp) + 1))
+        elements.append(Paragraph("<b>COMPRAR</b>", filial_style)); elements.append(_build(df_comp, "COMP"))
 
     agora = agora_br()
     doc.build(elements, canvasmaker=lambda *a, **kw: HeaderFooterCanvas(*a, titulo=f"Relatorio de Reposicao - {nome_perfil} - {nome_filial.title()}", gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), parametros_texto=parametros_texto, **kw))
@@ -568,12 +601,13 @@ if btn_pdf_global:
         st.warning("⚠️ Faça uma consulta primeiro para depois gerar o PDF.")
     else:
         df_atual = st.session_state["df_transf"]
+        df_compras_atual = st.session_state.get("df_compras", pd.DataFrame())
         cod_pdf = codigos_filial[filial_pdf]
         parametros_str = f"Cob: {cobertura}d | Lead: {lead_time}d | Res: {reserva}% | Piso: {piso} | Quarentena: {anti_gangorra}d | Trânsito: {dias_transito}d | Mín.Compra: {atacado_min_compra}"
         
         with st.spinner("Gerando PDF..."):
             try:
-                pdf_bytes, agora = gerar_pdf_filial(filial_pdf, cod_pdf, df_atual, st.session_state.get("perfil_sel", "Padrão"), parametros_str)
+                pdf_bytes, agora = gerar_pdf_filial(filial_pdf, cod_pdf, df_atual, df_compras_atual, st.session_state.get("perfil_sel", "Padrão"), parametros_str)
                 nome_file = filial_pdf.title().replace(" ", "")
                 st.session_state["pdf_bytes_global"] = (pdf_bytes, f"Reposicao {nome_file} {agora.strftime('%Y%m%d %H%M%S')}.pdf")
             except Exception as e:
@@ -750,4 +784,4 @@ if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v3.3 — 2026-10-21</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v3.4 — 2026-10-21</div>', unsafe_allow_html=True)
