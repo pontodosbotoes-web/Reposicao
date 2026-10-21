@@ -750,4 +750,4 @@ if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v3.2 — 2026-10-21</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v3.3 — 2026-10-21</div>', unsafe_allow_html=True)
