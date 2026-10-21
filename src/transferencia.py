@@ -36,7 +36,6 @@ def calcular_indicadores(
         return reserva_pct
 
     df["Piso"] = df["CodigoFilial"].apply(_piso)
-    # O Cálculo do Ideal: Velocidade x (Cobertura + Lead)
     df["EstoqueIdeal"] = np.maximum(df["Piso"], df["VelocidadePeriodo"] * dias).round(0).astype(int)
     df["Excesso"] = np.maximum(0, df["SaldoAjustado"] - df["EstoqueIdeal"])
     df["Falta"] = np.maximum(0, df["EstoqueIdeal"] - df["SaldoAjustado"])
@@ -78,7 +77,6 @@ def excluir_descontinuados(df: pd.DataFrame) -> pd.DataFrame:
 def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_tem_minimo_compra: bool = False) -> tuple[list[dict], list[dict]]:
     vel_max = df_produto["VelocidadePeriodo"].max()
 
-    # === REGRA 1: LIQUIDAÇÃO ===
     if vel_max == 0:
         alocacoes = []
         doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & (df_produto["SaldoAjustado"] > 0)]
@@ -97,7 +95,6 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                 })
         return alocacoes, []
 
-    # === REGRA 2: DESCONTINUAÇÃO ===
     elif vel_max < 0.1:
         alocacoes = []
         doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & (df_produto["SaldoAjustado"] > 0)]
@@ -116,7 +113,6 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                 })
         return alocacoes, []
 
-    # --- Lógica normal ---
     receptoras = df_produto[df_produto["Falta"] >= 5].copy()
     receptoras = receptoras[receptoras["QtdRecebidaRecente"] < receptoras["Falta"]]
     receptoras = receptoras.sort_values(["VelocidadePeriodo", "VelocidadeAtiva", "DiasInativo"], ascending=[False, False, True])
@@ -130,6 +126,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
 
     for _, rec in receptoras.iterrows():
         precisa = rec["Falta"]
+        qtd_recebida_transf = 0
         ordem = MATRIZ_PROXIMIDADE.get(rec["CodigoFilial"], [])
 
         for cod_doador in ordem:
@@ -168,12 +165,16 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
 
             excesso_livre[cod_doador] -= qtd
             precisa -= qtd
+            qtd_recebida_transf += qtd
 
-        # Se após todas as transferências a loja ainda precisa, gera a sugestão de COMPRA
-        if precisa > 0:
+        # CÁLCULO DE COMPRA BASEADO NO ESTOQUE IDEAL (Ignorando saldo negativo)
+        # Quanto a loja precisa para chegar no Ideal?
+        # Se o ideal é 15, e ela já vai receber 10 de transferência, ela precisa comprar 5.
+        necessidade_ideal = rec["EstoqueIdeal"] - qtd_recebida_transf
+        
+        if necessidade_ideal > 0:
             minimo = piso_exposicao if atacado_tem_minimo_compra else 1
-            if precisa >= minimo:
-                qtd_final = max(int(precisa), piso_exposicao) if atacado_tem_minimo_compra else int(precisa)
+            if necessidade_ideal >= minimo:
                 compras.append({
                     "NomeFilialDestino": rec["Filial"],
                     "CodigoProduto": rec["CodigoProduto"],
@@ -181,21 +182,19 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "Produto": rec["Produto"],
                     "Fabricante": rec["Fabricante"],
                     "Embalagem": rec["Embalagem"],
-                    "QtdSugerida": qtd_final,
-                    "Motivo": "Falta na rede sem excesso p/ transferir",
+                    "QtdSugerida": int(necessidade_ideal),
+                    "Motivo": "Sugestão de compra",
                     "Velocidade": rec["VelocidadePeriodo"],
-                    "Ideal": rec["EstoqueIdeal"],
-                    "Saldo": rec["SaldoAjustado"]
+                    "Ideal": rec["EstoqueIdeal"]
                 })
 
-    # Verifica se o próprio Atacado precisa comprar para si
+    # CÁLCULO DE COMPRA PARA O ATACADO (Repor o ideal dele próprio)
     atacado = df_produto[df_produto["CodigoFilial"] == 5]
     if not atacado.empty:
-        falta_atacado = atacado.iloc[0]["Falta"]
-        if falta_atacado > 0:
+        falta_atacado_ideal = atacado.iloc[0]["EstoqueIdeal"] - atacado.iloc[0]["SaldoAjustado"]
+        if falta_atacado_ideal > 0:
             minimo = piso_exposicao if atacado_tem_minimo_compra else 1
-            if falta_atacado >= minimo:
-                qtd_final = max(int(falta_atacado), piso_exposicao) if atacado_tem_minimo_compra else int(falta_atacado)
+            if falta_atacado_ideal >= minimo:
                 compras.append({
                     "NomeFilialDestino": "ATACADO",
                     "CodigoProduto": atacado.iloc[0]["CodigoProduto"],
@@ -203,11 +202,10 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "Produto": atacado.iloc[0]["Produto"],
                     "Fabricante": atacado.iloc[0]["Fabricante"],
                     "Embalagem": atacado.iloc[0]["Embalagem"],
-                    "QtdSugerida": qtd_final,
-                    "Motivo": "Falta no Atacado",
+                    "QtdSugerida": int(falta_atacado_ideal),
+                    "Motivo": "Sugestão de compra",
                     "Velocidade": atacado.iloc[0]["VelocidadePeriodo"],
-                    "Ideal": atacado.iloc[0]["EstoqueIdeal"],
-                    "Saldo": atacado.iloc[0]["SaldoAjustado"]
+                    "Ideal": atacado.iloc[0]["EstoqueIdeal"]
                 })
 
     return alocacoes, compras
