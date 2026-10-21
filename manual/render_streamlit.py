@@ -31,32 +31,20 @@ def render_tabela(headers, rows):
 def render_manual() -> None:
     """Renderiza o manual do gestor."""
 
-    # ============================================================
-    # CORREÇÃO MOBILE: ABAS EM GRID (QUEBRAM LINHA)
-    # ============================================================
+    # CSS atualizado: Abas sem fundo azul, apenas underline padrão
     st.markdown("""
         <style>
-            /* Permite que as abas pulem de linha no celular */
             .stTabs [data-baseweb="tab-list"] {
                 flex-wrap: wrap !important; 
                 justify-content: center !important;
                 gap: 6px !important;
                 padding-bottom: 10px;
             }
-            /* Deixa as abas com formato de botão (pílula) no celular */
             .stTabs [data-baseweb="tab"] {
                 flex-grow: 1 !important;
                 justify-content: center !important;
-                background-color: #262730 !important;
-                border-radius: 6px !important;
                 padding: 6px 12px !important;
                 font-size: 0.85rem !important;
-                border: 1px solid #334155 !important;
-            }
-            /* Destaque para a aba ativa */
-            .stTabs [aria-selected="true"] {
-                background-color: #2563EB !important;
-                border-color: #2563EB !important;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -115,8 +103,9 @@ def render_manual() -> None:
             "✅ **2. Calcula** o estoque ideal de cada filial\n\n"
             "✅ **3. Identifica** excesso (doador) e falta (receptor)\n\n"
             "✅ **4. Sugere** qual filial envia, para quem, e quanto\n\n"
-            "✅ **5. Prioriza** por urgência\n\n"
-            "✅ **6. Gera** relatórios em PDF por filial"
+            "✅ **5. Sugere Compras** caso falte produto na rede inteira\n\n"
+            "✅ **6. Prioriza** por urgência\n\n"
+            "✅ **7. Gera** relatórios em PDF por filial"
         )
 
         st.subheader("1.3 O que o sistema NÃO faz")
@@ -133,27 +122,9 @@ def render_manual() -> None:
             "**ritmo de venda** de cada filial, define **quanto cada uma precisa "
             "ter em estoque** para cobrir **30 dias** de venda + **10 dias** de "
             "transporte, e cruza tudo: quem tem demais é sugerido como **doador**, "
-            "quem tem de menos é sugerido como **receptor**. O **Atacado** entra "
-            "como hub principal, e as **lojas próximas** se ajudam quando faz sentido."
+            "quem tem de menos é sugerido como **receptor**. Se ninguém tiver o produto, "
+            "o sistema sugere a **Compra**. O **Atacado** entra como hub principal."
         )
-
-        st.subheader("1.5 De onde vem a inteligência")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown("### 🏛️ DRP")
-            st.caption("Distribution Requirements Planning")
-            st.markdown("Planejamento baseado no **consumo real**.")
-            st.caption("Walmart, Carrefour, Pão de Açúcar")
-        with col2:
-            st.markdown("### 🔄 IST")
-            st.caption("Inter-Store Transfers")
-            st.markdown("Transferências entre lojas.")
-            st.caption("Zara, H&M, Best Buy")
-        with col3:
-            st.markdown("### 🌐 MEIO")
-            st.caption("Multi-Echelon Optimization")
-            st.markdown("Otimização com **hub central**.")
-            st.caption("Amazon, Coca-Cola, P&G")
 
     # ---------------- ABA 2 - Como Pensa ----------------
     with tab2:
@@ -169,33 +140,19 @@ def render_manual() -> None:
         st.header("2.2 Estoque Ideal")
         st.code("Estoque Ideal = max(Piso Exposição, Velocidade Período x (Cobertura + Tempo de Transporte))", language="text")
         st.warning(
-            "**Atenção:** O **Piso Exposição** garante um mínimo na prateleira, mesmo que a velocidade seja baixa. "
-            "E a velocidade usada é a **Período** (vendas / dias corridos), não a Ativa."
+            "**Atenção:** O **Piso Exposição** garante um mínimo na prateleira. "
+            "A velocidade usada é a **Período** (vendas / dias corridos)."
         )
 
-        st.markdown("**Exemplo Prático (Fita Adesiva 3M):**")
+        st.header("2.3 O que acontece quando a rede inteira está sem estoque? (COMPRAR)")
         st.markdown(
-            "- Vendas nos últimos 365 dias: 1.825 un\n"
-            "- Velocidade: 1.825 / 365 = **5 un/dia**\n"
-            "- Cobertura: **30 dias** | Tempo de Transporte: **10 dias** | Soma: **40 dias**\n"
-            "- **Estoque Ideal = 5 x 40 = 200 unidades**"
+            "Se a filial precisa do produto e não há em nenhuma outra filial para transferir, "
+            "o sistema vai sugerir a **COMPRA**.\n\n"
+            "**Como é calculada a quantidade?**\n"
+            "- O sistema soma o que as lojas precisam (ideal).\n"
+            "- Subtrai o que as lojas já têm e o que já vai chegar (Em Trânsito).\n"
+            "- A diferença é a **Qtd Sugerida** para compra."
         )
-
-        st.header("2.3 Excesso e Falta")
-        st.code("Excesso = Saldo Ajustado - Estoque Ideal\nFalta   = Estoque Ideal - Saldo Ajustado", language="text")
-        st.info(
-            "**Saldo Ajustado** = Saldo Provável + Qtd Em Trânsito. O sistema **sempre** usa o "
-            "Saldo Ajustado — nunca o saldo puro — para não sugerir transferência duplicada."
-        )
-
-        st.markdown("**Exemplo com 5 filiais:**")
-        render_tabela(["Filial", "Saldo", "Ideal", "Excesso", "Falta"], [
-            ["Atacado", "500", "100", "400", "0"],
-            ["Alecrim", "30", "50", "0", "20"],
-            ["Via Direta", "80", "40", "40", "0"],
-            ["Zona Sul", "15", "60", "0", "45"],
-            ["Zona Norte", "70", "55", "15", "0"]
-        ])
 
         st.header("2.4 A Matriz de Proximidade")
         st.markdown("Quem ajuda quem:")
@@ -209,12 +166,9 @@ def render_manual() -> None:
 
         st.header("2.5 Regra do Mínimo de 5 unidades (MOQ)")
         st.markdown(
-            "O motor **ignora transferências menores que 5 unidades** em todas as regras: "
-            "só sugere se a Falta for >= 5 e se o Excesso Transferível for >= 5. "
-            "Esse é um **MOQ interno** (Minimum Order Quantity): abaixo desse volume, "
-            "o custo logístico da transferência supera o ganho de disponibilidade."
+            "O motor **ignora transferências menores que 5 unidades** em todas as regras. "
+            "Abaixo desse volume, o custo logístico da transferência supera o ganho de disponibilidade."
         )
-        st.caption("💡 *Amazon usa o mesmo princípio para transferências entre centros de distribuição.*")
 
     # ---------------- ABA 3 - Primeiro Acesso ----------------
     with tab3:
@@ -233,18 +187,9 @@ def render_manual() -> None:
         render_tabela(["Área", "O que tem"], [
             ["Topo", "Título 'Reposição de Produtos'"],
             ["Linha 1", "6 filtros: Perfil, Fabricante, Depto, Grupo, Subgrupo, Produto"],
-            ["Botões", "Consultar, Limpar, Parâmetros e Manual"],
-            ["Aviso", "Faixa azul quando o Produto está preenchido"],
-            ["Parâmetros", "Aparece ao clicar em Parâmetros (3 linhas)"],
+            ["Botões", "Consultar, Limpar, Parâmetros, Manual e Gerar PDF"],
+            ["Cards", "Enviar, Receber, Liquidar, Desc., Comprar (Itens e Unid)"],
             ["Resultados", "Aparece após consultar (5 abas por filial)"]
-        ])
-
-        st.header("3.3 Problemas comuns")
-        render_tabela(["Problema", "Solução"], [
-            ["App 'dormindo'", "Clicar em 'Yes, get this app back up!'"],
-            ["Tela em branco", "Atualizar navegador"],
-            ["Erro de conexão", "Testar em outra rede"],
-            ["Consulta não retorna", "Aguardar 5 min e tentar"]
         ])
 
     # ---------------- ABA 4 - Filtros e Parâmetros ----------------
@@ -253,11 +198,6 @@ def render_manual() -> None:
         st.markdown(
             "O **Perfil de Análise** configura automaticamente os 9 parâmetros do motor. "
             "Um mesmo produto pode ser analisado com perfis diferentes, dependendo do seu momento de vida."
-        )
-        st.info(
-            "**Como ele interage com os Parâmetros?** Ao trocar o Perfil, o sistema sobrescreve "
-            "os 9 parâmetros no painel. Se você mudar manualmente um parâmetro, o sistema respeitará "
-            "sua alteração. Para voltar ao padrão, clique em **Limpar** (🧹)."
         )
 
         st.markdown("**Perfis disponíveis:**")
@@ -280,154 +220,92 @@ def render_manual() -> None:
                 ["Cobertura", "30d", "30d", "15d", "15d", "30d", "15d", "30d", "7d"],
                 ["Lead time", "10", "10", "7", "7", "10", "7", "10", "10"],
                 ["Piso Exposição", "0", "5", "10", "5", "5", "3", "3", "0"],
-                ["Reserva Origem", "25%", "0%", "40%", "15%", "15%", "5%", "30%", "0%"],
+                ["Reserva Origem", "25%", "0%", "25%", "15%", "15%", "5%", "30%", "0%"],
                 ["Atacado tem Piso?", "Não", "Não", "Não", "Não", "Não", "Não", "Não", "Não"],
                 ["Atacado tem Reserva?", "Não", "Não", "Não", "Não", "Não", "Não", "Não", "Não"],
                 ["Reposição Recente", "15", "7", "7", "7", "7", "5", "20", "30"],
-                ["Dias em Trânsito", "10", "10", "7", "7", "10", "7", "10", "10"]
+                ["Dias em Trânsito", "10", "10", "7", "7", "10", "7", "10", "10"],
+                ["Mín. Compra", "Não", "Não", "Sim", "Não", "Sim", "Não", "Não", "Não"]
             ]
         )
 
-        st.header("4.2 Busca Avançada de Produto")
-        st.markdown("O campo **Produto** varre **4 fontes**: código interno, referência do fabricante, nome/descrição e código de barras (GTIN).")
-        render_tabela(["Você digita", "O que o sistema faz"], [
-            ["CAIXA QUADRADA", "Acha produtos que tenham CAIXA E QUADRADA"],
-            ["CAPA, CAPUZ", "Acha produtos com CAPA OU CAPUZ"],
-            ["CAIXA QUADRADA, CAPA", "Acha (CAIXA E QUADRADA) OU CAPA"]
-        ])
-        st.warning(
-            "**Regra especial — Produto é exclusivo:** Quando você digita algo em Produto, "
-            "o sistema **ignora** Fabricante, Departamento, Grupo, Subgrupo e Filial. Busca em toda a rede."
+        st.header("4.2 Parâmetros em detalhe")
+        st.markdown(
+            "**Atacado tem Mínimo p/ Compra?** Se 'Sim', o sistema só sugere comprar se a "
+            "necessidade for maior ou igual ao Piso Exposição. Isso evita comprar volumes "
+            "irrisórios de fornecedores."
         )
 
     # ---------------- ABA 5 - Resultado ----------------
     with tab5:
-        st.header("5.1 Como ler o resultado")
+        st.header("5.1 Como ler os cards")
         st.markdown(
-            "Após consultar, você verá 5 abas (ATACADO, ALECRIM, VIA DIRETA, ZONA SUL, ZONA NORTE). "
-            "Cada uma mostra: **ENVIAR**, **RECEBER**, **DESCONTINUAR** e **LIQUIDAR**."
+            "Acima de cada aba, você verá 5 cards: **Enviar, Receber, Liquidar, Desc. e Comprar**. "
+            "Cada um mostra a quantidade de **Itens** (linhas) e **Unid** (soma das quantidades)."
         )
 
-        st.header("5.2 Prioridades")
-        render_tabela(["Prioridade", "Critério", "Ação"], [
-            ["Crítica", "Zera em menos de 7 dias", "Transferir hoje"],
-            ["Alta", "Zera de 7 a 14 dias", "Esta semana"],
-            ["Normal", "Zera em 15 dias ou mais (ou sem projeção)", "Fluxo regular"]
+        st.header("5.2 As colunas essenciais")
+        render_tabela(["Coluna", "Significado"], [
+            ["Prioridade", "Crítica / Alta / Normal"],
+            ["Em Trânsito", "Quantidade que já está a caminho para a filial"],
+            ["Qtd Transf.", "Quanto transferir ou comprar"],
+            ["Qtd Ideal", "Estoque ideal da filial"],
+            ["Motivo", "Por que foi sugerido"]
         ])
-        st.caption("💡 *Dias p/ Zerar usa a Velocidade Ativa (dias em que efetivamente vendeu).*")
 
         st.header("5.3 Motivos possíveis")
         render_tabela(["Motivo", "Significado"], [
-            ["SEM ESTOQUE", "Já zerou — urgente"],
-            ["AGUARDANDO TRANSFERENCIA", "Saldo Provável <= 0 E tem envio a caminho"],
-            ["RECEBIDO RECENTEMENTE", "Recebeu nos últimos N dias (parâmetro Reposição Recente)"],
-            ["URGENTE - zera em N dias", "Vai zerar em breve"],
-            ["Origem parada, destino vendendo", "Origem com velocidade < 0.05 e destino >= 0.1"],
-            ["Alta rotação no destino", "Destino vende 2x mais que origem"],
-            ["Maior giro no destino", "Destino vende 1.5x mais que origem"],
-            ["Reposição de ciclo", "Padrão — mantém fluxo"]
+            ["SEM ESTOQUE", "Loja zerada e sem produto em trânsito (Alarme Vermelho)"],
+            ["AGUARDANDO TRANSFERENCIA", "Produto já está a caminho (caminhão na estrada)"],
+            ["RECEBIDO RECENTEMENTE", "Recebeu nos últimos N dias (quarentena)"],
+            ["URGENTE - zera hoje", "Vai zerar em menos de 1 dia"],
+            ["URGENTE - zera em N dias", "Vai zerar em breve (1 a 6 dias)"],
+            ["ESTOQUE COMPLEMENTAR", "Falta na rede, mas ainda há um pouco de estoque nas lojas"]
         ])
 
         st.header("5.4 Ações de Fim de Linha (Liquidar e Descontinuar)")
         st.markdown(
-            "Quando um produto não vende em nenhuma filial, transferi-lo gera custo de frete "
-            "e não resolve a venda. O sistema cria duas seções exclusivas:"
+            "Quando um produto não vende em nenhuma filial, transferi-lo gera custo de frete. "
+            "O sistema cria seções exclusivas de ação comercial para não poluir a tela de transferências."
         )
-        render_tabela(["Ação", "Quando acontece?", "O que o gestor deve fazer?"], [
-            ["LIQUIDAR", "Velocidade exata ZERO em toda a rede, mas há estoque.", "Não transferir. Promoção, queima ou devolver ao fornecedor."],
-            ["DESCONTINUAR", "Velocidade > 0 mas < 0.1 (fim de ciclo), com estoque.", "Vender até o fim do estoque. Não repor e retirar do mix."]
-        ])
-        st.info("**O Atacado nunca entra em LIQUIDAR/DESCONTINUAR** - apenas as lojas (filiais 1 a 4).")
-
-        st.header("5.5 Reposição Recente (Anti-gangorra)")
-        st.markdown(
-            "A **Reposição Recente** não bloqueia cegamente toda nova transferência. "
-            "Ela bloqueia apenas quando o que já foi recebido **cobre ou supera** a falta atual. "
-            "Se recebeu 20 un e a falta continua em 50 un, o produto **volta a ser elegível**."
-        )
-        st.caption("💡 *Esse comportamento evita o Efeito Chicote (estudo clássico da P&G com fraldas Pampers).*")
-
-        st.header("5.6 Reserva Origem")
-        st.markdown("A Reserva é calculada como **ceil** (arredonda para cima) do percentual sobre o Excesso. Ex.: Excesso 45, Reserva 25% -> 12 un (11.25 arredondado).")
 
     # ---------------- ABA 6 - Rotina ----------------
     with tab6:
         st.header("6.1 Segunda-feira (10 min)")
         st.markdown(
             "1. Abra o app\n"
-            "2. Clique em Parâmetros e confira os padrões (Período='1 ano', Cobertura='30 dias', Tempo Transp=10)\n"
-            "3. Escolha um Fabricante no topo\n"
-            "4. Clique em Consultar (🔍)\n"
+            "2. Escolha o Perfil\n"
+            "3. Escolha um Fabricante\n"
+            "4. Clique em Consultar\n"
             "5. Filtre por Prioridade = Crítica"
         )
         st.header("6.2 Terça a Quinta (ação)")
         st.markdown(
-            "Para cada produto crítico:\n"
             "1. Veja o **Motivo**\n"
             "2. Confirme a **Qtd Transf.**\n"
-            "3. Verifique a **Origem**\n"
-            "4. Clique em **Gerar PDF** (📄)\n"
-            "5. Crie a ordem no ERP"
+            "3. Gere o PDF\n"
+            "4. Crie a ordem no ERP\n"
+            "5. Se houver itens em **COMPRAR**, envie a lista para o time de Compras."
         )
-        st.header("6.3 Sexta-feira (10 min)")
-        st.markdown("1. Reabra o app\n2. Compare com a semana anterior\n3. Ajuste parâmetros se necessário")
 
     # ---------------- ABA 7 - Ajustes ----------------
     with tab7:
         st.header("Cenários e Soluções")
-        
         st.subheader("Cenário A — Sugerindo transferência demais")
-        render_tabela(["Ajuste", "Efeito"], [
-            ["Aumentar Reposição Recente (15 -> 30)", "Bloqueia por mais tempo"],
-            ["Aumentar Reserva Origem (25% -> 40%)", "Origem doa menos"],
-            ["Diminuir Cobertura (30 -> 15)", "Ideal menor"]
-        ])
-
+        st.markdown("- Aumentar Reposição Recente (15 -> 30)\n- Aumentar Reserva Origem (25% -> 40%)\n- Diminuir Cobertura (30 -> 15)")
+        
         st.subheader("Cenário B — Sugerindo transferência de menos")
-        render_tabela(["Ajuste", "Efeito"], [
-            ["Diminuir Reposição Recente (15 -> 7)", "Bloqueia menos"],
-            ["Diminuir Reserva Origem (25% -> 15%)", "Origem doa mais"],
-            ["Aumentar Cobertura (30 -> 45)", "Ideal maior"]
-        ])
-
-        st.subheader("Cenário C — Produto sempre zerado")
-        render_tabela(["Ajuste", "Efeito"], [
-            ["Aumentar Piso Exposição (0 -> 5)", "Mínimo maior na prateleira"],
-            ["Aumentar Cobertura", "Ideal maior"],
-            ["Verificar Tempo de Transporte", "Corrigir se subestimado"]
-        ])
-
-        st.subheader("Cenário D — Duplicidade de envio")
-        render_tabela(["Ajuste", "Efeito"], [
-            ["Aumentar Dias em Trânsito (10 -> 15)", "Cobre mais tempo"],
-            ["Aumentar Reposição Recente (15 -> 25)", "Quarentena maior"]
-        ])
-        st.warning("**Nota:** Nunca mude 2 parâmetros ao mesmo tempo. Assim você não sabe qual causou o efeito.")
+        st.markdown("- Diminuir Reposição Recente (15 -> 7)\n- Diminuir Reserva Origem (25% -> 15%)\n- Aumentar Cobertura (30 -> 45)")
 
     # ---------------- ABA 8 - FAQ ----------------
     with tab8:
-        st.header("Perguntas frequentes (20)")
+        st.header("Perguntas frequentes")
         faq = [
-            ("O sistema demora quanto para carregar?", "Com filtro de fabricante: 30-60 segundos. Sem filtro: pode demorar mais."),
-            ("Posso deixar em branco todos os filtros?", "Não. Escolha pelo menos um."),
-            ("Por que meu produto não aparece?", "Várias causas: não vendeu no período, está nos departamentos INATIVO/USO INTERNO, não tem excesso nem falta, o filtro excluiu, ou o produto foi removido automaticamente (ver próxima pergunta)."),
-            ("Por que meu produto sumiu da análise automaticamente?", "Se o produto não vendeu (velocidade < 0.1) em NENHUMA filial E não tem saldo em NENHUMA, ele é removido. Volta a aparecer quando houver venda ou estoque."),
-            ("A sugestão parece errada. O que faço?", "1. Verifique o Motivo. 2. Confira movimentações estranhas. 3. Verifique o Período. 4. Se persistir, acione TI."),
-            ("Posso mudar os parâmetros toda hora?", "Não recomendo. Deixe padrão por 15 dias antes de mexer."),
-            ("O PDF pode ser editado?", "Não, é um PDF padrão."),
-            ("Como sei se um produto é doador ou receptor?", "Doador: seção ENVIAR. Receptor: seção RECEBER."),
-            ("Preciso anotar tudo?", "Não. Sempre confira o Motivo antes de aprovar."),
-            ("Dois produtos competem pela mesma quantidade?", "O motor prioriza por urgência (Crítica -> Alta -> Normal)."),
-            ("Como aciono o suporte?", "[Contato do responsável pelo projeto]"),
-            ("Consigo ver o histórico de sugestões?", "Hoje não. Sugestão futura."),
-            ("Posso exportar para Excel?", "Só PDF hoje."),
-            ("Por que o 'Reserva' varia?", "É o percentual (padrão 25%) sobre o Excesso, arredondado para cima. Quanto maior o Excesso, maior a Reserva."),
-            ("O que é 'AGUARDANDO TRANSFERENCIA'?", "O saldo projetado está <= 0 E já existe envio a caminho. Não duplica."),
-            ("O que é 'RECEBIDO RECENTEMENTE'?", "Filial recebeu nos últimos N dias (parâmetro Reposição Recente). Está em quarentena."),
-            ("Posso transferir tudo que o sistema sugere?", "Não. O programa não substitui o bom senso. Sempre confira antes."),
-            ("Quando o Ideal é 0?", "Produtos sem venda no período E sem Piso Exposição configurado."),
-            ("O sistema sugere menos de 5 unidades?", "Não. O motor ignora transferências < 5 un (MOQ interno para evitar custo logístico)."),
-            ("Isso substitui o ERP?", "Não. É uma ferramenta de decisão. A execução continua no ERP."),
+            ("Por que meu produto está na aba COMPRAR?", "Porque a rede inteira está sem estoque suficiente. Transferir não resolve, precisamos comprar do fornecedor."),
+            ("O que significa 'ESTOQUE COMPLEMENTAR'?", "Significa que a rede tem um pouco do produto, mas não o suficiente para o período ideal. O sistema sugere comprar apenas o complemento."),
+            ("O que é 'Em Trânsito'?", "É a quantidade que já foi despachada pela origem e está no caminhão a caminho do destino."),
+            ("Por que o Motivo difere do Em Trânsito?", "Se a loja tem -100 de saldo e 20 em trânsito, o motivo será SEM ESTOQUE (pois o caminhão não salva). Se tem -10 e 20 em trânsito, o motivo será AGUARDANDO TRANSFERENCIA."),
+            ("O sistema compra sozinho?", "Não. Ele apenas sugere a lista. A compra é feita pelo ERP."),
         ]
         for i, (pergunta, resposta) in enumerate(faq, 1):
             with st.expander(f"{i}. {pergunta}"):
@@ -437,88 +315,31 @@ def render_manual() -> None:
     with tab9:
         st.header("Glossário")
         render_tabela(["Termo", "Definição"], [
-            ["Base", "Consulta SQL que traz todos os produtos x filial"],
-            ["Cobertura de Vendas", "Dias de venda que o produto deve cobrir"],
-            ["Dias em Trânsito", "Período entre envio e recebimento"],
             ["Estoque Ideal", "max(Piso, VelocPeriodo x (Cob + Lead))"],
-            ["Excesso", "Saldo Ajustado acima do Ideal"],
-            ["Falta", "Saldo Ajustado abaixo do Ideal"],
-            ["Hub", "Filial central (Atacado)"],
-            ["Matriz de Proximidade", "Regra de quem ajuda quem"],
-            ["MOQ", "Minimum Order Quantity - mínimo de 5 un por transferência"],
-            ["Piso Exposição", "Quantidade mínima na prateleira"],
-            ["Reposição Recente", "Bloqueio parcial pós-recebimento"],
-            ["Reserva Origem", "% do excesso que fica na origem (ceil)"],
+            ["Em Trânsito", "Quantidade já despachada, a caminho da filial"],
+            ["ESTOQUE COMPLEMENTAR", "Motivo de compra quando há estoque na rede, mas abaixo do ideal"],
+            ["MOQ", "Minimum Order Quantity - mínimo de 5 un por transferência ou compra"],
             ["Saldo Ajustado", "SaldoProvavel + QtdEmTransito"],
-            ["Saldo Provável", "Estoque calculado (compras + recebidas - enviadas - vendidas)"],
-            ["Tempo de Transporte", "Dias entre envio e entrega"],
-            ["Velocidade Ativa", "Vendas / dias com venda (usada em Dias p/ Zerar)"],
-            ["Velocidade Período", "Vendas / dias corridos (usada no Estoque Ideal)"]
         ])
 
     # ---------------- ABA 10 - Casos Práticos ----------------
     with tab10:
         st.header("Casos Práticos")
-        st.markdown("Estes casos mostram situações reais do dia a dia e como o sistema reage a cada uma.")
-
+        
         with st.expander("Caso 1 — Produto em falta crítica (RECEBER)"):
             st.markdown("**Aba Zona Sul (RECEBER):**")
-            render_tabela(["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Dias", "Motivo"], [
-                ["1", "Crítica", "562351", "FITA ADESIVA", "Atacado", "85", "3", "URGENTE"]
+            render_tabela(["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Motivo"], [
+                ["1", "Crítica", "562351", "FITA ADESIVA", "Atacado", "85", "URGENTE - zera hoje"]
             ])
             st.markdown("**Ação:** gerar PDF, enviar para o Atacado, criar ordem no ERP.")
 
-        with st.expander("Caso 2 — Produto com excesso (ENVIAR)"):
-            st.markdown("**Aba Atacado (ENVIAR):**")
-            render_tabela(["#", "Prior.", "Cod", "Produto", "Destino", "Qtd", "Reserva"], [
-                ["1", "Normal", "627893", "FITA PAPEL", "Alecrim", "50", "20"],
-                ["2", "Normal", "627893", "FITA PAPEL", "Via Direta", "30", "20"]
+        with st.expander("Caso 2 — Produto que precisa ser COMPRADO"):
+            st.markdown("**Aba Alecrim (COMPRAR):**")
+            render_tabela(["#", "Cod", "Produto", "Velocidade", "Ideal", "Sugestão", "Motivo"], [
+                ["1", "563551", "FITA ADESIVA", "0.58", "23", "2", "ESTOQUE COMPLEMENTAR"],
+                ["2", "627885", "FITA CREPE", "0.33", "13", "13", "SEM ESTOQUE"]
             ])
-            st.markdown("**Ação:** confirmar rota, gerar PDF, criar 2 ordens (uma por destino).")
-
-        with st.expander("Caso 3 — Transferência entre lojas (sem passar pelo Atacado)"):
-            st.markdown("**Aba Zona Sul (RECEBER):**")
-            render_tabela(["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Dias"], [
-                ["5", "Alta", "612202", "SUSPENSORIO", "Via Direta", "20", "10"]
-            ])
-            st.markdown("**Ação:** confirmar com a Via Direta, gerar PDF, criar ordem no ERP.")
-
-        with st.expander("Caso 4 — Nenhuma sugestão encontrada"):
-            st.markdown("**Mensagem:** 'Nenhuma sugestão encontrada'")
-            st.markdown("O que fazer:")
-            st.markdown("- Confirmar se os produtos estão equilibrados\n- Tentar afrouxar a Cobertura (ex.: 15 dias)\n- Tentar outro período de análise (ex.: 6 meses)\n- Verificar se o filtro de Fabricante não está muito restritivo")
-
-        with st.expander("Caso 5 — Produto parado: LIQUIDAR"):
-            st.markdown("**Aba Zona Norte (LIQUIDAR):**")
-            render_tabela(["#", "Prior.", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Liq.", "Motivo"], [
-                ["1", "Normal", "771234", "SQUEEZE HALLOWEEN", "UN", "CASA FESTA", "15", "ESTOQUE PARADO"]
-            ])
-            st.markdown("**Por que caiu aqui?** O produto não teve NENHUMA venda (velocidade zero) nos últimos 365 dias em toda a rede, mas a Zona Norte tem 15 unidades no estoque.")
-            st.markdown("**O que o sistema faz:** Não sugere transferir para outras lojas. Transferir um produto que não vende só gasta frete e não gera receita.")
-            st.markdown("**Ação:** Criar uma promoção local, fazer um kit com outro produto, ou devolver ao fornecedor.")
-
-        with st.expander("Caso 6 — Produto de fim de ciclo: DESCONTINUAR"):
-            st.markdown("**Aba Alecrim (DESCONTINUAR):**")
-            render_tabela(["#", "Prior.", "Cod", "Produto", "Emb.", "Fabricante", "Qtd p/ Desc.", "Motivo"], [
-                ["1", "Normal", "554433", "FITA CETIM VERMELHA", "UN", "ADERE", "8", "FIM DE CICLO"]
-            ])
-            st.markdown("**Por que caiu aqui?** O produto tem uma velocidade de venda muito baixa (ex: 0.08 un/dia, ou seja, 1 unidade a cada 12 dias) na rede inteira. O ciclo de vida dele acabou.")
-            st.markdown("**O que o sistema faz:** Não sugere reposição. Você deve vender o que tem e não comprar mais.")
-            st.markdown("**Ação:** Vender até o fim do estoque atual. Não fazer novas compras e retirar o item do mix da loja quando zerar.")
-
-        with st.expander("Caso 7 — Produto recém-recebido: AGUARDANDO QUARENTENA"):
-            st.markdown("**Aba Zona Sul (RECEBER):**")
-            render_tabela(["#", "Prior.", "Cod", "Produto", "Origem", "Qtd", "Dias", "Motivo"], [
-                ["3", "Alta", "889900", "PAPEL KRAFT", "Atacado", "40", "5", "RECEBIDO RECENTEMENTE"]
-            ])
-            st.markdown("**Por que caiu aqui?** A Zona Sul ainda tem uma falta projetada, mas recebeu uma transferência deste produto nos últimos 15 dias (parâmetro Reposição Recente).")
-            st.markdown("**O que o sistema faz:** Mostra o alerta para você saber que a falta existe, mas a origem já mandou algo recentemente. Ele evita mandar de novo (efeito gangorra).")
-            st.markdown("**Ação:** Verificar fisicamente na loja. Se a transferência anterior já cobre a falta, não fazer nada. Se não chegou, acionar a transportadora.")
-
-        with st.expander("Caso 8 — Falta pequena: A REGRA DO MÍNIMO DE 5"):
-            st.markdown("Você consulta e nota que o produto 'Fita Refletiva' tem falta de 3 unidades na Zona Norte, mas ele **não aparece** no sistema.")
-            st.markdown("**Por que não aparece?** O motor ignora transferências menores que 5 unidades em todas as regras. É o MOQ (Minimum Order Quantity).")
-            st.markdown("**O que fazer:** O custo logístico (frete, separação, embalagem) para mover 3 unidades é maior que o benefício. Deixe o produto seguir o fluxo natural ou aguarde acumular uma falta maior.")
+            st.markdown("**Ação:** enviar a lista para o time de Compras do Atacado.")
 
     st.markdown("---")
     st.caption("Manual do Gestor — Reposição de Produtos | Uso interno")
