@@ -404,7 +404,7 @@ def render_manual() -> None:
 
     # ---------------- ABA 8 - FAQ ----------------
     with tab8:
-        st.header("Perguntas frequentes (20)")
+        st.header("Perguntas frequentes")
         faq = [
             ("O sistema demora quanto para carregar?", "Com filtro de fabricante: 30-60 segundos. Sem filtro: pode demorar mais."),
             ("Posso deixar em branco todos os filtros?", "Não. Escolha pelo menos um."),
