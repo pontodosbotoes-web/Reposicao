@@ -154,7 +154,7 @@ def gerar(buffer=None):
         ("Parte 5", "Como ler o resultado"),
         ("Parte 6", "Rotina semanal"),
         ("Parte 7", "Ajustes finos"),
-        ("Parte 8", "Perguntas frequentes (20)"),
+        ("Parte 8", "Perguntas frequentes"),
         ("Parte 9", "Glossario"),
         ("Parte 10", "Casos praticos"),
     ]:
@@ -618,7 +618,7 @@ def gerar(buffer=None):
     conteudo.append(PageBreak())
 
     # ---------- PARTE 8 - FAQ 20 ----------
-    conteudo.append(h1("Parte 8 - Perguntas frequentes (20)"))
+    conteudo.append(h1("Parte 8 - Perguntas frequentes"))
     faq = [
         ("O sistema demora quanto para carregar?", "Com filtro de fabricante: 30-60 segundos. Sem filtro: pode demorar mais."),
         ("Posso deixar em branco todos os filtros?", "Nao. Escolha pelo menos um."),
