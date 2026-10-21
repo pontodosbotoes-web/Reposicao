@@ -194,8 +194,10 @@ def gerar(buffer=None):
 
     conteudo.append(h2("2.2 Ideal vs. Quantidade de Transferencia"))
     conteudo.append(p(
-        "Essa e a maior duvida: O <b>Ideal</b> e o tamanho do buraco (a meta). A <b>Qtd Transf.</b> e a acao de hoje. "
-        "Se o Ideal e 100 e o Saldo e 40, transfere 60. O Ideal e a meta, a transferencia e o passo."
+        "Essa e uma das maiores duvidas dos gestores:<br/>"
+        "<b>Qtd Ideal:</b> E a quantidade para satisfazer o periodo.<br/>"
+        "<b>Qtd Transf.:</b> E a acao de hoje. O que falta para cobrir o saldo mais o necessario para o periodo.<br/>"
+        "Exemplo: Ideal 100, Saldo 40. Transfere 60. O Ideal e o necessario para o periodo, a transferencia cobre o saldo atual e a necessidade projetada."
     ))
 
     conteudo.append(h2("2.3 O Resgate de Saldos Negativos"))
