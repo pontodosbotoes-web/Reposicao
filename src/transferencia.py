@@ -92,6 +92,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "QtdTransferir": qtd, "ReservaOrigem": 0, "IdealOrigem": 0, "IdealDestino": 0,
                     "DiasAteZerarDestino": None, "Motivo": "ESTOQUE PARADO",
                     "SaldoAjustado": int(doa["SaldoAjustado"]),
+                    "QtdEmTransito": 0
                 })
         return alocacoes, []
 
@@ -110,6 +111,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "QtdTransferir": qtd, "ReservaOrigem": 0, "IdealOrigem": 0, "IdealDestino": 0,
                     "DiasAteZerarDestino": None, "Motivo": "FIM DE CICLO",
                     "SaldoAjustado": int(doa["SaldoAjustado"]),
+                    "QtdEmTransito": 0
                 })
         return alocacoes, []
 
@@ -161,6 +163,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                 "IdealOrigem": int(doa["EstoqueIdeal"]), "IdealDestino": int(rec["EstoqueIdeal"]),
                 "DiasAteZerarDestino": round(rec["DiasAteZerar"], 1) if pd.notna(rec["DiasAteZerar"]) else None,
                 "Motivo": motivo, "SaldoAjustado": int(rec["SaldoAjustado"]),
+                "QtdEmTransito": int(rec["QtdEmTransito"]),
             })
 
             excesso_livre[cod_doador] -= qtd
@@ -172,7 +175,6 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
         if necessidade_ideal > 0:
             minimo = piso_exposicao if atacado_tem_minimo_compra else 1
             if necessidade_ideal >= minimo:
-                # Definição do Motivo (Item 2 e 3)
                 if qtd_recebida_transf == 0 and rec["SaldoAjustado"] <= 0:
                     motivo_compra = "SEM ESTOQUE"
                 else:
