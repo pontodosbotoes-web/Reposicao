@@ -190,14 +190,49 @@ grupos = carregar_grupos()
 subgrupos = carregar_subgrupos()
 
 PERFIS = {
-    "Padrão": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 0, "reserva": 25, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 15, "dias_transito": 10},
-    "Lançamento": {"opcao_data": "30 dias atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 5, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 10},
-    "Classe A": {"opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 10, "reserva": 40, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 7},
-    "Alto Giro": {"opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 7},
-    "Sazonal Longo": {"opcao_data": "2 meses atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 10},
-    "Sazonal Curto": {"opcao_data": "30 dias atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 3, "reserva": 5, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 5, "dias_transito": 7},
-    "Baixo Giro": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 3, "reserva": 30, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 20, "dias_transito": 10},
-    "Liquidação": {"opcao_data": "6 meses atrás", "cobertura_opcao": "Para 7 dias", "lead_time": 10, "piso": 0, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 30, "dias_transito": 10},
+    "Padrão": {
+        "opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, 
+        "piso": 0, "reserva": 25, "atacado_piso": "Não", "atacado_reserva": "Não", 
+        "atacado_min_compra": "Não", "anti_gangorra": 15, "dias_transito": 10
+    },
+    "Lançamento": {
+        "opcao_data": "30 dias atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, # Ajustado de 7 para 10
+        "piso": 5, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", 
+        "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 10
+    },
+    "Classe A": {
+        "opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, 
+        "piso": 10, "reserva": 25, # Ajustado de 40% para 25%
+        "atacado_piso": "Não", "atacado_reserva": "Não", 
+        "atacado_min_compra": "Sim", # Ativado MOQ de compra
+        "anti_gangorra": 7, "dias_transito": 7
+    },
+    "Alto Giro": {
+        "opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, 
+        "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", 
+        "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 7
+    },
+    "Sazonal Longo": {
+        "opcao_data": "2 meses atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, 
+        "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", 
+        "atacado_min_compra": "Sim", # Ativado MOQ de compra
+        "anti_gangorra": 7, "dias_transito": 10
+    },
+    "Sazonal Curto": {
+        "opcao_data": "30 dias atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, 
+        "piso": 3, "reserva": 5, "atacado_piso": "Não", "atacado_reserva": "Não", 
+        "atacado_min_compra": "Não", "anti_gangorra": 5, "dias_transito": 7
+    },
+    "Baixo Giro": {
+        "opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, 
+        "piso": 3, "reserva": 30, "atacado_piso": "Não", "atacado_reserva": "Não", 
+        "atacado_min_compra": "Não", "anti_gangorra": 20, "dias_transito": 10
+    },
+    "Liquidação": {
+        "opcao_data": "6 meses atrás", "cobertura_opcao": "Para 7 dias", "lead_time": 10, 
+        "piso": 0, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", 
+        "atacado_min_compra": "Não", "anti_gangorra": 30, "dias_transito": 10
+    },
 }
 
 if "show_params" not in st.session_state: st.session_state.show_params = False
