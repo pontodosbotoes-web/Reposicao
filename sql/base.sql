@@ -2,7 +2,8 @@ WITH ProdutosBase AS
 (
     SELECT
         p.IdProduto, p.CODPRODUTO, p.CodProdutoFabr, p.NOMEPRODUTO, p.UNID,
-        p.CODFABR, f.NOMEFABR, g.NomeGrupo
+        p.CODFABR, f.NOMEFABR, g.NomeGrupo,
+        p.PrecoVenda1, p.PrecoVenda2, p.CustoUnitario  -- NOVAS COLUNAS
     FROM Produtos p WITH (NOLOCK)
     LEFT JOIN Fabricantes f WITH (NOLOCK) ON f.CODFABR = p.CODFABR
     LEFT JOIN Grupos g      WITH (NOLOCK) ON g.IdGrupo  = p.IdGrupo
@@ -88,6 +89,11 @@ SELECT
     pf.NomeGrupo,
     pf.CodFilial       AS CodigoFilial,
     pf.Filial,
+    
+    -- NOVAS COLUNAS AQUI
+    CAST(ISNULL(pf.PrecoVenda1, 0) AS DECIMAL(18,2)) AS PrecoVenda1,
+    CAST(ISNULL(pf.PrecoVenda2, 0) AS DECIMAL(18,2)) AS PrecoVenda2,
+    CAST(ISNULL(pf.CustoUnitario, 0) AS DECIMAL(18,2)) AS CustoUnitario,
 
     uc.DataUltimaCompra,
     DATEDIFF(DAY, uc.DataUltimaCompra, :data_referencia) + 1 AS DiasDesdeCompra,
