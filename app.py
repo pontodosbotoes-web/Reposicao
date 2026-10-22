@@ -127,8 +127,8 @@ st.markdown("""
             transition: all 0.2s;
         }
 
-        .st-key-btn_consultar button { background-color: #2563EB !important; color: #FFFFFF !important; border: none !important; }
-        .st-key-btn_consultar button:hover { background-color: #1D4ED8 !important; }
+        .st-key-btn_consultar button { background-color: #3B82F6 !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_consultar button:hover { background-color: #2563EB !important; }
         
         .st-key-btn_limpar button { background-color: #DC2626 !important; color: #FFFFFF !important; border: none !important; }
         .st-key-btn_limpar button:hover { background-color: #B91C1C !important; }
@@ -145,6 +145,12 @@ st.markdown("""
         
         .st-key-btn_download_pdf button { background-color: #0891B2 !important; color: #FFFFFF !important; border: none !important; }
         .st-key-btn_download_pdf button:hover { background-color: #0E7490 !important; }
+
+        /* --- CORREÇÃO DO TEXTO DOS EXPANDERS --- */
+        div[data-testid="stExpander"] details summary p {
+            color: #F8FAFC !important; 
+            font-weight: 600;
+        }
 
         div[data-testid="stDataFrame"] div[role="columnheader"] {
             justify-content: center !important;
