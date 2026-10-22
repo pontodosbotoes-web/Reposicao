@@ -275,7 +275,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
         
         # Gatilho 2: Loja nunca foi abastecida (sem histórico de vendas, compras ou recebimento)
         elif (loja["VelocidadePeriodo"] == 0 and loja["SaldoAjustado"] <= 0 and 
-              loja["QtdComprada"] == 0 and loja["QtdRecebida"] == 0 and loja["QtdVendida"] == 0):
+              loja["QtdComprada"] == 0 and loja["QtdRecebida"] == 0 and loja["QtdVendida"] == 0 and loja["QtdEnviada"] == 0):
             
             # Força o mínimo de 5 unidades (MOQ) para valer a pena o frete
             qtd_entrada = max(int(piso_exposicao), 5)
@@ -296,7 +296,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                 "IdealOrigem": int(loja["EstoqueIdeal"]),
                 "IdealDestino": 0,
                 "DiasAteZerarDestino": None,
-                "Motivo": "Falha de Distribuição (Nunca abastecida)",
+                "Motivo": "Esquecimento na Rede (Sem movimento)",
                 "SaldoAjustado": 0,
                 "QtdEmTransito": 0,
                 "RetornoFinanceiro": 0
