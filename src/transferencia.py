@@ -77,7 +77,7 @@ def excluir_descontinuados(df: pd.DataFrame) -> pd.DataFrame:
 def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_tem_minimo_compra: bool = False) -> tuple[list[dict], list[dict], list[dict]]:
     vel_max = df_produto["VelocidadePeriodo"].max()
 
-    # === REGRA 1: LIQUIDAÇÃO ===
+    # === REGRA 1: LIQUIDAÇÃO (Velocidade zero na rede) ===
     if vel_max == 0:
         alocacoes = []
         doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & (df_produto["SaldoAjustado"] > 0)]
@@ -97,7 +97,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                 })
         return alocacoes, [], []
 
-    # === REGRA 2: DESCONTINUAÇÃO ===
+    # === REGRA 2: DESCONTINUAÇÃO (Velocidade baixa na rede) ===
     elif vel_max < 0.1:
         alocacoes = []
         doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & (df_produto["SaldoAjustado"] > 0)]
@@ -117,7 +117,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                 })
         return alocacoes, [], []
 
-    # --- Lógica normal ---
+    # --- Lógica normal (Velocidade >= 0.1 na rede) ---
     receptoras = df_produto[df_produto["Falta"] >= 5].copy()
     receptoras = receptoras[receptoras["QtdRecebidaRecente"] < receptoras["Falta"]]
     receptoras = receptoras.sort_values(["VelocidadePeriodo", "VelocidadeAtiva", "DiasInativo"], ascending=[False, False, True])
@@ -245,10 +245,12 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "RetornoFinanceiro": retorno_fin
                 })
 
-    # === NOVA REGRA: DEMONSTRAR ===
-    # Identifica produtos que vendem na rede (vel_max >= 0.1) mas estão parados em uma loja com estoque.
+    # === NOVA REGRA: DEMONSTRAR (O produto vende na rede, mas está invisível em uma loja) ===
     for _, loja in df_produto.iterrows():
-        if loja["VelocidadePeriodo"] == 0 and loja["SaldoAjustado"] > 0 and loja["CodigoFilial"] != 5:
+        if loja["CodigoFilial"] == 5: continue
+        
+        # Gatilho 1: Produto tem estoque, mas não vende nesta loja
+        if loja["VelocidadePeriodo"] == 0 and loja["SaldoAjustado"] > 0:
             demonstracoes.append({
                 "Prioridade": 3,
                 "CodigoProduto": loja["CodigoProduto"],
@@ -265,9 +267,37 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                 "IdealOrigem": int(loja["EstoqueIdeal"]),
                 "IdealDestino": 0,
                 "DiasAteZerarDestino": None,
-                "Motivo": "Ação de Merchandising (Vende na rede)",
+                "Motivo": "Estoque parado (Vende na rede)",
                 "SaldoAjustado": int(loja["SaldoAjustado"]),
                 "QtdEmTransito": int(loja["QtdEmTransito"]),
+                "RetornoFinanceiro": 0
+            })
+        
+        # Gatilho 2: Loja nunca foi abastecida (sem histórico de vendas, compras ou recebimento)
+        elif (loja["VelocidadePeriodo"] == 0 and loja["SaldoAjustado"] <= 0 and 
+              loja["QtdComprada"] == 0 and loja["QtdRecebida"] == 0 and loja["QtdVendida"] == 0):
+            
+            # Quantidade sugerida: o Piso de Exposição (se > 0) ou 5 unidades padrão
+            qtd_entrada = piso_exposicao if piso_exposicao > 0 else 5
+            demonstracoes.append({
+                "Prioridade": 3,
+                "CodigoProduto": loja["CodigoProduto"],
+                "ReferenciaFabricante": loja["ReferenciaFabricante"],
+                "Produto": loja["Produto"],
+                "Fabricante": loja["Fabricante"],
+                "Embalagem": loja["Embalagem"],
+                "CodigoFilialOrigem": int(loja["CodigoFilial"]),
+                "NomeFilialOrigem": loja["Filial"],
+                "CodigoFilialDestino": 0,
+                "NomeFilialDestino": "DEMONSTRAR",
+                "QtdTransferir": int(qtd_entrada),
+                "ReservaOrigem": 0,
+                "IdealOrigem": int(loja["EstoqueIdeal"]),
+                "IdealDestino": 0,
+                "DiasAteZerarDestino": None,
+                "Motivo": "Falha de Distribuição (Nunca abastecida)",
+                "SaldoAjustado": 0,
+                "QtdEmTransito": 0,
                 "RetornoFinanceiro": 0
             })
 
