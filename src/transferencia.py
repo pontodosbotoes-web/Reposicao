@@ -74,7 +74,7 @@ def excluir_descontinuados(df: pd.DataFrame) -> pd.DataFrame:
     return df[(vel_max >= 0.1) | (saldo_max > 0)].copy()
 
 
-def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_tem_minimo_compra: bool = False) -> tuple[list[dict], list[dict], list[dict]]:
+def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_tem_minimo_compra: bool = False) -> tuple[list[dict], list[dict]]:
     vel_max = df_produto["VelocidadePeriodo"].max()
 
     # === REGRA 1: LIQUIDAÇÃO (Velocidade zero na rede) ===
@@ -95,7 +95,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "SaldoAjustado": int(doa["SaldoAjustado"]),
                     "QtdEmTransito": 0, "RetornoFinanceiro": 0
                 })
-        return alocacoes, [], []
+        return alocacoes, []
 
     # === REGRA 2: DESCONTINUAÇÃO (Velocidade baixa na rede) ===
     elif vel_max < 0.1:
@@ -115,7 +115,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "SaldoAjustado": int(doa["SaldoAjustado"]),
                     "QtdEmTransito": 0, "RetornoFinanceiro": 0
                 })
-        return alocacoes, [], []
+        return alocacoes, []
 
     # --- Lógica normal (Velocidade >= 0.1 na rede) ---
     receptoras = df_produto[df_produto["Falta"] >= 5].copy()
@@ -128,7 +128,6 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
     excesso_livre = dict(zip(doadoras["CodigoFilial"], doadoras["ExcessoTransferivel"]))
     alocacoes = []
     compras = []
-    demonstracoes = []
 
     for _, rec in receptoras.iterrows():
         precisa = rec["Falta"]
@@ -245,64 +244,92 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "RetornoFinanceiro": retorno_fin
                 })
 
-    # === NOVA REGRA: DEMONSTRAR (O produto vende na rede, mas está invisível em uma loja) ===
-    for _, loja in df_produto.iterrows():
-        if loja["CodigoFilial"] == 5: continue
-        
-        # Gatilho 1: Produto tem estoque, mas não vende nesta loja
-        if loja["VelocidadePeriodo"] == 0 and loja["SaldoAjustado"] > 0:
-            demonstracoes.append({
-                "Prioridade": 3,
-                "CodigoProduto": loja["CodigoProduto"],
-                "ReferenciaFabricante": loja["ReferenciaFabricante"],
-                "Produto": loja["Produto"],
-                "Fabricante": loja["Fabricante"],
-                "Embalagem": loja["Embalagem"],
-                "CodigoFilialOrigem": int(loja["CodigoFilial"]),
-                "NomeFilialOrigem": loja["Filial"],
-                "CodigoFilialDestino": 0,
-                "NomeFilialDestino": "DEMONSTRAR",
-                "QtdTransferir": int(loja["SaldoAjustado"]),
-                "ReservaOrigem": 0,
-                "IdealOrigem": int(loja["EstoqueIdeal"]),
-                "IdealDestino": 0,
-                "DiasAteZerarDestino": None,
-                "Motivo": "Estoque parado (Vende na rede)",
-                "SaldoAjustado": int(loja["SaldoAjustado"]),
-                "QtdEmTransito": int(loja["QtdEmTransito"]),
-                "RetornoFinanceiro": 0
-            })
-        
-        # Gatilho 2: Loja nunca foi abastecida (sem histórico de vendas, compras ou recebimento)
-        elif (loja["VelocidadePeriodo"] == 0 and loja["SaldoAjustado"] <= 0 and 
-              loja["QtdComprada"] == 0 and loja["QtdRecebida"] == 0 and loja["QtdVendida"] == 0 and loja["QtdEnviada"] == 0):
-            
-            # Força o mínimo de 5 unidades (MOQ) para valer a pena o frete
-            qtd_entrada = max(int(piso_exposicao), 5)
-            
-            demonstracoes.append({
-                "Prioridade": 3,
-                "CodigoProduto": loja["CodigoProduto"],
-                "ReferenciaFabricante": loja["ReferenciaFabricante"],
-                "Produto": loja["Produto"],
-                "Fabricante": loja["Fabricante"],
-                "Embalagem": loja["Embalagem"],
-                "CodigoFilialOrigem": int(loja["CodigoFilial"]),
-                "NomeFilialOrigem": loja["Filial"],
-                "CodigoFilialDestino": 0,
-                "NomeFilialDestino": "DEMONSTRAR",
-                "QtdTransferir": qtd_entrada,
-                "ReservaOrigem": 0,
-                "IdealOrigem": int(loja["EstoqueIdeal"]),
-                "IdealDestino": 0,
-                "DiasAteZerarDestino": None,
-                "Motivo": "Esquecimento na Rede (Sem movimento)",
-                "SaldoAjustado": 0,
-                "QtdEmTransito": 0,
-                "RetornoFinanceiro": 0
-            })
+    return alocacoes, compras
 
-    return alocacoes, compras, demonstracoes
+
+def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) -> list[dict]:
+    """
+    Identifica produtos para ação de DEMONSTRAR (Merchandising).
+    Roda independentemente dos parâmetros de Cobertura, Lead Time, etc.
+    Usa apenas o período de análise (dados de movimentação do banco).
+    """
+    df = df_base.copy()
+    vel_max = df.groupby("IdProduto")["VelocidadePeriodo"].transform("max")
+    df["VelMax"] = vel_max
+
+    # Filtra apenas produtos que vendem na rede (excluindo o atacado para ser o parâmetro)
+    # ou que têm estoque no atacado
+    demonstracoes = []
+    
+    # Produtos com giro na rede
+    produtos_ativos = df[df["VelMax"] >= 0.1]["IdProduto"].unique()
+
+    for prod_id in produtos_ativos:
+        grupo = df[df["IdProduto"] == prod_id]
+        atacado = grupo[grupo["CodigoFilial"] == 5]
+        
+        tem_estoque_atacado = not atacado.empty and atacado.iloc[0]["SaldoAjustado"] > 0
+        tem_venda_filiais = grupo[grupo["CodigoFilial"] != 5]["VelocidadePeriodo"].max() >= 0.1
+
+        if not (tem_estoque_atacado or tem_venda_filiais):
+            continue
+
+        for _, loja in grupo.iterrows():
+            if loja["CodigoFilial"] == 5: continue
+            
+            # Gatilho 1: Produto tem estoque, mas não vende nesta loja
+            if loja["VelocidadePeriodo"] == 0 and loja["SaldoAjustado"] > 0:
+                demonstracoes.append({
+                    "Prioridade": 3,
+                    "CodigoProduto": loja["CodigoProduto"],
+                    "ReferenciaFabricante": loja["ReferenciaFabricante"],
+                    "Produto": loja["Produto"],
+                    "Fabricante": loja["Fabricante"],
+                    "Embalagem": loja["Embalagem"],
+                    "CodigoFilialOrigem": int(loja["CodigoFilial"]),
+                    "NomeFilialOrigem": loja["Filial"],
+                    "CodigoFilialDestino": 0,
+                    "NomeFilialDestino": "DEMONSTRAR",
+                    "QtdTransferir": int(loja["SaldoAjustado"]),
+                    "ReservaOrigem": 0,
+                    "IdealOrigem": int(loja["EstoqueIdeal"]),
+                    "IdealDestino": 0,
+                    "DiasAteZerarDestino": None,
+                    "Motivo": "Estoque parado (Vende na rede)",
+                    "SaldoAjustado": int(loja["SaldoAjustado"]),
+                    "QtdEmTransito": int(loja["QtdEmTransito"]),
+                    "RetornoFinanceiro": 0
+                })
+
+            # Gatilho 2: Loja sem NENHUMA movimentação no período
+            elif (loja["QtdComprada"] == 0 and loja["QtdRecebida"] == 0 and 
+                  loja["QtdVendida"] == 0 and loja["QtdEnviada"] == 0):
+                
+                qtd_entrada = max(int(piso_exposicao), 5)
+                
+                demonstracoes.append({
+                    "Prioridade": 3,
+                    "CodigoProduto": loja["CodigoProduto"],
+                    "ReferenciaFabricante": loja["ReferenciaFabricante"],
+                    "Produto": loja["Produto"],
+                    "Fabricante": loja["Fabricante"],
+                    "Embalagem": loja["Embalagem"],
+                    "CodigoFilialOrigem": int(loja["CodigoFilial"]),
+                    "NomeFilialOrigem": loja["Filial"],
+                    "CodigoFilialDestino": 0,
+                    "NomeFilialDestino": "DEMONSTRAR",
+                    "QtdTransferir": qtd_entrada,
+                    "ReservaOrigem": 0,
+                    "IdealOrigem": int(loja["EstoqueIdeal"]),
+                    "IdealDestino": 0,
+                    "DiasAteZerarDestino": None,
+                    "Motivo": "Esquecimento na Rede (Sem movimento)",
+                    "SaldoAjustado": int(loja["SaldoAjustado"]),
+                    "QtdEmTransito": int(loja["QtdEmTransito"]),
+                    "RetornoFinanceiro": 0
+                })
+
+    return demonstracoes
 
 
 def gerar_sugestoes(
@@ -331,19 +358,21 @@ def gerar_sugestoes(
     df["SaldoProvavel"] = pd.to_numeric(df["SaldoProvavel"], errors="coerce").fillna(0)
     df["SaldoAjustado"] = df["SaldoProvavel"] + df["QtdEmTransito"]
 
+    # 1. Identifica DEMONSTRAR (antes de calcular Estoque Ideal, pois não depende dele)
+    df_demonstracao = pd.DataFrame(identificar_demonstracoes(df, piso_exposicao))
+
+    # 2. Calcula Indicadores
     df = calcular_indicadores(df, cobertura_alvo, lead_time, piso_exposicao, reserva_pct, atacado_tem_piso, atacado_tem_reserva)
     df = filtrar_recentes(df, df_recebidas_recentes)
     df = excluir_descontinuados(df)
 
     todas_transf = []
     todas_compras = []
-    todas_demonstracoes = []
 
     for _, grupo in df.groupby("IdProduto"):
-        t, c, d = alocar_produto(grupo, piso_exposicao, atacado_tem_minimo_compra)
+        t, c = alocar_produto(grupo, piso_exposicao, atacado_tem_minimo_compra)
         todas_transf.extend(t)
         todas_compras.extend(c)
-        todas_demonstracoes.extend(d)
 
     df_transf = pd.DataFrame(todas_transf)
     if not df_transf.empty:
@@ -353,7 +382,6 @@ def gerar_sugestoes(
     if not df_compras.empty:
         df_compras = df_compras.sort_values(["NomeFilialDestino", "Produto"]).reset_index(drop=True)
 
-    df_demonstracao = pd.DataFrame(todas_demonstracoes)
     if not df_demonstracao.empty:
         df_demonstracao = df_demonstracao.sort_values(["NomeFilialOrigem", "Produto"]).reset_index(drop=True)
 
