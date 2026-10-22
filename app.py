@@ -127,8 +127,8 @@ st.markdown("""
             transition: all 0.2s;
         }
 
-        .st-key-btn_consultar button { background-color: #3B82F6 !important; color: #FFFFFF !important; border: none !important; }
-        .st-key-btn_consultar button:hover { background-color: #2563EB !important; }
+        .st-key-btn_consultar button { background-color: #2563EB !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_consultar button:hover { background-color: #1D4ED8 !important; }
         
         .st-key-btn_limpar button { background-color: #DC2626 !important; color: #FFFFFF !important; border: none !important; }
         .st-key-btn_limpar button:hover { background-color: #B91C1C !important; }
@@ -145,12 +145,6 @@ st.markdown("""
         
         .st-key-btn_download_pdf button { background-color: #0891B2 !important; color: #FFFFFF !important; border: none !important; }
         .st-key-btn_download_pdf button:hover { background-color: #0E7490 !important; }
-
-        /* --- CORREÇÃO DO TEXTO DOS EXPANDERS --- */
-        div[data-testid="stExpander"] details summary p {
-            color: #F8FAFC !important; 
-            font-weight: 600;
-        }
 
         div[data-testid="stDataFrame"] div[role="columnheader"] {
             justify-content: center !important;
@@ -187,7 +181,7 @@ def calcular_janela_analise(opcao: str) -> tuple[date, int]:
 
 
 # ============================================================
-# CARREGAR LISTAS E PERFIS (ATUALIZADO)
+# CARREGAR LISTAS E PERFIS
 # ============================================================
 filiais = carregar_filiais()
 fabricantes = carregar_fabricantes()
@@ -196,49 +190,14 @@ grupos = carregar_grupos()
 subgrupos = carregar_subgrupos()
 
 PERFIS = {
-    "Padrão": {
-        "opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, 
-        "piso": 0, "reserva": 25, "atacado_piso": "Não", "atacado_reserva": "Não", 
-        "atacado_min_compra": "Não", "anti_gangorra": 15, "dias_transito": 10
-    },
-    "Lançamento": {
-        "opcao_data": "30 dias atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, # Ajustado de 7 para 10
-        "piso": 5, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", 
-        "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 10
-    },
-    "Classe A": {
-        "opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, 
-        "piso": 10, "reserva": 25, # Ajustado de 40% para 25%
-        "atacado_piso": "Não", "atacado_reserva": "Não", 
-        "atacado_min_compra": "Sim", # Ativado MOQ de compra
-        "anti_gangorra": 7, "dias_transito": 7
-    },
-    "Alto Giro": {
-        "opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, 
-        "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", 
-        "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 7
-    },
-    "Sazonal Longo": {
-        "opcao_data": "2 meses atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, 
-        "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", 
-        "atacado_min_compra": "Sim", # Ativado MOQ de compra
-        "anti_gangorra": 7, "dias_transito": 10
-    },
-    "Sazonal Curto": {
-        "opcao_data": "30 dias atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, 
-        "piso": 3, "reserva": 5, "atacado_piso": "Não", "atacado_reserva": "Não", 
-        "atacado_min_compra": "Não", "anti_gangorra": 5, "dias_transito": 7
-    },
-    "Baixo Giro": {
-        "opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, 
-        "piso": 3, "reserva": 30, "atacado_piso": "Não", "atacado_reserva": "Não", 
-        "atacado_min_compra": "Não", "anti_gangorra": 20, "dias_transito": 10
-    },
-    "Liquidação": {
-        "opcao_data": "6 meses atrás", "cobertura_opcao": "Para 7 dias", "lead_time": 10, 
-        "piso": 0, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", 
-        "atacado_min_compra": "Não", "anti_gangorra": 30, "dias_transito": 10
-    },
+    "Padrão": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 0, "reserva": 25, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 15, "dias_transito": 10},
+    "Lançamento": {"opcao_data": "30 dias atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 5, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 10},
+    "Classe A": {"opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 10, "reserva": 25, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Sim", "anti_gangorra": 7, "dias_transito": 7},
+    "Alto Giro": {"opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 7},
+    "Sazonal Longo": {"opcao_data": "2 meses atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Sim", "anti_gangorra": 7, "dias_transito": 10},
+    "Sazonal Curto": {"opcao_data": "30 dias atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 3, "reserva": 5, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 5, "dias_transito": 7},
+    "Baixo Giro": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 3, "reserva": 30, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 20, "dias_transito": 10},
+    "Liquidação": {"opcao_data": "6 meses atrás", "cobertura_opcao": "Para 7 dias", "lead_time": 10, "piso": 0, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 30, "dias_transito": 10},
 }
 
 if "show_params" not in st.session_state: st.session_state.show_params = False
@@ -492,13 +451,13 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, nome_perfil, parametros_t
 
         elif tipo == "COMP":
             if cod == 5:
-                heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Ideal", "Sugestão", "Motivo"]
-                widths = [28, 45, 250, 30, 140, 50, 50, 150]
-                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (r["Motivo"], "L")]
+                heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Ideal", "Sugestão", "Retorno Fin.", "Motivo"]
+                widths = [28, 45, 220, 30, 120, 50, 50, 60, 150]
+                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (r["Motivo"], "L")]
             else:
-                heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Velocidade", "Ideal", "Sugestão", "Motivo"]
-                widths = [28, 45, 200, 30, 120, 50, 40, 50, 150]
-                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (r["Motivo"], "L")]
+                heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Velocidade", "Ideal", "Sugestão", "Retorno Fin.", "Motivo"]
+                widths = [28, 45, 180, 30, 110, 50, 40, 50, 60, 150]
+                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (r["Motivo"], "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
         for _, row in df_part.iterrows():
@@ -525,7 +484,11 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, nome_perfil, parametros_t
     
     if not df_compras.empty:
         if cod == 5:
-            df_comp = df_compras.groupby(["CodigoProduto", "Produto", "Embalagem", "Fabricante"], as_index=False).agg({"QtdSugerida": "sum", "Ideal": "sum"})
+            df_comp = df_compras.groupby(["CodigoProduto", "Produto", "Embalagem", "Fabricante"], as_index=False).agg({
+                "QtdSugerida": "sum", 
+                "Ideal": "sum",
+                "RetornoFinanceiro": "sum"
+            })
             df_comp["Motivo"] = df_comp.apply(lambda r: "SEM ESTOQUE" if r["QtdSugerida"] == r["Ideal"] else "ESTOQUE COMPLEMENTAR", axis=1)
             df_comp = df_comp.sort_values("Produto").reset_index(drop=True)
         else:
@@ -680,7 +643,6 @@ if "df_transf" in st.session_state:
         else:
             nomes = nomes_todos
 
-        # Aplica os emojis nas abas
         nomes_com_icone = [f"{icones_filial[n]} {n}" for n in nomes]
         tabs = st.tabs(nomes_com_icone)
         
@@ -698,7 +660,8 @@ if "df_transf" in st.session_state:
                     if not df_compras.empty:
                         df_comp_view = df_compras.groupby(["CodigoProduto", "Produto", "Embalagem", "Fabricante"], as_index=False).agg({
                             "QtdSugerida": "sum",
-                            "Ideal": "sum"
+                            "Ideal": "sum",
+                            "RetornoFinanceiro": "sum"
                         })
                         df_comp_view["Motivo"] = df_comp_view.apply(
                             lambda r: "SEM ESTOQUE" if r["QtdSugerida"] == r["Ideal"] else "ESTOQUE COMPLEMENTAR", 
@@ -710,7 +673,6 @@ if "df_transf" in st.session_state:
                 else:
                     df_comp_view = df_compras[df_compras["NomeFilialDestino"] == nome].copy() if not df_compras.empty else pd.DataFrame()
 
-                # Cálculos para os Cards
                 env_itens = len(df_env)
                 env_unid = int(df_env["QtdTransferir"].sum()) if not df_env.empty else 0
                 
@@ -808,18 +770,18 @@ if "df_transf" in st.session_state:
                     dfc.insert(0, "#", range(1, len(dfc) + 1))
                     
                     if nome == "ATACADO":
-                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Ideal", "QtdSugerida", "Motivo"]]
-                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Ideal", "Sugestão", "Motivo"]
-                        st.dataframe(dfc.style.set_properties(subset=["Ideal", "Sugestão"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
+                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Ideal", "QtdSugerida", "RetornoFinanceiro", "Motivo"]]
+                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Ideal", "Sugestão", "Retorno Fin. (R$)", "Motivo"]
+                        st.dataframe(dfc.style.format({"Retorno Fin. (R$)": "R$ {:.2f}"}).set_properties(subset=["Ideal", "Sugestão", "Retorno Fin. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
                     else:
-                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "Motivo"]]
-                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Velocidade", "Ideal", "Sugestão", "Motivo"]
+                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "RetornoFinanceiro", "Motivo"]]
+                        dfc.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Velocidade", "Ideal", "Sugestão", "Retorno Fin. (R$)", "Motivo"]
                         dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
-                        st.dataframe(dfc.style.set_properties(subset=["Velocidade", "Ideal", "Sugestão"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
+                        st.dataframe(dfc.style.format({"Retorno Fin. (R$)": "R$ {:.2f}"}).set_properties(subset=["Velocidade", "Ideal", "Sugestão", "Retorno Fin. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
 
 
 if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v3.5 — 2026-10-21</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v3.6 — 2026-10-22</div>', unsafe_allow_html=True)
