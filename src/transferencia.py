@@ -74,9 +74,10 @@ def excluir_descontinuados(df: pd.DataFrame) -> pd.DataFrame:
     return df[(vel_max >= 0.1) | (saldo_max > 0)].copy()
 
 
-def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_tem_minimo_compra: bool = False) -> tuple[list[dict], list[dict]]:
+def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_tem_minimo_compra: bool = False) -> tuple[list[dict], list[dict], list[dict]]:
     vel_max = df_produto["VelocidadePeriodo"].max()
 
+    # === REGRA 1: LIQUIDAÇÃO ===
     if vel_max == 0:
         alocacoes = []
         doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & (df_produto["SaldoAjustado"] > 0)]
@@ -94,8 +95,9 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "SaldoAjustado": int(doa["SaldoAjustado"]),
                     "QtdEmTransito": 0, "RetornoFinanceiro": 0
                 })
-        return alocacoes, []
+        return alocacoes, [], []
 
+    # === REGRA 2: DESCONTINUAÇÃO ===
     elif vel_max < 0.1:
         alocacoes = []
         doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & (df_produto["SaldoAjustado"] > 0)]
@@ -113,8 +115,9 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "SaldoAjustado": int(doa["SaldoAjustado"]),
                     "QtdEmTransito": 0, "RetornoFinanceiro": 0
                 })
-        return alocacoes, []
+        return alocacoes, [], []
 
+    # --- Lógica normal ---
     receptoras = df_produto[df_produto["Falta"] >= 5].copy()
     receptoras = receptoras[receptoras["QtdRecebidaRecente"] < receptoras["Falta"]]
     receptoras = receptoras.sort_values(["VelocidadePeriodo", "VelocidadeAtiva", "DiasInativo"], ascending=[False, False, True])
@@ -125,6 +128,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
     excesso_livre = dict(zip(doadoras["CodigoFilial"], doadoras["ExcessoTransferivel"]))
     alocacoes = []
     compras = []
+    demonstracoes = []
 
     for _, rec in receptoras.iterrows():
         precisa = rec["Falta"]
@@ -192,7 +196,6 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                 else:
                     motivo_compra = "ESTOQUE COMPLEMENTAR"
 
-                # Cálculo do Retorno Financeiro
                 preco_venda = rec["PrecoVenda1"] if rec["CodigoFilial"] == 1 else rec["PrecoVenda2"]
                 custo = rec["CustoUnitario"]
                 margem = preco_venda - custo
@@ -242,7 +245,33 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "RetornoFinanceiro": retorno_fin
                 })
 
-    return alocacoes, compras
+    # === NOVA REGRA: DEMONSTRAR ===
+    # Identifica produtos que vendem na rede (vel_max >= 0.1) mas estão parados em uma loja com estoque.
+    for _, loja in df_produto.iterrows():
+        if loja["VelocidadePeriodo"] == 0 and loja["SaldoAjustado"] > 0 and loja["CodigoFilial"] != 5:
+            demonstracoes.append({
+                "Prioridade": 3,
+                "CodigoProduto": loja["CodigoProduto"],
+                "ReferenciaFabricante": loja["ReferenciaFabricante"],
+                "Produto": loja["Produto"],
+                "Fabricante": loja["Fabricante"],
+                "Embalagem": loja["Embalagem"],
+                "CodigoFilialOrigem": int(loja["CodigoFilial"]),
+                "NomeFilialOrigem": loja["Filial"],
+                "CodigoFilialDestino": 0,
+                "NomeFilialDestino": "DEMONSTRAR",
+                "QtdTransferir": int(loja["SaldoAjustado"]),
+                "ReservaOrigem": 0,
+                "IdealOrigem": int(loja["EstoqueIdeal"]),
+                "IdealDestino": 0,
+                "DiasAteZerarDestino": None,
+                "Motivo": "Ação de Merchandising (Vende na rede)",
+                "SaldoAjustado": int(loja["SaldoAjustado"]),
+                "QtdEmTransito": int(loja["QtdEmTransito"]),
+                "RetornoFinanceiro": 0
+            })
+
+    return alocacoes, compras, demonstracoes
 
 
 def gerar_sugestoes(
@@ -256,7 +285,7 @@ def gerar_sugestoes(
     atacado_tem_piso: bool = False,
     atacado_tem_reserva: bool = False,
     atacado_tem_minimo_compra: bool = False,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     df = df_base.copy()
 
     if df_transito is not None and not df_transito.empty:
@@ -277,11 +306,13 @@ def gerar_sugestoes(
 
     todas_transf = []
     todas_compras = []
+    todas_demonstracoes = []
 
     for _, grupo in df.groupby("IdProduto"):
-        t, c = alocar_produto(grupo, piso_exposicao, atacado_tem_minimo_compra)
+        t, c, d = alocar_produto(grupo, piso_exposicao, atacado_tem_minimo_compra)
         todas_transf.extend(t)
         todas_compras.extend(c)
+        todas_demonstracoes.extend(d)
 
     df_transf = pd.DataFrame(todas_transf)
     if not df_transf.empty:
@@ -291,4 +322,8 @@ def gerar_sugestoes(
     if not df_compras.empty:
         df_compras = df_compras.sort_values(["NomeFilialDestino", "Produto"]).reset_index(drop=True)
 
-    return df_transf, df_compras
+    df_demonstracao = pd.DataFrame(todas_demonstracoes)
+    if not df_demonstracao.empty:
+        df_demonstracao = df_demonstracao.sort_values(["NomeFilialOrigem", "Produto"]).reset_index(drop=True)
+
+    return df_transf, df_compras, df_demonstracao
