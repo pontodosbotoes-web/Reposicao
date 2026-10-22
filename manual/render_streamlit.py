@@ -26,7 +26,7 @@ def render_tabela(headers, rows):
     st.markdown(md)
 
 
-def render_box(texto, cor_borda="#60A5FA", cor_fundo="#1E293B"):
+def render_box(texto, cor_borda="#3B82F6", cor_fundo="#1E293B"):
     html = f"""
     <div style="background-color: {cor_fundo}; border-left: 4px solid {cor_borda}; padding: 12px 16px; margin-bottom: 12px; border-radius: 4px; color: #E2E8F0;">
         {texto}
@@ -54,19 +54,13 @@ def render_manual() -> None:
             }
             .stTabs [aria-selected="true"] {
                 background-color: #1E293B !important; 
-                border: 1px solid #60A5FA !important; 
+                border: 1px solid #3B82F6 !important; 
                 color: #F8FAFC !important; 
                 font-weight: 600 !important;
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
             }
             .stTabs [data-baseweb="tab-highlight"] { display: none !important; }
             .stTabs [data-baseweb="tab-border"] { display: none !important; }
-            
-            /* Expander text color */
-            div[data-testid="stExpander"] details summary p {
-                color: #F8FAFC !important; 
-                font-weight: 600;
-            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -242,6 +236,15 @@ def render_manual() -> None:
             ["🔥 LIQUIDAR", "Produto zerado de venda. Deve ser promovido ou devolvido."]
         ])
 
+        st.subheader("O que é o 'Retorno Financeiro' (R$)?")
+        st.markdown(
+            "Na aba **COMPRAR**, você verá a coluna **Retorno Fin. (R$)**. Ela mostra qual será o lucro bruto "
+            "gerado por aquela compra.\n\n"
+            "**Fórmula:** `(Preço de Venda - Custo Unitário) × Quantidade Sugerida`.\n\n"
+            "Isso ajuda você a priorizar. Se o orçamento está curto, compre primeiro os itens que trazem mais retorno. "
+            "No Atacado, esse valor é a **soma** do retorno de todas as lojas, mostrando o impacto total no caixa da rede."
+        )
+
     # ---------------- ABA 7 - Motivos ----------------
     with tab7:
         st.header("O Livro dos Motivos")
@@ -307,7 +310,7 @@ def render_manual() -> None:
 
         with st.expander("Cenário 2: A rede inteira está sem estoque (COMPRAR)"):
             st.markdown(
-                "**O que vejo:** Fita Crepe na aba COMPRAR do Atacado, Sugestão 50.\n"
+                "**O que vejo:** Fita Crepe na aba COMPRAR do Atacado, Sugestão 50, Retorno Financeiro R$ 25.00.\n"
                 "**Ação:** Nenhuma loja tem. Envie a lista para o time de Compras."
             )
 
