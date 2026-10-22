@@ -80,7 +80,7 @@ st.markdown("""
         /* --- GRID RESPONSIVO PARA MÉTRICAS --- */
         .metric-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 10px;
             margin-bottom: 15px;
             margin-top: 10px;
@@ -245,7 +245,7 @@ def _limpar_filtros():
     st.session_state["produto_busca"] = ""
     st.session_state["filial_param"] = "(todas)"
     
-    for _k in ("df_base", "df_transf", "df_compras", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
+    for _k in ("df_base", "df_transf", "df_compras", "df_demonstracao", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
         if _k in st.session_state: del st.session_state[_k]
 
 def _mudar_perfil():
@@ -424,7 +424,7 @@ class HeaderFooterCanvas(canvas.Canvas):
         if self.parametros_texto: self.drawCentredString(w / 2, 12, self.parametros_texto)
         self.drawRightString(w - 15, 12, f"Página {self._pageNumber} de {page_count}")
 
-def gerar_pdf_filial(nome_filial, cod, df, df_compras, nome_perfil, parametros_texto):
+def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_perfil, parametros_texto):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=15, leftMargin=15, topMargin=35, bottomMargin=25)
     elements = []
@@ -458,6 +458,11 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, nome_perfil, parametros_t
                 heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Velocidade", "Ideal", "Sugestão", "Retorno Fin.", "Motivo"]
                 widths = [28, 45, 160, 30, 110, 50, 40, 50, 60, 150]
                 mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (r["Motivo"], "L")]
+
+        elif tipo == "DEM":
+            heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Qtd Estoque", "Motivo"]
+            widths = [28, 45, 250, 30, 150, 50, 200]
+            mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (int(r["SaldoAjustado"]), "R"), (r["Motivo"], "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
         for _, row in df_part.iterrows():
@@ -496,7 +501,12 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, nome_perfil, parametros_t
     else:
         df_comp = pd.DataFrame()
 
-    if df_env.empty and df_rec.empty and df_comp.empty:
+    if not df_demonstracao.empty:
+        df_dem = df_demonstracao[df_demonstracao["NomeFilialOrigem"] == nome_filial].copy()
+    else:
+        df_dem = pd.DataFrame()
+
+    if df_env.empty and df_rec.empty and df_comp.empty and df_dem.empty:
         elements.append(Paragraph(f"<b>Sem movimentações para {nome_filial.title()}</b>", filial_style))
         agora = agora_br()
         doc.build(elements, canvasmaker=lambda *a, **kw: HeaderFooterCanvas(*a, titulo=f"Relatorio de Reposicao - {nome_perfil} - {nome_filial.title()}", gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), parametros_texto=parametros_texto, **kw))
@@ -507,13 +517,14 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, nome_perfil, parametros_t
     liq_totais = df_env[df_env["NomeFilialDestino"] == "LIQUIDAR"]
     desc_totais = df_env[df_env["NomeFilialDestino"] == "DESCONTINUAR"]
     comp_totais = df_comp
+    dem_totais = df_dem
 
     resumo_data = [
-        ["", "ENVIAR", "RECEBER", "DESCONTINUAR", "LIQUIDAR", "COMPRAR"],
-        ["Itens", str(len(env_totais)), str(len(df_rec)), str(len(desc_totais)), str(len(liq_totais)), str(len(comp_totais))],
-        ["Unidades", str(int(env_totais["QtdTransferir"].sum()) if not env_totais.empty else 0), str(int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0), str(int(desc_totais["QtdTransferir"].sum()) if not desc_totais.empty else 0), str(int(liq_totais["QtdTransferir"].sum()) if not liq_totais.empty else 0), str(int(comp_totais["QtdSugerida"].sum()) if not comp_totais.empty else 0)]
+        ["", "ENVIAR", "RECEBER", "DESCONTINUAR", "LIQUIDAR", "COMPRAR", "DEMONSTRAR"],
+        ["Itens", str(len(env_totais)), str(len(df_rec)), str(len(desc_totais)), str(len(liq_totais)), str(len(comp_totais)), str(len(dem_totais))],
+        ["Unidades", str(int(env_totais["QtdTransferir"].sum()) if not env_totais.empty else 0), str(int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0), str(int(desc_totais["QtdTransferir"].sum()) if not desc_totais.empty else 0), str(int(liq_totais["QtdTransferir"].sum()) if not liq_totais.empty else 0), str(int(comp_totais["QtdSugerida"].sum()) if not comp_totais.empty else 0), str(int(dem_totais["SaldoAjustado"].sum()) if not dem_totais.empty else 0)]
     ]
-    t_resumo = Table(resumo_data, colWidths=[70, 70, 70, 90, 70, 70], hAlign='LEFT')
+    t_resumo = Table(resumo_data, colWidths=[70, 70, 70, 90, 70, 70, 70], hAlign='LEFT')
     t_resumo.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E293B')), ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'), ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
@@ -552,7 +563,11 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, nome_perfil, parametros_t
 
     if not df_comp.empty:
         df_comp = df_comp.reset_index(drop=True); df_comp.insert(0, "#", range(1, len(df_comp) + 1))
-        elements.append(Paragraph("<b>COMPRAR</b>", filial_style)); elements.append(_build(df_comp, "COMP"))
+        elements.append(Paragraph("<b>COMPRAR</b>", filial_style)); elements.append(_build(df_comp, "COMP")); elements.append(Spacer(1, 14))
+
+    if not df_dem.empty:
+        df_dem = df_dem.reset_index(drop=True); df_dem.insert(0, "#", range(1, len(df_dem) + 1))
+        elements.append(Paragraph("<b>DEMONSTRAR</b>", filial_style)); elements.append(_build(df_dem, "DEM"))
 
     agora = agora_br()
     doc.build(elements, canvasmaker=lambda *a, **kw: HeaderFooterCanvas(*a, titulo=f"Relatorio de Reposicao - {nome_perfil} - {nome_filial.title()}", gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), parametros_texto=parametros_texto, **kw))
@@ -585,13 +600,14 @@ if btn_consultar:
             with st.spinner("⏳ Calculando sugestões..."):
                 df_transito = carregar_transf_em_transito(data_ref.strftime("%Y-%m-%d"), dias_transito)
                 df_recebidas = carregar_transf_recebidas_recentes(data_ref.strftime("%Y-%m-%d"), anti_gangorra)
-                df_transf, df_compras = gerar_sugestoes(
+                df_transf, df_compras, df_demonstracao = gerar_sugestoes(
                     df_base, df_transito, df_recebidas, cobertura, lead_time, piso, reserva, 
                     (atacado_piso == "Sim"), (atacado_reserva == "Sim"), (atacado_min_compra == "Sim")
                 )
                 
                 st.session_state["df_transf"] = df_transf
                 st.session_state["df_compras"] = df_compras
+                st.session_state["df_demonstracao"] = df_demonstracao
                 st.session_state["df_base_n"] = len(df_base)
                 if "pdf_bytes_global" in st.session_state: del st.session_state["pdf_bytes_global"]
         except Exception as e:
@@ -603,12 +619,13 @@ if btn_pdf_global:
     else:
         df_atual = st.session_state["df_transf"]
         df_compras_atual = st.session_state.get("df_compras", pd.DataFrame())
+        df_demonstracao_atual = st.session_state.get("df_demonstracao", pd.DataFrame())
         cod_pdf = codigos_filial[filial_pdf]
         parametros_str = f"Cob: {cobertura}d | Lead: {lead_time}d | Res: {reserva}% | Piso: {piso} | Quarentena: {anti_gangorra}d | Trânsito: {dias_transito}d | Mín.Compra: {atacado_min_compra}"
         
         with st.spinner("Gerando PDF..."):
             try:
-                pdf_bytes, agora = gerar_pdf_filial(filial_pdf, cod_pdf, df_atual, df_compras_atual, st.session_state.get("perfil_sel", "Padrão"), parametros_str)
+                pdf_bytes, agora = gerar_pdf_filial(filial_pdf, cod_pdf, df_atual, df_compras_atual, df_demonstracao_atual, st.session_state.get("perfil_sel", "Padrão"), parametros_str)
                 nome_file = filial_pdf.title().replace(" ", "")
                 st.session_state["pdf_bytes_global"] = (pdf_bytes, f"Reposicao {nome_file} {agora.strftime('%Y%m%d %H%M%S')}.pdf")
             except Exception as e:
@@ -630,8 +647,9 @@ if "pdf_bytes_global" in st.session_state and st.session_state["pdf_bytes_global
 if "df_transf" in st.session_state:
     df = st.session_state["df_transf"]
     df_compras = st.session_state.get("df_compras", pd.DataFrame())
+    df_demonstracao = st.session_state.get("df_demonstracao", pd.DataFrame())
 
-    if df.empty and df_compras.empty:
+    if df.empty and df_compras.empty and df_demonstracao.empty:
         st.info("Nenhuma sugestão encontrada.")
     else:
         nomes_todos = ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"]
@@ -651,6 +669,7 @@ if "df_transf" in st.session_state:
             with tabs[i]:
                 df_env_all = df[df["CodigoFilialOrigem"] == cod].copy().reset_index(drop=True)
                 df_rec = df[df["CodigoFilialDestino"] == cod].copy().reset_index(drop=True)
+                df_dem = df_demonstracao[df_demonstracao["NomeFilialOrigem"] == nome].copy() if not df_demonstracao.empty else pd.DataFrame()
 
                 df_liq = df_env_all[df_env_all["NomeFilialDestino"] == "LIQUIDAR"].copy().reset_index(drop=True)
                 df_desc = df_env_all[df_env_all["NomeFilialDestino"] == "DESCONTINUAR"].copy().reset_index(drop=True)
@@ -688,6 +707,9 @@ if "df_transf" in st.session_state:
                 comp_itens = len(df_comp_view)
                 comp_unid = int(df_comp_view["QtdSugerida"].sum()) if not df_comp_view.empty else 0
 
+                dem_itens = len(df_dem)
+                dem_unid = int(df_dem["SaldoAjustado"].sum()) if not df_dem.empty else 0
+
                 html_metrics = f"""
                 <div class="metric-grid">
                     <div class="metric-card">
@@ -699,6 +721,11 @@ if "df_transf" in st.session_state:
                         <div class="metric-card-title">📥 Receber</div>
                         <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
                         <div class="metric-card-values"><div>{rec_itens}</div><div>{rec_unid}</div></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-card-title">🎯 Demonstrar</div>
+                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
+                        <div class="metric-card-values"><div>{dem_itens}</div><div>{dem_unid}</div></div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-card-title">🔥 Liquidar</div>
@@ -779,9 +806,18 @@ if "df_transf" in st.session_state:
                         dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
                         st.dataframe(dfc.style.format({"Retorno Fin. (R$)": "R$ {:.2f}"}).set_properties(subset=["Velocidade", "Ideal", "Sugestão", "Retorno Fin. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
 
+                st.markdown('<div class="secao-titulo">🎯 DEMONSTRAR</div>', unsafe_allow_html=True)
+                if df_dem.empty:
+                    st.caption("Nenhum produto para demonstração")
+                else:
+                    dfm = df_dem.copy()
+                    dfm.insert(0, "#", range(1, len(dfm) + 1))
+                    dfm = dfm[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "SaldoAjustado", "Motivo"]]
+                    dfm.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Qtd em Estoque", "Motivo"]
+                    st.dataframe(dfm.style.set_properties(subset=["Qtd em Estoque"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfm) * 36 + 42)))
 
 if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v3.6 — 2026-10-22</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v3.7 — 2026-10-22</div>', unsafe_allow_html=True)

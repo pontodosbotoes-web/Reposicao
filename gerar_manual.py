@@ -211,7 +211,7 @@ def gerar(buffer=None):
     conteudo.append(h1("Parte 3 - Primeiro acesso"))
     conteudo.append(p("1. Abra o navegador e digite: https://pb-reposicao.streamlit.app"))
     conteudo.append(p("2. Se o app estiver dormindo, clique em 'Yes, get this app back up!'."))
-    conteudo.append(p("3. A tela possui 6 filtros, 5 botoes de acao, 5 cards de resumo e as tabelas."))
+    conteudo.append(p("3. A tela possui 6 filtros, 5 botoes de acao, 6 cards de resumo e as tabelas."))
     conteudo.append(PageBreak())
 
     # ---------- PARTE 4 - DICIONARIO DE FILTROS ----------
@@ -275,11 +275,12 @@ def gerar(buffer=None):
 
     # ---------- PARTE 6 - LENDO OS RESULTADOS ----------
     conteudo.append(h1("Parte 6 - Lendo os Resultados e os Cards"))
-    conteudo.append(h2("6.1 Os 5 Cards e as 5 Secoes"))
+    conteudo.append(h2("6.1 Os 6 Cards e as 6 Secoes"))
     acoes_fim_linha = [
         ["Acao", "O que significa?"],
         ["ENVIAR", "A filial tem demais e vai doar."],
         ["RECEBER", "A filial tem falta e vai receber."],
+        ["DEMONSTRAR", "Produto parado na loja, mas que vende em outras. Ação de merchandising."],
         ["COMPRAR", "Ninguem na rede tem. Precisa comprar."],
         ["DESCONTINUAR", "Produto de giro baixo. Deve sair do mix."],
         ["LIQUIDAR", "Produto zerado de venda. Deve ser promovido."],
@@ -303,6 +304,7 @@ def gerar(buffer=None):
         ["ESTOQUE COMPLEMENTAR", "Motivo de compra. A rede tem um pouco, mas nao o suficiente."],
         ["ESTOQUE PARADO", "Liquidar. Velocidade de venda zero."],
         ["FIM DE CICLO", "Descontinuar. Vende muito pouco."],
+        ["Ação de Merchandising", "Demonstrar. O produto vende na rede, mas esta parado nesta loja."],
     ]
     est_tec = ParagraphStyle('Tec3', parent=styles['Normal'], fontSize=8, leading=10)
     for i, row in enumerate(motivos):
@@ -317,7 +319,7 @@ def gerar(buffer=None):
     conteudo.append(h2("Segunda (10 min)"))
     conteudo.append(p("1. Escolha o Perfil e o Fabricante. 2. Consulte. 3. Filtre por Critica."))
     conteudo.append(h2("Terca a Quinta (Acao)"))
-    conteudo.append(p("1. Leia o Motivo. 2. Gere o PDF. 3. Crie a ordem no ERP. 4. Envie lista de COMPRAR para o time."))
+    conteudo.append(p("1. Leia o Motivo. 2. Gere o PDF. 3. Crie a ordem no ERP. 4. Envie lista de COMPRAR e DEMONSTRAR para os times."))
     conteudo.append(h2("Sexta (10 min)"))
     conteudo.append(p("Reabra e compare com a semana anterior."))
     conteudo.append(PageBreak())
@@ -352,6 +354,10 @@ def gerar(buffer=None):
     conteudo.append(h2("Caso 3: O produto ja esta a caminho (AGUARDANDO)"))
     conteudo.append(p("O que vejo: Papel Kraft, Em Transito 20."))
     conteudo.append(p("Acao: Aguarde a entrega."))
+    
+    conteudo.append(h2("Caso 4: Produto parado mas vendendo na rede (DEMONSTRAR)"))
+    conteudo.append(p("O que vejo: Fita Isolante, Qtd 50, Motivo: 'Ação de Merchandising'."))
+    conteudo.append(p("Acao: O produto vende na rede, mas nao nesta loja. Avise o gerente para expor melhor o produto ou treinar a equipe."))
 
     # ---------- GERAR ----------
     doc.build(conteudo, canvasmaker=ManualCanvas)
