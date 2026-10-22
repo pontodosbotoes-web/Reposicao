@@ -280,7 +280,7 @@ def gerar(buffer=None):
         ["Acao", "O que significa?"],
         ["ENVIAR", "A filial tem demais e vai doar."],
         ["RECEBER", "A filial tem falta e vai receber."],
-        ["DEMONSTRAR", "Produto parado na loja, mas que vende em outras. Ação de merchandising."],
+        ["DEMONSTRAR", "Produto parado ou nunca abastecido, mas que vende em outras lojas. Ação de merchandising."],
         ["COMPRAR", "Ninguem na rede tem. Precisa comprar."],
         ["DESCONTINUAR", "Produto de giro baixo. Deve sair do mix."],
         ["LIQUIDAR", "Produto zerado de venda. Deve ser promovido."],
@@ -304,7 +304,8 @@ def gerar(buffer=None):
         ["ESTOQUE COMPLEMENTAR", "Motivo de compra. A rede tem um pouco, mas nao o suficiente."],
         ["ESTOQUE PARADO", "Liquidar. Velocidade de venda zero."],
         ["FIM DE CICLO", "Descontinuar. Vende muito pouco."],
-        ["Ação de Merchandising", "Demonstrar. O produto vende na rede, mas esta parado nesta loja."],
+        ["Estoque parado (Vende na rede)", "Demonstrar. O produto esta na loja, mas nao vende. Acao de merchandising."],
+        ["Falha de Distribuicao", "Demonstrar. O produto vende na rede, mas nunca foi enviado para esta loja."],
     ]
     est_tec = ParagraphStyle('Tec3', parent=styles['Normal'], fontSize=8, leading=10)
     for i, row in enumerate(motivos):
@@ -356,8 +357,12 @@ def gerar(buffer=None):
     conteudo.append(p("Acao: Aguarde a entrega."))
     
     conteudo.append(h2("Caso 4: Produto parado mas vendendo na rede (DEMONSTRAR)"))
-    conteudo.append(p("O que vejo: Fita Isolante, Qtd 50, Motivo: 'Ação de Merchandising'."))
+    conteudo.append(p("O que vejo: Fita Isolante, Motivo: 'Estoque parado (Vende na rede)'."))
     conteudo.append(p("Acao: O produto vende na rede, mas nao nesta loja. Avise o gerente para expor melhor o produto ou treinar a equipe."))
+
+    conteudo.append(h2("Caso 5: Loja nunca recebeu o produto (DEMONSTRAR)"))
+    conteudo.append(p("O que vejo: Papel Colorido, Motivo: 'Falha de Distribuicao'."))
+    conteudo.append(p("Acao: O produto vende em todas as outras lojas, mas a Zona Norte nunca recebeu. O sistema esta sugerindo que ela peca uma quantidade inicial para testar a venda."))
 
     # ---------- GERAR ----------
     doc.build(conteudo, canvasmaker=ManualCanvas)

@@ -460,9 +460,9 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
                 mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (r["Motivo"], "L")]
 
         elif tipo == "DEM":
-            heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Qtd Estoque", "Motivo"]
+            heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Qtd", "Motivo"]
             widths = [28, 45, 250, 30, 150, 50, 200]
-            mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (int(r["SaldoAjustado"]), "R"), (r["Motivo"], "L")]
+            mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (int(r["QtdTransferir"]), "R"), (r["Motivo"], "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
         for _, row in df_part.iterrows():
@@ -520,11 +520,11 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
     dem_totais = df_dem
 
     resumo_data = [
-        ["", "ENVIAR", "RECEBER", "DESCONTINUAR", "LIQUIDAR", "COMPRAR", "DEMONSTRAR"],
-        ["Itens", str(len(env_totais)), str(len(df_rec)), str(len(desc_totais)), str(len(liq_totais)), str(len(comp_totais)), str(len(dem_totais))],
-        ["Unidades", str(int(env_totais["QtdTransferir"].sum()) if not env_totais.empty else 0), str(int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0), str(int(desc_totais["QtdTransferir"].sum()) if not desc_totais.empty else 0), str(int(liq_totais["QtdTransferir"].sum()) if not liq_totais.empty else 0), str(int(comp_totais["QtdSugerida"].sum()) if not comp_totais.empty else 0), str(int(dem_totais["SaldoAjustado"].sum()) if not dem_totais.empty else 0)]
+        ["", "ENVIAR", "RECEBER", "DEMONSTRAR", "DESCONTINUAR", "LIQUIDAR", "COMPRAR"],
+        ["Itens", str(len(env_totais)), str(len(df_rec)), str(len(dem_totais)), str(len(desc_totais)), str(len(liq_totais)), str(len(comp_totais))],
+        ["Unidades", str(int(env_totais["QtdTransferir"].sum()) if not env_totais.empty else 0), str(int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0), str(int(dem_totais["QtdTransferir"].sum()) if not dem_totais.empty else 0), str(int(desc_totais["QtdTransferir"].sum()) if not desc_totais.empty else 0), str(int(liq_totais["QtdTransferir"].sum()) if not liq_totais.empty else 0), str(int(comp_totais["QtdSugerida"].sum()) if not comp_totais.empty else 0)]
     ]
-    t_resumo = Table(resumo_data, colWidths=[70, 70, 70, 90, 70, 70, 70], hAlign='LEFT')
+    t_resumo = Table(resumo_data, colWidths=[70, 70, 70, 80, 90, 70, 70], hAlign='LEFT')
     t_resumo.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E293B')), ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'), ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
@@ -548,6 +548,10 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
         df_rec = df_rec.reset_index(drop=True); df_rec.insert(0, "#", range(1, len(df_rec) + 1))
         df_rec["Qtd Ideal"] = df_rec["IdealDestino"]; df_rec["Prioridade"] = df_rec["Prioridade"].map(PRIO_TXT).fillna("-")
         elements.append(Paragraph("<b>RECEBER</b>", filial_style)); elements.append(_build(df_rec, "REC")); elements.append(Spacer(1, 14))
+        
+    if not df_dem.empty:
+        df_dem = df_dem.reset_index(drop=True); df_dem.insert(0, "#", range(1, len(df_dem) + 1))
+        elements.append(Paragraph("<b>DEMONSTRAR</b>", filial_style)); elements.append(_build(df_dem, "DEM")); elements.append(Spacer(1, 14))
     
     if not df_desc.empty:
         df_desc = df_desc.reset_index(drop=True); df_desc.insert(0, "#", range(1, len(df_desc) + 1))
@@ -563,11 +567,7 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
 
     if not df_comp.empty:
         df_comp = df_comp.reset_index(drop=True); df_comp.insert(0, "#", range(1, len(df_comp) + 1))
-        elements.append(Paragraph("<b>COMPRAR</b>", filial_style)); elements.append(_build(df_comp, "COMP")); elements.append(Spacer(1, 14))
-
-    if not df_dem.empty:
-        df_dem = df_dem.reset_index(drop=True); df_dem.insert(0, "#", range(1, len(df_dem) + 1))
-        elements.append(Paragraph("<b>DEMONSTRAR</b>", filial_style)); elements.append(_build(df_dem, "DEM"))
+        elements.append(Paragraph("<b>COMPRAR</b>", filial_style)); elements.append(_build(df_comp, "COMP"))
 
     agora = agora_br()
     doc.build(elements, canvasmaker=lambda *a, **kw: HeaderFooterCanvas(*a, titulo=f"Relatorio de Reposicao - {nome_perfil} - {nome_filial.title()}", gerado_em=agora.strftime('%d/%m/%Y %H:%M:%S'), parametros_texto=parametros_texto, **kw))
@@ -697,6 +697,9 @@ if "df_transf" in st.session_state:
                 
                 rec_itens = len(df_rec)
                 rec_unid = int(df_rec["QtdTransferir"].sum()) if not df_rec.empty else 0
+
+                dem_itens = len(df_dem)
+                dem_unid = int(df_dem["QtdTransferir"].sum()) if not df_dem.empty else 0
                 
                 liq_itens = len(df_liq)
                 liq_unid = int(df_liq["QtdTransferir"].sum()) if not df_liq.empty else 0
@@ -706,9 +709,6 @@ if "df_transf" in st.session_state:
                 
                 comp_itens = len(df_comp_view)
                 comp_unid = int(df_comp_view["QtdSugerida"].sum()) if not df_comp_view.empty else 0
-
-                dem_itens = len(df_dem)
-                dem_unid = int(df_dem["SaldoAjustado"].sum()) if not df_dem.empty else 0
 
                 html_metrics = f"""
                 <div class="metric-grid">
@@ -728,14 +728,14 @@ if "df_transf" in st.session_state:
                         <div class="metric-card-values"><div>{dem_itens}</div><div>{dem_unid}</div></div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-card-title">🔥 Liquidar</div>
-                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
-                        <div class="metric-card-values"><div>{liq_itens}</div><div>{liq_unid}</div></div>
-                    </div>
-                    <div class="metric-card">
                         <div class="metric-card-title">⏸️ Desc.</div>
                         <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
                         <div class="metric-card-values"><div>{desc_itens}</div><div>{desc_unid}</div></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-card-title">🔥 Liquidar</div>
+                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
+                        <div class="metric-card-values"><div>{liq_itens}</div><div>{liq_unid}</div></div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-card-title">🛒 Comprar</div>
@@ -768,6 +768,16 @@ if "df_transf" in st.session_state:
                     dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "QtdTransferir", "QtdEmTransito", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
                     dfr.columns = ["#", "Prioridade", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Qtd Transf.", "Em Trânsito", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]
                     st.dataframe(dfr.style.set_properties(subset=["Qtd Transf.", "Em Trânsito", "Dias p/ Zerar", "Qtd Ideal"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
+
+                st.markdown('<div class="secao-titulo">🎯 DEMONSTRAR</div>', unsafe_allow_html=True)
+                if df_dem.empty:
+                    st.caption("Nenhum produto para demonstração")
+                else:
+                    dfm = df_dem.copy()
+                    dfm.insert(0, "#", range(1, len(dfm) + 1))
+                    dfm = dfm[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "QtdTransferir", "Motivo"]]
+                    dfm.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Qtd", "Motivo"]
+                    st.dataframe(dfm.style.set_properties(subset=["Qtd"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfm) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR</div>', unsafe_allow_html=True)
                 if df_desc.empty:
@@ -806,18 +816,8 @@ if "df_transf" in st.session_state:
                         dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
                         st.dataframe(dfc.style.format({"Retorno Fin. (R$)": "R$ {:.2f}"}).set_properties(subset=["Velocidade", "Ideal", "Sugestão", "Retorno Fin. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
 
-                st.markdown('<div class="secao-titulo">🎯 DEMONSTRAR</div>', unsafe_allow_html=True)
-                if df_dem.empty:
-                    st.caption("Nenhum produto para demonstração")
-                else:
-                    dfm = df_dem.copy()
-                    dfm.insert(0, "#", range(1, len(dfm) + 1))
-                    dfm = dfm[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "SaldoAjustado", "Motivo"]]
-                    dfm.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Qtd em Estoque", "Motivo"]
-                    st.dataframe(dfm.style.set_properties(subset=["Qtd em Estoque"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfm) * 36 + 42)))
-
 if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v3.7 — 2026-10-22</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v3.8 — 2026-10-22</div>', unsafe_allow_html=True)
