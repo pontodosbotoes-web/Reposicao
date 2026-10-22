@@ -452,11 +452,11 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, nome_perfil, parametros_t
         elif tipo == "COMP":
             if cod == 5:
                 heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Ideal", "Sugestão", "Retorno Fin.", "Motivo"]
-                widths = [28, 45, 220, 30, 120, 50, 50, 60, 150]
+                widths = [28, 45, 200, 30, 120, 50, 50, 60, 150]
                 mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (r["Motivo"], "L")]
             else:
                 heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Velocidade", "Ideal", "Sugestão", "Retorno Fin.", "Motivo"]
-                widths = [28, 45, 180, 30, 110, 50, 40, 50, 60, 150]
+                widths = [28, 45, 160, 30, 110, 50, 40, 50, 60, 150]
                 mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (r["Motivo"], "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]

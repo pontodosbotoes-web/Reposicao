@@ -346,7 +346,7 @@ def gerar(buffer=None):
     conteudo.append(p("Acao: Gere o PDF, envie para o Atacado, crie a ordem no ERP."))
 
     conteudo.append(h2("Caso 2: A rede esta sem estoque (COMPRAR)"))
-    conteudo.append(p("O que vejo: Fita Crepe, Sugestao 50."))
+    conteudo.append(p("O que vejo: Fita Crepe, Sugestao 50, Retorno Financeiro R$ 25.00."))
     conteudo.append(p("Acao: Envie a lista para o time de Compras."))
 
     conteudo.append(h2("Caso 3: O produto ja esta a caminho (AGUARDANDO)"))
