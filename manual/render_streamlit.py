@@ -26,7 +26,7 @@ def render_tabela(headers, rows):
     st.markdown(md)
 
 
-def render_box(texto, cor_borda="#3B82F6", cor_fundo="#1E293B"):
+def render_box(texto, cor_borda="#60A5FA", cor_fundo="#1E293B"):
     html = f"""
     <div style="background-color: {cor_fundo}; border-left: 4px solid {cor_borda}; padding: 12px 16px; margin-bottom: 12px; border-radius: 4px; color: #E2E8F0;">
         {texto}
@@ -54,13 +54,19 @@ def render_manual() -> None:
             }
             .stTabs [aria-selected="true"] {
                 background-color: #1E293B !important; 
-                border: 1px solid #3B82F6 !important; 
+                border: 1px solid #60A5FA !important; 
                 color: #F8FAFC !important; 
                 font-weight: 600 !important;
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
             }
             .stTabs [data-baseweb="tab-highlight"] { display: none !important; }
             .stTabs [data-baseweb="tab-border"] { display: none !important; }
+            
+            /* Expander text color */
+            div[data-testid="stExpander"] details summary p {
+                color: #F8FAFC !important; 
+                font-weight: 600;
+            }
         </style>
     """, unsafe_allow_html=True)
 
