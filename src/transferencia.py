@@ -92,7 +92,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "QtdTransferir": qtd, "ReservaOrigem": 0, "IdealOrigem": 0, "IdealDestino": 0,
                     "DiasAteZerarDestino": None, "Motivo": "ESTOQUE PARADO",
                     "SaldoAjustado": int(doa["SaldoAjustado"]),
-                    "QtdEmTransito": 0
+                    "QtdEmTransito": 0, "RetornoFinanceiro": 0
                 })
         return alocacoes, []
 
@@ -111,7 +111,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "QtdTransferir": qtd, "ReservaOrigem": 0, "IdealOrigem": 0, "IdealDestino": 0,
                     "DiasAteZerarDestino": None, "Motivo": "FIM DE CICLO",
                     "SaldoAjustado": int(doa["SaldoAjustado"]),
-                    "QtdEmTransito": 0
+                    "QtdEmTransito": 0, "RetornoFinanceiro": 0
                 })
         return alocacoes, []
 
@@ -175,6 +175,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                 "DiasAteZerarDestino": round(rec["DiasAteZerar"], 1) if pd.notna(rec["DiasAteZerar"]) else None,
                 "Motivo": motivo, "SaldoAjustado": int(rec["SaldoAjustado"]),
                 "QtdEmTransito": int(rec["QtdEmTransito"]),
+                "RetornoFinanceiro": 0
             })
 
             excesso_livre[cod_doador] -= qtd
@@ -190,6 +191,12 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     motivo_compra = "SEM ESTOQUE"
                 else:
                     motivo_compra = "ESTOQUE COMPLEMENTAR"
+
+                # Cálculo do Retorno Financeiro
+                preco_venda = rec["PrecoVenda1"] if rec["CodigoFilial"] == 1 else rec["PrecoVenda2"]
+                custo = rec["CustoUnitario"]
+                margem = preco_venda - custo
+                retorno_fin = margem * int(necessidade_ideal)
                 
                 compras.append({
                     "NomeFilialDestino": rec["Filial"],
@@ -201,7 +208,8 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "QtdSugerida": int(necessidade_ideal),
                     "Motivo": motivo_compra,
                     "Velocidade": rec["VelocidadePeriodo"],
-                    "Ideal": rec["EstoqueIdeal"]
+                    "Ideal": rec["EstoqueIdeal"],
+                    "RetornoFinanceiro": retorno_fin
                 })
 
     atacado = df_produto[df_produto["CodigoFilial"] == 5]
@@ -215,6 +223,11 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                 else:
                     motivo_compra = "ESTOQUE COMPLEMENTAR"
 
+                preco_venda = atacado.iloc[0]["PrecoVenda2"]
+                custo = atacado.iloc[0]["CustoUnitario"]
+                margem = preco_venda - custo
+                retorno_fin = margem * int(falta_atacado_ideal)
+
                 compras.append({
                     "NomeFilialDestino": "ATACADO",
                     "CodigoProduto": atacado.iloc[0]["CodigoProduto"],
@@ -225,7 +238,8 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "QtdSugerida": int(falta_atacado_ideal),
                     "Motivo": motivo_compra,
                     "Velocidade": atacado.iloc[0]["VelocidadePeriodo"],
-                    "Ideal": atacado.iloc[0]["EstoqueIdeal"]
+                    "Ideal": atacado.iloc[0]["EstoqueIdeal"],
+                    "RetornoFinanceiro": retorno_fin
                 })
 
     return alocacoes, compras
