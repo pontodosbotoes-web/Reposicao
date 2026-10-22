@@ -160,7 +160,7 @@ def render_manual() -> None:
         st.markdown(
             "- **Topo:** Filtros (Perfil, Fabricante, etc.).\n"
             "- **Meio:** Botões de Ação (Consultar, Parâmetros).\n"
-            "- **Baixo:** 6 Cards (Enviar, Receber, Liquidar, Desc., Comprar, Demonstrar) e as tabelas."
+            "- **Baixo:** 6 Cards (Enviar, Receber, Demonstrar, Desc., Liquidar, Comprar) e as tabelas."
         )
 
     # ---------------- ABA 4 - Filtros ----------------
@@ -231,7 +231,7 @@ def render_manual() -> None:
         render_tabela(["Seção", "O que significa?"], [
             ["📤 ENVIAR", "A filial tem demais e vai doar."],
             ["📥 RECEBER", "A filial tem falta e vai receber."],
-            ["🎯 DEMONSTRAR", "Produto parado na loja, mas que vende em outras. Ação de merchandising!"],
+            ["🎯 DEMONSTRAR", "Produto parado na loja, ou que nunca foi abastecido, mas que vende em outras. Ação de merchandising!"],
             ["🛒 COMPRAR", "Ninguém na rede tem. Precisa comprar do fornecedor."],
             ["⏸️ DESCONTINUAR", "Produto de giro baixo. Deve sair do mix."],
             ["🔥 LIQUIDAR", "Produto zerado de venda. Deve ser promovido ou devolvido."]
@@ -264,7 +264,8 @@ def render_manual() -> None:
             "ESTOQUE COMPLEMENTAR": "Motivo de compra. A rede tem um pouco, mas não o suficiente.",
             "ESTOQUE PARADO": "Liquidar. A velocidade de venda é zero.",
             "FIM DE CICLO": "Descontinuar. O produto vende muito pouco.",
-            "Ação de Merchandising (Vende na rede)": "Demonstrar. O produto está parado na loja, mas tem giro em outras filiais. O gestor local precisa expor melhor ou treinar a equipe."
+            "Estoque parado (Vende na rede)": "Demonstrar. O produto está na loja, mas não vende. O motor sugere ação de merchandising.",
+            "Falha de Distribuição (Nunca abastecida)": "Demonstrar. O produto vende em outras lojas, mas nunca foi enviado para esta. Sugere entrada no mix."
         }
         for k, v in motivos.items():
             st.markdown(f"**{k}:** {v}")
@@ -280,7 +281,7 @@ def render_manual() -> None:
             "**Terça a Quinta (Ação):**\n"
             "1. Leia o Motivo. 2. Confirme a Qtd. 3. Gere o PDF. 4. Crie a ordem no ERP.\n"
             "5. Se houver itens em COMPRAR, envie para o time de Compras.\n"
-            "6. Se houver itens em DEMONSTRAR, avise o gerente da loja para fazer uma ação de merchandising.\n\n"
+            "6. Se houver itens em DEMONSTRAR, avise o gerente da loja para fazer merchandising ou incluir o produto no mix.\n\n"
             "**Sexta (10 min):**\n"
             "1. Reabra o app e compare com a semana anterior."
         )
@@ -323,22 +324,16 @@ def render_manual() -> None:
                 "**Ação:** O caminhão já saiu. Apenas aguarde a entrega."
             )
 
-        with st.expander("Cenário 4: O produto está encalhado (LIQUIDAR)"):
+        with st.expander("Cenário 4: Produto parado na loja mas vendendo na rede (DEMONSTRAR)"):
             st.markdown(
-                "**O que vejo:** Squeeze Halloween, Motivo: `ESTOQUE PARADO`.\n"
-                "**Ação:** O sistema NÃO vai transferir. Ação comercial: promoção local ou devolução."
+                "**O que vejo:** Fita Isolante, Motivo: `Estoque parado (Vende na rede)`.\n"
+                "**Ação:** O sistema identificou que a loja tem o produto, mas não vende. Avise o gerente da loja para reposicionar na prateleira ou treinar a equipe."
             )
 
-        with st.expander("Cenário 5: O produto tem giro baixo (DESCONTINUAR)"):
+        with st.expander("Cenário 5: Loja nunca recebeu o produto (DEMONSTRAR)"):
             st.markdown(
-                "**O que vejo:** Fita Cetim Vermelha, Motivo: `FIM DE CICLO`.\n"
-                "**Ação:** Vender até o fim do estoque. Não comprar mais."
-            )
-
-        with st.expander("Cenário 6: Produto parado na loja mas vendendo na rede (DEMONSTRAR)"):
-            st.markdown(
-                "**O que vejo:** Fita Isolante, Qtd em Estoque 50, Motivo: `Ação de Merchandising`.\n"
-                "**Ação:** O sistema identificou que a Zona Norte tem 50 fitas, mas não vendeu nenhuma no período, enquanto as outras lojas vendem. O produto está escondido. Avise o gerente da loja para reposicionar na prateleira, colocar num local de destaque ou treinar a equipe."
+                "**O que vejo:** Papel Colorido, Motivo: `Falha de Distribuição (Nunca abastecida)`.\n"
+                "**Ação:** O produto vende em todas as outras lojas, mas a Zona Norte nunca recebeu. O sistema está sugerindo que ela peça uma quantidade inicial para testar a venda."
             )
 
     st.markdown("---")
