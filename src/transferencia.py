@@ -271,8 +271,8 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
     df["VelMax"] = df.groupby("IdProduto")["VelocidadePeriodo"].transform("max")
     
     demonstracoes = []
-    # CORREÇÃO: Mudar de > 0 para >= 0.1 para garantir que só produtos vivos entrem aqui
-    produtos_ativos = df[df["VelMax"] >= 0.1]["IdProduto"].unique()
+    # VOLTAMOS PARA > 0 para pegar produtos de baixo giro que foram esquecidos
+    produtos_ativos = df[df["VelMax"] > 0]["IdProduto"].unique()
 
     for prod_id in produtos_ativos:
         grupo = df[df["IdProduto"] == prod_id]
