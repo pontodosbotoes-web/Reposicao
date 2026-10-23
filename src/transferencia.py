@@ -250,16 +250,30 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
 def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) -> list[dict]:
     """
     Identifica produtos para ação de DEMONSTRAR (Merchandising).
-    Roda independentemente dos parâmetros de Cobertura, Lead Time, etc.
-    Usa apenas o período de análise (dados de movimentação do banco).
+    Garante que TODAS as filiais sejam analisadas, mesmo as que não vieram no SQL.
     """
-    df = df_base.copy()
-    vel_max = df.groupby("IdProduto")["VelocidadePeriodo"].transform("max")
-    df["VelMax"] = vel_max
-
-    demonstracoes = []
+    # 1. Cria a matriz com todos os produtos e todas as filiais para garantir que nenhuma seja esquecida
+    produtos = df_base[["IdProduto", "CodigoProduto", "Produto", "Fabricante", "Embalagem"]].drop_duplicates(subset=["IdProduto"]).copy()
+    filiais_df = pd.DataFrame({
+        "CodigoFilial": [1, 2, 3, 4, 5],
+        "Filial": ["ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE", "ATACADO"]
+    })
+    base_completa = produtos.merge(filiais_df, how="cross")
     
-    # Produtos com giro na rede
+    # Traz os dados reais
+    df = base_completa.merge(df_base, on=["IdProduto", "CodigoFilial", "CodigoProduto", "Produto", "Fabricante", "Embalagem", "Filial"], how="left")
+    
+    # Preenche com zeros as colunas que podem estar vazias (as filiais sem movimento)
+    colunas_zero = ["QtdComprada", "QtdRecebida", "QtdVendida", "QtdEnviada", "SaldoAjustado", "VelocidadePeriodo", "QtdEmTransito"]
+    for col in colunas_zero:
+        if col in df.columns:
+            df[col] = df[col].fillna(0)
+        else:
+            df[col] = 0
+
+    df["VelMax"] = df.groupby("IdProduto")["VelocidadePeriodo"].transform("max")
+    
+    demonstracoes = []
     produtos_ativos = df[df["VelMax"] >= 0.1]["IdProduto"].unique()
 
     for prod_id in produtos_ativos:
@@ -290,7 +304,7 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
                     "NomeFilialDestino": "DEMONSTRAR",
                     "QtdTransferir": int(loja["SaldoAjustado"]),
                     "ReservaOrigem": 0,
-                    "IdealOrigem": 0, # Não se aplica aqui
+                    "IdealOrigem": 0, 
                     "IdealDestino": 0,
                     "DiasAteZerarDestino": None,
                     "Motivo": "Estoque parado (Vende na rede)",
@@ -318,7 +332,7 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
                     "NomeFilialDestino": "DEMONSTRAR",
                     "QtdTransferir": qtd_entrada,
                     "ReservaOrigem": 0,
-                    "IdealOrigem": 0, # Não se aplica aqui
+                    "IdealOrigem": 0, 
                     "IdealDestino": 0,
                     "DiasAteZerarDestino": None,
                     "Motivo": "Esquecimento na Rede (Sem movimento)",
