@@ -3,7 +3,7 @@ WITH ProdutosBase AS
     SELECT
         p.IdProduto, p.CODPRODUTO, p.CodProdutoFabr, p.NOMEPRODUTO, p.UNID,
         p.CODFABR, f.NOMEFABR, g.NomeGrupo,
-        p.PrecoVenda1, p.PrecoVenda2, p.CustoUnitario  -- NOVAS COLUNAS
+        p.PrecoVenda1, p.PrecoVenda2, p.CustoUnitario
     FROM Produtos p WITH (NOLOCK)
     LEFT JOIN Fabricantes f WITH (NOLOCK) ON f.CODFABR = p.CODFABR
     LEFT JOIN Grupos g      WITH (NOLOCK) ON g.IdGrupo  = p.IdGrupo
@@ -90,7 +90,6 @@ SELECT
     pf.CodFilial       AS CodigoFilial,
     pf.Filial,
     
-    -- NOVAS COLUNAS AQUI
     CAST(ISNULL(pf.PrecoVenda1, 0) AS DECIMAL(18,2)) AS PrecoVenda1,
     CAST(ISNULL(pf.PrecoVenda2, 0) AS DECIMAL(18,2)) AS PrecoVenda2,
     CAST(ISNULL(pf.CustoUnitario, 0) AS DECIMAL(18,2)) AS CustoUnitario,
@@ -122,7 +121,8 @@ SELECT
 FROM ProdutoFilial pf
 LEFT JOIN UltimaCompra uc ON uc.IdProduto = pf.IdProduto
 LEFT JOIN Mov mv ON mv.IdProduto = pf.IdProduto AND mv.CodFilial = pf.CodFilial
-WHERE mv.IdProduto IS NOT NULL
+-- A MÁGICA ACONTECE AQUI: Traz a filial mesmo sem movimento, desde que o produto tenha movimentado em alguma outra.
+WHERE pf.IdProduto IN (SELECT IdProduto FROM Mov)
 
 ORDER BY pf.NOMEPRODUTO, pf.CodFilial
 OPTION (MAXDOP 1);
