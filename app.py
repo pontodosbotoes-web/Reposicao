@@ -460,9 +460,14 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
                 mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (r["Motivo"], "L")]
 
         elif tipo == "DEM":
-            heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Motivo"]
-            widths = [28, 45, 250, 30, 150, 80, 50, 200]
-            mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialDestino"], "C"), (int(r["QtdTransferir"]), "R"), (r["Motivo"], "L")]
+            if cod == 5:
+                heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Motivo"]
+                widths = [28, 45, 250, 30, 150, 80, 50, 200]
+                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialDestino"], "C"), (int(r["QtdTransferir"]), "R"), (r["Motivo"], "L")]
+            else:
+                heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Destino", "Qtd", "Motivo"]
+                widths = [28, 45, 200, 30, 120, 60, 60, 50, 200]
+                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (int(r["QtdTransferir"]), "R"), (r["Motivo"], "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
         for _, row in df_part.iterrows():
@@ -502,7 +507,10 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
         df_comp = pd.DataFrame()
 
     if not df_demonstracao.empty:
-        df_dem = df_demonstracao[df_demonstracao["NomeFilialOrigem"] == nome_filial].copy()
+        if cod == 5:
+            df_dem = df_demonstracao[df_demonstracao["NomeFilialOrigem"] == nome_filial].copy()
+        else:
+            df_dem = df_demonstracao[(df_demonstracao["NomeFilialOrigem"] == nome_filial) | (df_demonstracao["NomeFilialDestino"] == nome_filial)].copy()
     else:
         df_dem = pd.DataFrame()
 
@@ -669,7 +677,12 @@ if "df_transf" in st.session_state:
             with tabs[i]:
                 df_env_all = df[df["CodigoFilialOrigem"] == cod].copy().reset_index(drop=True)
                 df_rec = df[df["CodigoFilialDestino"] == cod].copy().reset_index(drop=True)
-                df_dem = df_demonstracao[df_demonstracao["NomeFilialOrigem"] == nome].copy() if not df_demonstracao.empty else pd.DataFrame()
+                
+                # A MÁGICA DO DEMONSTRAR AQUI: Pega tanto se é Origem quanto Destino
+                if not df_demonstracao.empty:
+                    df_dem = df_demonstracao[(df_demonstracao["NomeFilialOrigem"] == nome) | (df_demonstracao["NomeFilialDestino"] == nome)].copy()
+                else:
+                    df_dem = pd.DataFrame()
 
                 df_liq = df_env_all[df_env_all["NomeFilialDestino"] == "LIQUIDAR"].copy().reset_index(drop=True)
                 df_desc = df_env_all[df_env_all["NomeFilialDestino"] == "DESCONTINUAR"].copy().reset_index(drop=True)
@@ -775,8 +788,12 @@ if "df_transf" in st.session_state:
                 else:
                     dfm = df_dem.copy()
                     dfm.insert(0, "#", range(1, len(dfm) + 1))
-                    dfm = dfm[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "QtdTransferir", "Motivo"]]
-                    dfm.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Motivo"]
+                    if nome == "ATACADO":
+                        dfm = dfm[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "QtdTransferir", "Motivo"]]
+                        dfm.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Motivo"]
+                    else:
+                        dfm = dfm[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "Motivo"]]
+                        dfm.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Origem", "Destino", "Qtd", "Motivo"]
                     st.dataframe(dfm.style.set_properties(subset=["Qtd"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfm) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR</div>', unsafe_allow_html=True)
@@ -820,4 +837,4 @@ if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v4.1 — 2026-10-23</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v4.2 — 2026-10-23</div>', unsafe_allow_html=True)
