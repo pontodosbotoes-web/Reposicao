@@ -460,9 +460,9 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
                 mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (r["Motivo"], "L")]
 
         elif tipo == "DEM":
-            heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Qtd", "Motivo"]
-            widths = [28, 45, 250, 30, 150, 50, 200]
-            mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (int(r["QtdTransferir"]), "R"), (r["Motivo"], "L")]
+            heads = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Motivo"]
+            widths = [28, 45, 250, 30, 150, 80, 50, 200]
+            mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialDestino"], "C"), (int(r["QtdTransferir"]), "R"), (r["Motivo"], "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
         for _, row in df_part.iterrows():
@@ -775,8 +775,8 @@ if "df_transf" in st.session_state:
                 else:
                     dfm = df_dem.copy()
                     dfm.insert(0, "#", range(1, len(dfm) + 1))
-                    dfm = dfm[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "QtdTransferir", "Motivo"]]
-                    dfm.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Qtd", "Motivo"]
+                    dfm = dfm[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialDestino", "QtdTransferir", "Motivo"]]
+                    dfm.columns = ["#", "Cod", "Produto", "Emb.", "Fabricante", "Destino", "Qtd", "Motivo"]
                     st.dataframe(dfm.style.set_properties(subset=["Qtd"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfm) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR</div>', unsafe_allow_html=True)
@@ -820,4 +820,4 @@ if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v3.8 — 2026-10-22</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v4.1 — 2026-10-23</div>', unsafe_allow_html=True)
