@@ -247,21 +247,34 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
     return alocacoes, compras
 
 
-def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) -> list[dict]:
+def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) -> tuple[list[dict], list[dict]]:
     """
     Identifica produtos para ação de DEMONSTRAR (Merchandising).
-    Garante que TODAS as filiais sejam analisadas.
+    Retorna (demonstracoes, compras_para_iniciar_historico).
+
+    Gatilho 1 - Estoque parado na loja, mas vende na rede -> ação de merchandising.
+    Gatilho 2 - Loja sem histórico do item (nem entrada, nem saída, nem trânsito)
+                -> entrada inicial de 5 un para iniciar histórico na filial.
+                Doadora escolhida pela matriz de proximidade (ATACADO prioritário).
+                Saldo disponível da doadora usa SaldoProvavel (exclui trânsito)
+                e é decrementado a cada alocação.
+                Se nenhuma filial tem saldo suficiente, a loja entra em
+                compras_para_iniciar_historico (a ser comprado do fornecedor).
     """
+    QUANTIDADE_INICIAL = 5
+
     produtos = df_base[["IdProduto", "CodigoProduto", "Produto", "Fabricante", "Embalagem"]].drop_duplicates(subset=["IdProduto"]).copy()
     filiais_df = pd.DataFrame({
         "CodigoFilial": [1, 2, 3, 4, 5],
         "Filial": ["ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE", "ATACADO"]
     })
     base_completa = produtos.merge(filiais_df, how="cross")
-    
+
     df = base_completa.merge(df_base, on=["IdProduto", "CodigoFilial", "CodigoProduto", "Produto", "Fabricante", "Embalagem", "Filial"], how="left")
-    
-    colunas_zero = ["QtdComprada", "QtdRecebida", "QtdVendida", "QtdEnviada", "SaldoAjustado", "VelocidadePeriodo", "QtdEmTransito"]
+
+    colunas_zero = ["QtdComprada", "QtdRecebida", "QtdVendida", "QtdEnviada",
+                    "SaldoAjustado", "SaldoProvavel", "VelocidadePeriodo", "QtdEmTransito",
+                    "PrecoVenda1", "PrecoVenda2", "CustoUnitario"]
     for col in colunas_zero:
         if col in df.columns:
             df[col] = df[col].fillna(0)
@@ -269,41 +282,61 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
             df[col] = 0
 
     df["VelMax"] = df.groupby("IdProduto")["VelocidadePeriodo"].transform("max")
-    
+
     demonstracoes = []
-    # VOLTAMOS PARA > 0 para pegar produtos de baixo giro que foram esquecidos
+    compras_para_iniciar_historico = []
     produtos_ativos = df[df["VelMax"] > 0]["IdProduto"].unique()
 
     for prod_id in produtos_ativos:
         grupo = df[df["IdProduto"] == prod_id]
-        
-        # Encontra a melhor origem para doar
-        melhor_origem = None
-        maior_saldo = -999999
-        
-        atacado = grupo[grupo["CodigoFilial"] == 5]
-        if not atacado.empty and atacado.iloc[0]["SaldoAjustado"] > 0:
-            melhor_origem = atacado.iloc[0]
-        else:
-            for _, row in grupo.iterrows():
-                if row["CodigoFilial"] != 5 and row["SaldoAjustado"] > maior_saldo:
-                    maior_saldo = row["SaldoAjustado"]
-                    melhor_origem = row
-                    
-        if melhor_origem is None or melhor_origem["SaldoAjustado"] <= 0:
-            continue
+        grupo_por_filial = {int(r["CodigoFilial"]): r for _, r in grupo.iterrows()}
 
-        for _, loja in grupo.iterrows():
-            if loja["CodigoFilial"] == 5: continue
-            if loja["CodigoFilial"] == melhor_origem["CodigoFilial"]: continue
+        # Saldo disponível para doar = SaldoProvavel (exclui trânsito — não
+        # prometemos o que ainda não chegou). Decrementado a cada alocação.
+        saldo_disponivel = {int(r["CodigoFilial"]): max(0, int(r["SaldoProvavel"])) for _, r in grupo.iterrows()}
 
-            # Gatilho 2: Loja sem NENHUMA movimentação
-            if (loja["QtdComprada"] == 0 and loja["QtdRecebida"] == 0 and 
+        def _buscar_doadora(cod_destino: int):
+            for cod_doador in MATRIZ_PROXIMIDADE.get(cod_destino, []):
+                if saldo_disponivel.get(cod_doador, 0) >= QUANTIDADE_INICIAL:
+                    return grupo_por_filial[cod_doador]
+            return None
+
+        for cod_loja in (1, 2, 3, 4):
+            if cod_loja not in grupo_por_filial:
+                continue
+            loja = grupo_por_filial[cod_loja]
+
+            # Gatilho 2: Loja sem NENHUMA movimentação nem trânsito
+            if (loja["QtdComprada"] == 0 and loja["QtdRecebida"] == 0 and
                 loja["QtdVendida"] == 0 and loja["QtdEnviada"] == 0 and
-                loja["SaldoAjustado"] <= 0):
-                
-                qtd_entrada = max(int(piso_exposicao), 5)
-                
+                loja["QtdEmTransito"] == 0):
+
+                doadora = _buscar_doadora(cod_loja)
+
+                if doadora is None:
+                    # Sem doadora na rede: sugerir COMPRA para iniciar histórico
+                    qtd_compra = max(int(piso_exposicao), QUANTIDADE_INICIAL)
+                    preco_venda = loja["PrecoVenda1"] if cod_loja == 1 else loja["PrecoVenda2"]
+                    custo = loja["CustoUnitario"]
+                    margem = float(preco_venda) - float(custo)
+                    compras_para_iniciar_historico.append({
+                        "NomeFilialDestino": loja["Filial"],
+                        "CodigoProduto": loja["CodigoProduto"],
+                        "ReferenciaFabricante": loja["ReferenciaFabricante"],
+                        "Produto": loja["Produto"],
+                        "Fabricante": loja["Fabricante"],
+                        "Embalagem": loja["Embalagem"],
+                        "QtdSugerida": qtd_compra,
+                        "Motivo": "SEM ESTOQUE",
+                        "Velocidade": 0,
+                        "Ideal": int(piso_exposicao),
+                        "RetornoFinanceiro": margem * qtd_compra,
+                    })
+                    continue
+
+                cod_origem = int(doadora["CodigoFilial"])
+                saldo_disponivel[cod_origem] -= QUANTIDADE_INICIAL
+
                 demonstracoes.append({
                     "Prioridade": 3,
                     "CodigoProduto": loja["CodigoProduto"],
@@ -311,13 +344,13 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
                     "Produto": loja["Produto"],
                     "Fabricante": loja["Fabricante"],
                     "Embalagem": loja["Embalagem"],
-                    "CodigoFilialOrigem": int(melhor_origem["CodigoFilial"]),
-                    "NomeFilialOrigem": melhor_origem["Filial"],
+                    "CodigoFilialOrigem": cod_origem,
+                    "NomeFilialOrigem": doadora["Filial"],
                     "CodigoFilialDestino": int(loja["CodigoFilial"]),
                     "NomeFilialDestino": loja["Filial"],
-                    "QtdTransferir": qtd_entrada,
+                    "QtdTransferir": QUANTIDADE_INICIAL,
                     "ReservaOrigem": 0,
-                    "IdealOrigem": 0, 
+                    "IdealOrigem": 0,
                     "IdealDestino": 0,
                     "DiasAteZerarDestino": None,
                     "Motivo": "Sem Registro na Filial",
@@ -341,7 +374,7 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
                     "NomeFilialDestino": "DEMONSTRAR",
                     "QtdTransferir": int(loja["SaldoAjustado"]),
                     "ReservaOrigem": 0,
-                    "IdealOrigem": 0, 
+                    "IdealOrigem": 0,
                     "IdealDestino": 0,
                     "DiasAteZerarDestino": None,
                     "Motivo": "Estoque parado (Vende na rede)",
@@ -350,7 +383,7 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
                     "RetornoFinanceiro": 0
                 })
 
-    return demonstracoes
+    return demonstracoes, compras_para_iniciar_historico
 
 
 def gerar_sugestoes(
@@ -380,7 +413,8 @@ def gerar_sugestoes(
     df["SaldoAjustado"] = df["SaldoProvavel"] + df["QtdEmTransito"]
 
     # 1. Identifica DEMONSTRAR (antes de calcular Estoque Ideal, pois não depende dele)
-    df_demonstracao = pd.DataFrame(identificar_demonstracoes(df, piso_exposicao))
+    _dem_list, _comp_sem_doadora = identificar_demonstracoes(df, piso_exposicao)
+    df_demonstracao = pd.DataFrame(_dem_list)
 
     # 2. Calcula Indicadores
     df = calcular_indicadores(df, cobertura_alvo, lead_time, piso_exposicao, reserva_pct, atacado_tem_piso, atacado_tem_reserva)
@@ -394,6 +428,9 @@ def gerar_sugestoes(
         t, c = alocar_produto(grupo, piso_exposicao, atacado_tem_minimo_compra)
         todas_transf.extend(t)
         todas_compras.extend(c)
+
+    # Compras para iniciar histórico em lojas sem doadora (vindas de DEMONSTRAR)
+    todas_compras.extend(_comp_sem_doadora)
 
     df_transf = pd.DataFrame(todas_transf)
     if not df_transf.empty:
