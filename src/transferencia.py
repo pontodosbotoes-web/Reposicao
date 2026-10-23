@@ -320,7 +320,7 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
                     "IdealOrigem": 0, 
                     "IdealDestino": 0,
                     "DiasAteZerarDestino": None,
-                    "Motivo": "Esquecimento na Rede (Sem movimento)",
+                    "Motivo": "Sem Registro na Filial",
                     "SaldoAjustado": int(loja["SaldoAjustado"]),
                     "QtdEmTransito": int(loja["QtdEmTransito"]),
                     "RetornoFinanceiro": 0
