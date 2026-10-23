@@ -257,8 +257,6 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
     vel_max = df.groupby("IdProduto")["VelocidadePeriodo"].transform("max")
     df["VelMax"] = vel_max
 
-    # Filtra apenas produtos que vendem na rede (excluindo o atacado para ser o parâmetro)
-    # ou que têm estoque no atacado
     demonstracoes = []
     
     # Produtos com giro na rede
@@ -292,7 +290,7 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
                     "NomeFilialDestino": "DEMONSTRAR",
                     "QtdTransferir": int(loja["SaldoAjustado"]),
                     "ReservaOrigem": 0,
-                    "IdealOrigem": int(loja["EstoqueIdeal"]),
+                    "IdealOrigem": 0, # Não se aplica aqui
                     "IdealDestino": 0,
                     "DiasAteZerarDestino": None,
                     "Motivo": "Estoque parado (Vende na rede)",
@@ -320,7 +318,7 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
                     "NomeFilialDestino": "DEMONSTRAR",
                     "QtdTransferir": qtd_entrada,
                     "ReservaOrigem": 0,
-                    "IdealOrigem": int(loja["EstoqueIdeal"]),
+                    "IdealOrigem": 0, # Não se aplica aqui
                     "IdealDestino": 0,
                     "DiasAteZerarDestino": None,
                     "Motivo": "Esquecimento na Rede (Sem movimento)",
