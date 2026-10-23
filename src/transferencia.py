@@ -250,7 +250,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
 def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) -> list[dict]:
     """
     Identifica produtos para ação de DEMONSTRAR (Merchandising).
-    Garante que TODAS as filiais sejam analisadas, mesmo as que não vieram no SQL.
+    Garante que TODAS as filiais sejam analisadas.
     """
     produtos = df_base[["IdProduto", "CodigoProduto", "Produto", "Fabricante", "Embalagem"]].drop_duplicates(subset=["IdProduto"]).copy()
     filiais_df = pd.DataFrame({
@@ -271,38 +271,36 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
     df["VelMax"] = df.groupby("IdProduto")["VelocidadePeriodo"].transform("max")
     
     demonstracoes = []
-    # CORREÇÃO: Mudar de >= 0.1 para > 0 para pegar produtos de baixo giro que foram esquecidos
-    produtos_ativos = df[df["VelMax"] > 0]["IdProduto"].unique()
+    # CORREÇÃO: Mudar de > 0 para >= 0.1 para garantir que só produtos vivos entrem aqui
+    produtos_ativos = df[df["VelMax"] >= 0.1]["IdProduto"].unique()
 
     for prod_id in produtos_ativos:
         grupo = df[df["IdProduto"] == prod_id]
         
-        # Encontra a melhor origem para doar (Prioriza o Atacado se tiver estoque, senão a loja com maior saldo)
+        # Encontra a melhor origem para doar
         melhor_origem = None
         maior_saldo = -999999
         
-        # Primeiro tenta o Atacado
         atacado = grupo[grupo["CodigoFilial"] == 5]
         if not atacado.empty and atacado.iloc[0]["SaldoAjustado"] > 0:
             melhor_origem = atacado.iloc[0]
         else:
-            # Se o Atacado não tem, procura a loja com maior saldo
             for _, row in grupo.iterrows():
                 if row["CodigoFilial"] != 5 and row["SaldoAjustado"] > maior_saldo:
                     maior_saldo = row["SaldoAjustado"]
                     melhor_origem = row
                     
         if melhor_origem is None or melhor_origem["SaldoAjustado"] <= 0:
-            continue # Ninguém tem estoque para doar
+            continue
 
         for _, loja in grupo.iterrows():
             if loja["CodigoFilial"] == 5: continue
-            if loja["CodigoFilial"] == melhor_origem["CodigoFilial"]: continue # Não sugerir para a mesma loja
+            if loja["CodigoFilial"] == melhor_origem["CodigoFilial"]: continue
 
-            # Gatilho 2: Loja sem NENHUMA movimentação no período (Esquecimento)
+            # Gatilho 2: Loja sem NENHUMA movimentação
             if (loja["QtdComprada"] == 0 and loja["QtdRecebida"] == 0 and 
                 loja["QtdVendida"] == 0 and loja["QtdEnviada"] == 0 and
-                loja["SaldoAjustado"] <= 0): # Sem saldo físico ou negativo
+                loja["SaldoAjustado"] <= 0):
                 
                 qtd_entrada = max(int(piso_exposicao), 5)
                 
