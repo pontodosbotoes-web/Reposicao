@@ -200,10 +200,12 @@ def gerar(buffer=None):
         "Exemplo: Ideal 100, Saldo 40. Transfere 60. O Ideal e o necessario para o periodo, a transferencia cobre o saldo atual e a necessidade projetada."
     ))
 
-    conteudo.append(h2("2.3 O Resgate de Saldos Negativos"))
+    conteudo.append(h2("2.3 Saldos Negativos (Erro de Movimentação)"))
     conteudo.append(p(
-        "Se o sistema mandar 80 un e o Ideal for 20, e porque o saldo da loja esta em -60 (erro de inventario ou venda nao baixada). "
-        "A formula e (Ideal - Saldo). O sistema esta te ajudando a resgatar o estoque."
+        "Se o saldo estimado de uma loja aparecer negativo (ex.: -60), isso indica <b>erro de movimentação</b>: "
+        "provavelmente houve uma entrada antes do período da consulta que o sistema não capturou. "
+        "Como não temos controle de inventário físico, o motor trata o saldo negativo como <b>zero</b> (loja vazia) "
+        "e sugere apenas o necessário para atingir o Ideal, sem tentar 'resgatar' a dívida fantasma."
     ))
     conteudo.append(PageBreak())
 
@@ -275,37 +277,38 @@ def gerar(buffer=None):
 
     # ---------- PARTE 6 - LENDO OS RESULTADOS ----------
     conteudo.append(h1("Parte 6 - Lendo os Resultados e os Cards"))
-    conteudo.append(h2("6.1 Os 6 Cards e as 6 Secoes"))
+    conteudo.append(h2("6.1 A Hierarquia de Decisão (Cascata)"))
+    conteudo.append(p(
+        "O sistema não toma decisões em paralelo. Ele usa uma <b>Cascata (Waterfall)</b>. Um produto passa por etapas de eliminação. "
+        "Se ele se encaixa na Etapa 1, ele não vai para a Etapa 2. Isso evita que o mesmo produto apareça em várias abas."
+    ))
+    
     acoes_fim_linha = [
-        ["Acao", "O que significa?"],
-        ["ENVIAR", "A filial tem demais e vai doar."],
-        ["RECEBER", "A filial tem falta e vai receber."],
-        ["DEMONSTRAR", "Produto parado ou nunca abastecido, mas que vende em outras lojas. Ação de merchandising."],
-        ["COMPRAR", "Ninguem na rede tem. Precisa comprar."],
-        ["DESCONTINUAR", "Produto de giro baixo. Deve sair do mix."],
-        ["LIQUIDAR", "Produto zerado de venda. Deve ser promovido."],
+        ["Etapa", "Ação", "O que significa?"],
+        ["1", "DEMONSTRAR", "A loja nunca teve o item. O motor busca doadora com excesso (mín. 5 un) e envia para teste. O produto é bloqueado das etapas seguintes."],
+        ["2", "DESCONTINUAR", "A rede toda vende muito pouco (velocidade entre 0 e 0.1). O item deve sair do mix das lojas restantes."],
+        ["3", "LIQUIDAR", "A rede toda zerou as vendas. O estoque físico restante deve ser promovido."],
+        ["4", "ENVIAR/RECEBER", "O produto vende bem. O motor cruza o excesso de uma loja com a falta de outra."],
+        ["5", "COMPRAR", "Ninguém na rede tem o suficiente. A sugestão é comprar do fornecedor."]
     ]
-    conteudo.append(tabela(acoes_fim_linha, col_widths=[3 * cm, 11 * cm]))
+    conteudo.append(tabela(acoes_fim_linha, col_widths=[1.5 * cm, 3 * cm, 9.5 * cm]))
     conteudo.append(PageBreak())
 
     # ---------- PARTE 7 - O LIVRO DOS MOTIVOS ----------
     conteudo.append(h1("Parte 7 - O Livro dos Motivos"))
     motivos = [
         ["Motivo", "Significado"],
-        ["SEM ESTOQUE", "A loja esta zerada e nao ha nada no caminhao."],
-        ["AGUARDANDO TRANSFERENCIA", "A loja tem falta, MAS ja tem um caminhao indo para la."],
-        ["RECEBIDO RECENTEMENTE", "A loja recebeu ha poucos dias (quarentena)."],
+        ["SEM REGISTRO NA FILIAL", "A loja nunca recebeu o item e o sistema está enviando 5 un para iniciar o histórico."],
+        ["SEM ESTOQUE", "A loja está zerada e não há nada no caminhão nem na rede."],
+        ["AGUARDANDO TRANSFERENCIA", "A loja tem falta, MAS já tem um caminhão indo para lá. Não faça novo pedido."],
+        ["RECEBIDO RECENTEMENTE", "A loja recebeu há poucos dias (quarentena). Aguarde as vendas."],
         ["URGENTE - zera hoje", "O estoque acaba em menos de 24 horas."],
-        ["URGENTE - zera em N dias", "Vai acabar logo."],
-        ["Origem parada, destino vendendo", "A doadora nao vende, mas a receptora vende muito."],
+        ["Origem parada, destino vendendo", "A doadora não vende, mas a receptora vende muito."],
         ["Alta rotacao no destino", "A receptora vende o dobro."],
-        ["Maior giro no destino", "A receptora vende 1.5x mais."],
-        ["Reposicao de ciclo", "Fluxo normal."],
-        ["ESTOQUE COMPLEMENTAR", "Motivo de compra. A rede tem um pouco, mas nao o suficiente."],
-        ["ESTOQUE PARADO", "Liquidar. Velocidade de venda zero."],
-        ["FIM DE CICLO", "Descontinuar. Vende muito pouco."],
-        ["Estoque parado (Vende na rede)", "Demonstrar. O produto esta na loja, mas nao vende. Acao de merchandising."],
-        ["Falha de Distribuicao", "Demonstrar. O produto vende na rede, mas nunca foi enviado para esta loja."],
+        ["Reposicao de ciclo", "Fluxo normal de transferência."],
+        ["ESTOQUE COMPLEMENTAR", "Motivo de compra. A rede tem um pouco, mas não o suficiente."],
+        ["ESTOQUE PARADO", "Liquidar. A velocidade de venda caiu para zero na rede."],
+        ["FIM DE CICLO", "Descontinuar. O produto vende muito pouco (abaixo do limite)."]
     ]
     est_tec = ParagraphStyle('Tec3', parent=styles['Normal'], fontSize=8, leading=10)
     for i, row in enumerate(motivos):
