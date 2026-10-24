@@ -103,7 +103,7 @@ def processar_demonstrar(grupo: pd.DataFrame) -> tuple[list[dict], list[int], pd
                     doadora = doadoras_por_cod[cod_doador]
                     break
             
-            if doadora:
+            if doadora is not None:
                 cod_origem = int(doadora["CodigoFilial"])
                 # Consome o excesso da doadora
                 excesso_livre[cod_origem] -= QUANTIDADE_INICIAL
