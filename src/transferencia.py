@@ -37,8 +37,8 @@ def calcular_indicadores(
 
     df["Piso"] = df["CodigoFilial"].apply(_piso)
     df["EstoqueIdeal"] = np.maximum(df["Piso"], df["VelocidadePeriodo"] * dias).round(0).astype(int)
-    df["Excesso"] = np.maximum(0, df["SaldoAjustado"] - df["EstoqueIdeal"])
-    df["Falta"] = np.maximum(0, df["EstoqueIdeal"] - df["SaldoAjustado"])
+    df["Excesso"] = np.maximum(0, df["SaldoProvavel"] - df["EstoqueIdeal"])
+    df["Falta"] = np.maximum(0, df["EstoqueIdeal"] - np.maximum(0, df["SaldoAjustado"]))
 
     df["PercReserva"] = df["CodigoFilial"].apply(_reserva)
     df["ReservaOrigem"] = np.ceil(df["Excesso"] * df["PercReserva"] / 100).astype(int)
@@ -80,9 +80,15 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
     # === REGRA 1: LIQUIDAÇÃO (Velocidade zero na rede) ===
     if vel_max == 0:
         alocacoes = []
-        doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & (df_produto["SaldoAjustado"] > 0)]
+        # Só liquida se: tem estoque físico, sem quarentena, e já teve histórico.
+        _tem_hist = (
+            (df_produto["QtdComprada"] > 0) | (df_produto["QtdRecebida"] > 0) |
+            (df_produto["QtdVendida"] > 0)  | (df_produto["QtdEnviada"] > 0)
+        )
+        _elegivel = (df_produto["SaldoProvavel"] > 0) & (df_produto["QtdRecebidaRecente"] == 0) & _tem_hist
+        doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & _elegivel]
         for _, doa in doadoras.iterrows():
-            qtd = int(doa["SaldoAjustado"])
+            qtd = int(doa["SaldoProvavel"])
             if qtd >= 5:
                 alocacoes.append({
                     "Prioridade": 3, "CodigoProduto": doa["CodigoProduto"],
@@ -92,7 +98,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "CodigoFilialDestino": 0, "NomeFilialDestino": "LIQUIDAR",
                     "QtdTransferir": qtd, "ReservaOrigem": 0, "IdealOrigem": 0, "IdealDestino": 0,
                     "DiasAteZerarDestino": None, "Motivo": "ESTOQUE PARADO",
-                    "SaldoAjustado": int(doa["SaldoAjustado"]),
+                    "SaldoAjustado": int(doa["SaldoProvavel"]),
                     "QtdEmTransito": 0, "RetornoFinanceiro": 0
                 })
         return alocacoes, []
@@ -100,9 +106,15 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
     # === REGRA 2: DESCONTINUAÇÃO (Velocidade baixa na rede) ===
     elif vel_max < 0.1:
         alocacoes = []
-        doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & (df_produto["SaldoAjustado"] > 0)]
+        # Só descontinua se: tem estoque físico, sem quarentena, e já teve histórico.
+        _tem_hist = (
+            (df_produto["QtdComprada"] > 0) | (df_produto["QtdRecebida"] > 0) |
+            (df_produto["QtdVendida"] > 0)  | (df_produto["QtdEnviada"] > 0)
+        )
+        _elegivel = (df_produto["SaldoProvavel"] > 0) & (df_produto["QtdRecebidaRecente"] == 0) & _tem_hist
+        doadoras = df_produto[(df_produto["CodigoFilial"] != 5) & _elegivel]
         for _, doa in doadoras.iterrows():
-            qtd = int(doa["SaldoAjustado"])
+            qtd = int(doa["SaldoProvavel"])
             if qtd >= 5:
                 alocacoes.append({
                     "Prioridade": 3, "CodigoProduto": doa["CodigoProduto"],
@@ -112,7 +124,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
                     "CodigoFilialDestino": 0, "NomeFilialDestino": "DESCONTINUAR",
                     "QtdTransferir": qtd, "ReservaOrigem": 0, "IdealOrigem": 0, "IdealDestino": 0,
                     "DiasAteZerarDestino": None, "Motivo": "FIM DE CICLO",
-                    "SaldoAjustado": int(doa["SaldoAjustado"]),
+                    "SaldoAjustado": int(doa["SaldoProvavel"]),
                     "QtdEmTransito": 0, "RetornoFinanceiro": 0
                 })
         return alocacoes, []
@@ -185,7 +197,7 @@ def alocar_produto(df_produto: pd.DataFrame, piso_exposicao: int = 0, atacado_te
             precisa -= qtd
             qtd_recebida_transf += qtd
 
-        necessidade_ideal = rec["EstoqueIdeal"] - qtd_recebida_transf
+        necessidade_ideal = max(0, rec["Falta"] - qtd_recebida_transf)
         
         if necessidade_ideal > 0:
             minimo = piso_exposicao if atacado_tem_minimo_compra else 1
@@ -285,7 +297,7 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
 
     demonstracoes = []
     compras_para_iniciar_historico = []
-    produtos_ativos = df[df["VelMax"] > 0]["IdProduto"].unique()
+    produtos_ativos = df[df["VelMax"] >= 0.1]["IdProduto"].unique()
 
     for prod_id in produtos_ativos:
         grupo = df[df["IdProduto"] == prod_id]
@@ -359,8 +371,12 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
                     "RetornoFinanceiro": 0
                 })
 
-            # Gatilho 1: Produto tem estoque, mas não vende nesta loja
-            elif loja["VelocidadePeriodo"] == 0 and loja["SaldoAjustado"] > 0:
+            # Gatilho 1: Produto tem estoque FÍSICO (SaldoProvavel), mas não vende nesta loja.
+            elif (loja["VelocidadePeriodo"] == 0 
+                  and loja["SaldoProvavel"] > 0
+                  and loja["QtdRecebidaRecente"] == 0
+                  and (loja["QtdComprada"] > 0 or loja["QtdRecebida"] > 0 
+                       or loja["QtdVendida"] > 0 or loja["QtdEnviada"] > 0)):
                 demonstracoes.append({
                     "Prioridade": 3,
                     "CodigoProduto": loja["CodigoProduto"],
@@ -372,7 +388,7 @@ def identificar_demonstracoes(df_base: pd.DataFrame, piso_exposicao: int = 0) ->
                     "NomeFilialOrigem": loja["Filial"],
                     "CodigoFilialDestino": 0,
                     "NomeFilialDestino": "DEMONSTRAR",
-                    "QtdTransferir": int(loja["SaldoAjustado"]),
+                    "QtdTransferir": int(loja["SaldoProvavel"]),
                     "ReservaOrigem": 0,
                     "IdealOrigem": 0,
                     "IdealDestino": 0,
@@ -412,13 +428,15 @@ def gerar_sugestoes(
     df["SaldoProvavel"] = pd.to_numeric(df["SaldoProvavel"], errors="coerce").fillna(0)
     df["SaldoAjustado"] = df["SaldoProvavel"] + df["QtdEmTransito"]
 
+    # 0. Aplica quarentena ANTES de qualquer regra (para respeitar "Reposição Recente")
+    df = filtrar_recentes(df, df_recebidas_recentes)
+
     # 1. Identifica DEMONSTRAR (antes de calcular Estoque Ideal, pois não depende dele)
     _dem_list, _comp_sem_doadora = identificar_demonstracoes(df, piso_exposicao)
     df_demonstracao = pd.DataFrame(_dem_list)
 
     # 2. Calcula Indicadores
     df = calcular_indicadores(df, cobertura_alvo, lead_time, piso_exposicao, reserva_pct, atacado_tem_piso, atacado_tem_reserva)
-    df = filtrar_recentes(df, df_recebidas_recentes)
     df = excluir_descontinuados(df)
 
     todas_transf = []
