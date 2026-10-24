@@ -823,8 +823,8 @@ if "df_transf" in st.session_state:
                         st.dataframe(dfc.style.format({"RETORNO FIN. (R$)": "R$ {:.2f}"}).set_properties(subset=["IDEAL", "SUGESTÃO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
                     else:
                         dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "RetornoFinanceiro", "Motivo"]]
-                        dfc.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "RETORNO FIN. (R$)", "MOTIVO"]
                         dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
+                        dfc.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "RETORNO FIN. (R$)", "MOTIVO"]
                         st.dataframe(dfc.style.format({"RETORNO FIN. (R$)": "R$ {:.2f}"}).set_properties(subset=["VELOCIDADE", "IDEAL", "SUGESTÃO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
 
 if btn_manual:
