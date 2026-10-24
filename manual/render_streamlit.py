@@ -139,12 +139,12 @@ def render_manual() -> None:
             "**Por que é bom:** O Atacado consolida o estoque e amortiza as variações das lojas."
         )
 
-        st.subheader("O Efeito Chicote (A P&G)")
+        st.subheader("A Cascata de Decisão (Waterfall)")
         st.markdown(
-            "A P&G descobriu que, mesmo com vendas estáveis de fraldas Pampers, os pedidos dos supermercados flutuavam muito. "
-            "Isso porque cada um pedia um pouco a mais por medo de faltar.\n\n"
-            "**Como o sistema resolve:** O parâmetro **Reposição Recente** bloqueia novos pedidos se a loja recebeu há poucos dias. "
-            "Assim, quebramos o ciclo de pedidos duplicados."
+            "Para evitar que um produto apareça em várias abas ao mesmo tempo, o motor usa a lógica de **eliminação em cascata**.\n\n"
+            "1. O motor verifica primeiro se alguma loja **nunca recebeu** o produto (DEMONSTRAR).\n"
+            "2. Se não houver lojas nessa situação, ele verifica a **velocidade da rede** (DESCONTINUAR ou LIQUIDAR).\n"
+            "3. Se o produto for saudável, ele gera o fluxo normal (ENVIAR/RECEBER/COMPRAR)."
         )
 
     # ---------------- ABA 3 - Acesso ----------------
@@ -227,15 +227,19 @@ def render_manual() -> None:
             "*Exemplo:* Ideal 100, Saldo 40. Transfere 60. O Ideal é o necessário para o período; a transferência cobre o saldo atual e a necessidade projetada."
         )
 
-        st.subheader("Os 6 Cards e as 6 Seções")
-        render_tabela(["Seção", "O que significa?"], [
-            ["📤 ENVIAR", "A filial tem demais e vai doar."],
-            ["📥 RECEBER", "A filial tem falta e vai receber."],
-            ["🎯 DEMONSTRAR", "Produto parado na loja, ou que nunca foi abastecido, mas que vende em outras. Ação de merchandising!"],
-            ["🛒 COMPRAR", "Ninguém na rede tem. Precisa comprar do fornecedor."],
-            ["⏸️ DESCONTINUAR", "Produto de giro baixo. Deve sair do mix."],
-            ["🔥 LIQUIDAR", "Produto zerado de venda. Deve ser promovido ou devolvido."]
+        st.subheader("Os 6 Cards e a Hierarquia")
+        st.markdown(
+            "O motor não mistura as sugestões. Se o item cai na primeira regra, ele é ignorado nas seguintes:"
+        )
+        render_tabela(["Etapa", "Seção", "O que significa?"], [
+            ["1º", "🎯 DEMONSTRAR", "Loja sem histórico. Envia 5 un da doadora com excedente para teste. (Prioridade oculta nesta aba)."],
+            ["2º", "⏸️ DESCONTINUAR", "Venda fraca na rede (0 < vel < 0.1). Deve sair do mix. (Prioridade oculta nesta aba)."],
+            ["3º", "🔥 LIQUIDAR", "Venda zero na rede. Deve ser promovido. (Prioridade oculta nesta aba)."],
+            ["4º", "📤 ENVIAR", "A filial tem demais e vai doar."],
+            ["4º", "📥 RECEBER", "A filial tem falta e vai receber."],
+            ["4º", "🛒 COMPRAR", "Ninguém na rede tem o suficiente. Precisa comprar do fornecedor."]
         ])
+        st.info("💡 **Por que não há mais coluna de Prioridade em DEMONSTRAR, DESC e LIQUIDAR?** Essas são ações táticas e absolutas. O item está parado ou precisa ser testado, não importa a urgência. A prioridade (Crítica, Alta, Normal) só se aplica ao fluxo de transferências normais (ENVIAR/RECEBER).")
 
         st.subheader("O que é o 'Retorno Financeiro' (R$)?")
         st.markdown(
@@ -252,7 +256,8 @@ def render_manual() -> None:
         st.markdown("O Motivo é o coração do sistema. Ele diz exatamente o que está acontecendo.")
         
         motivos = {
-            "SEM ESTOQUE": "A loja está zerada e **não há nada no caminhão**. Ação imediata.",
+            "SEM REGISTRO NA FILIAL": "A loja nunca recebeu o item e o sistema está enviando 5 un para iniciar o histórico.",
+            "SEM ESTOQUE": "A loja está zerada e não há nada no caminhão nem na rede.",
             "AGUARDANDO TRANSFERENCIA": "A loja tem falta, **MAS** já tem um caminhão cheio de produto indo para lá.",
             "RECEBIDO RECENTEMENTE": "A loja recebeu produto há poucos dias. Está em quarentena.",
             "URGENTE - zera hoje": "O estoque acaba em menos de 24 horas.",
@@ -262,10 +267,8 @@ def render_manual() -> None:
             "Maior giro no destino": "A receptora vende 1.5x mais que a doadora.",
             "Reposicao de ciclo": "Fluxo normal.",
             "ESTOQUE COMPLEMENTAR": "Motivo de compra. A rede tem um pouco, mas não o suficiente.",
-            "ESTOQUE PARADO": "Liquidar. A velocidade de venda é zero.",
-            "FIM DE CICLO": "Descontinuar. O produto vende muito pouco.",
-            "Estoque parado (Vende na rede)": "Demonstrar. O produto está na loja, mas não vende. O motor sugere ação de merchandising.",
-            "Falha de Distribuição (Nunca abastecida)": "Demonstrar. O produto vende em outras lojas, mas nunca foi enviado para esta. Sugere entrada no mix."
+            "ESTOQUE PARADO": "Liquidar. A velocidade de venda é zero na rede.",
+            "FIM DE CICLO": "Descontinuar. O produto vende muito pouco."
         }
         for k, v in motivos.items():
             st.markdown(f"**{k}:** {v}")
@@ -290,13 +293,15 @@ def render_manual() -> None:
     with tab9:
         st.header("Perguntas Frequentes")
         faq = [
-            ("A sugestão parece errada. O que faço?", "1. Leia o Motivo. 2. Confira o Saldo e o Em Trânsito. 3. Verifique movimentações estranhas. 4. Acione o TI."),
-            ("O sistema sugere menos de 5 unidades?", "Não. O motor tem uma regra de MOQ. Transferências ou compras abaixo de 5 un são ignoradas."),
-            ("Como ajustar se estiver sugerindo MUITO?", "Aumente a Reposição Recente (15->30) ou a Reserva Origem (25->40). Diminua a Cobertura (30->15)."),
-            ("Como ajustar se estiver sugerindo POUCO?", "Diminua a Reposição Recente (15->7) ou a Reserva Origem (25->15). Aumente a Cobertura (30->45)."),
+            ("A sugestão parece errada. O que faço?", "1. Leia o Motivo. 2. Confira o Saldo e o Em Trânsito. 3. Verifique se o produto não caiu em DESCONTINUAR ou LIQUIDAR por causa da velocidade da rede."),
+            ("Por que um produto não aparece em mais de uma aba?", "O sistema usa cascata. Se ele foi para DEMONSTRAR, ele não vai para ENVIAR. Se ele foi para DESC, não vai para LIQ. Isso evita duplicidade de pedidos."),
+            ("Por que a coluna de Prioridade sumiu em algumas abas?", "As ações de DEMONSTRAR, DESC e LIQ são absolutas. A prioridade (Crítica, Alta, Normal) só é calculada para o fluxo normal (Enviar/Receber)."),
+            ("O que significa um saldo negativo (ex: -60)?", "É um erro de movimentação (entrada não lançada no sistema). O motor trata esse saldo como ZERO para não pedir quantidades absurdas."),
+            ("O sistema sugere menos de 5 unidades?", "Não. O motor tem uma regra de MOQ (Quantidade Mínima). Transferências ou compras abaixo de 5 un são ignoradas."),
+            ("Como ajustar se estiver sugerindo MUITO?", "Aumente a Reposição Recente ou a Reserva Origem. Diminua a Cobertura."),
+            ("Como ajustar se estiver sugerindo POUCO?", "Diminua a Reposição Recente ou a Reserva Origem. Aumente a Cobertura."),
             ("O Atacado compra para ele mesmo?", "Sim. Se ele estiver abaixo do Ideal, a aba COMPRAR dele sugere a compra para repor o CD."),
-            ("Posso transferir tudo que o sistema sugere?", "Não. O programa não substitui o bom senso. Sempre confira o Motivo."),
-            ("Isso substitui o ERP?", "Não. É uma ferramenta de decisão. A execução continua no ERP."),
+            ("Isso substitui o ERP?", "Não. É uma ferramenta de decisão. A execução continua no ERP.")
         ]
         for i, (pergunta, resposta) in enumerate(faq, 1):
             with st.expander(f"{i}. {pergunta}"):
