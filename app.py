@@ -451,13 +451,13 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
 
         elif tipo == "COMP":
             if cod == 5:
-                heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "IDEAL", "SUGESTÃO", "RETORNO FIN.", "MOTIVO"]
-                widths = [28, 45, 200, 30, 120, 50, 50, 60, 150]
-                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (str(r["Motivo"]).upper(), "L")]
+                heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN.", "MOTIVO"]
+                widths = [28, 45, 200, 30, 120, 50, 50, 50, 60, 150]
+                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['Custo']:.2f}", "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (str(r["Motivo"]).upper(), "L")]
             else:
-                heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "RETORNO FIN.", "MOTIVO"]
-                widths = [28, 45, 160, 30, 110, 50, 40, 50, 60, 150]
-                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (str(r["Motivo"]).upper(), "L")]
+                heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN.", "MOTIVO"]
+                widths = [28, 45, 160, 30, 110, 50, 40, 50, 50, 60, 150]
+                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['Custo']:.2f}", "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (str(r["Motivo"]).upper(), "L")]
 
         elif tipo == "DEM":
             heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "MOTIVO"]
@@ -494,6 +494,7 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
                 "QtdSugerida": "sum", 
                 "Ideal": "sum",
                 "RetornoFinanceiro": "sum",
+                "Custo": "max",
                 "Motivo": _motivo_agg,
             })
             df_comp = df_comp.sort_values("Produto").reset_index(drop=True)
@@ -691,6 +692,7 @@ if "df_transf" in st.session_state:
                             "QtdSugerida": "sum",
                             "Ideal": "sum",
                             "RetornoFinanceiro": "sum",
+                            "Custo": "max",
                             "Motivo": _motivo_agg,
                         })
                         df_comp_view = df_comp_view.sort_values("Produto").reset_index(drop=True)
@@ -818,14 +820,14 @@ if "df_transf" in st.session_state:
                     dfc["Motivo"] = dfc["Motivo"].astype(str).str.upper()
                     
                     if nome == "ATACADO":
-                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Ideal", "QtdSugerida", "RetornoFinanceiro", "Motivo"]]
-                        dfc.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "IDEAL", "SUGESTÃO", "RETORNO FIN. (R$)", "MOTIVO"]
-                        st.dataframe(dfc.style.format({"RETORNO FIN. (R$)": "R$ {:.2f}"}).set_properties(subset=["IDEAL", "SUGESTÃO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
+                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Ideal", "QtdSugerida", "Custo", "RetornoFinanceiro", "Motivo"]]
+                        dfc.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)", "MOTIVO"]
+                        st.dataframe(dfc.style.format({"CUSTO": "R$ {:.2f}", "RETORNO FIN. (R$)": "R$ {:.2f}"}).set_properties(subset=["IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
                     else:
-                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "RetornoFinanceiro", "Motivo"]]
+                        dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "Custo", "RetornoFinanceiro", "Motivo"]]
                         dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
-                        dfc.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "RETORNO FIN. (R$)", "MOTIVO"]
-                        st.dataframe(dfc.style.format({"RETORNO FIN. (R$)": "R$ {:.2f}"}).set_properties(subset=["VELOCIDADE", "IDEAL", "SUGESTÃO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
+                        dfc.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)", "MOTIVO"]
+                        st.dataframe(dfc.style.format({"CUSTO": "R$ {:.2f}", "RETORNO FIN. (R$)": "R$ {:.2f}"}).set_properties(subset=["VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
 
 if btn_manual:
     st.session_state["view"] = "manual"
