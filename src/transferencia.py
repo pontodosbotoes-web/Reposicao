@@ -233,6 +233,7 @@ def alocar_fluxo_normal(df_produto: pd.DataFrame, piso_exposicao: int = 0, ataca
                     "Motivo": motivo_compra,
                     "Velocidade": rec["VelocidadePeriodo"],
                     "Ideal": rec["EstoqueIdeal"],
+                    "Custo": rec["CustoCompra2"],
                     "RetornoFinanceiro": retorno_fin
                 })
 
@@ -263,6 +264,7 @@ def alocar_fluxo_normal(df_produto: pd.DataFrame, piso_exposicao: int = 0, ataca
                     "Motivo": motivo_compra,
                     "Velocidade": atacado.iloc[0]["VelocidadePeriodo"],
                     "Ideal": atacado.iloc[0]["EstoqueIdeal"],
+                    "Custo": atacado.iloc[0]["CustoCompra2"],
                     "RetornoFinanceiro": retorno_fin
                 })
 
