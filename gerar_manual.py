@@ -213,7 +213,7 @@ def gerar(buffer=None):
     conteudo.append(h1("Parte 3 - Primeiro acesso"))
     conteudo.append(p("1. Abra o navegador e digite: https://pb-reposicao.streamlit.app"))
     conteudo.append(p("2. Se o app estiver dormindo, clique em 'Yes, get this app back up!'."))
-    conteudo.append(p("3. A tela possui 6 filtros, 5 botoes de acao, 6 cards de resumo e as tabelas."))
+    conteudo.append(p("3. A tela possui 6 filtros, botoes de acao (Consultar, Limpar, Parametros, Manual, Gerar PDF), 6 cards de resumo e as tabelas."))
     conteudo.append(PageBreak())
 
     # ---------- PARTE 4 - DICIONARIO DE FILTROS ----------
@@ -331,13 +331,15 @@ def gerar(buffer=None):
     # ---------- PARTE 9 - FAQ ----------------
     conteudo.append(h1("Parte 9 - Perguntas frequentes"))
     faq = [
-        ("A sugestao parece errada. O que faco?", "1. Leia o Motivo. 2. Confira Saldo e Em Transito. 3. Acione o TI."),
-        ("O sistema sugere menos de 5 unidades?", "Nao. Regra de MOQ."),
+        ("A sugestao parece errada. O que faco?", "1. Leia o Motivo. 2. Confira Saldo e Em Transito. 3. Verifique se o produto nao caiu em DESC ou LIQ por causa da velocidade da rede."),
+        ("Por que um produto nao aparece em mais de uma aba?", "O sistema usa Cascata. Se ele foi para DEMONSTRAR, nao vai para ENVIAR. Se foi para DESC, nao vai para LIQ. Isso evita duplicidade de pedidos."),
+        ("Por que a coluna de Prioridade sumiu em algumas abas?", "Acoes de DEMONSTRAR, DESC e LIQ sao absolutas (o item esta parado ou nao). A prioridade so e calculada no fluxo normal de transferencias (ENVIAR/RECEBER)."),
+        ("O que significa um saldo negativo (ex: -60)?", "E um erro de movimentacao (entrada nao lancada). O sistema trata como ZERO para nao pedir quantidades absurdas."),
+        ("O sistema sugere menos de 5 unidades?", "Nao. Regra de MOQ. Transferencias ou compras abaixo de 5 un sao ignoradas."),
         ("Como ajustar se estiver sugerindo MUITO?", "Aumente Reposicao Recente ou Reserva. Diminua Cobertura."),
         ("Como ajustar se estiver sugerindo POUCO?", "Diminua Reposicao Recente ou Reserva. Aumente Cobertura."),
         ("O Atacado compra para ele mesmo?", "Sim, se estiver abaixo do Ideal."),
-        ("Posso transferir tudo?", "Nao. Confira o Motivo."),
-        ("Isso substitui o ERP?", "Nao. E uma ferramenta de decisao."),
+        ("Isso substitui o ERP?", "Nao. E uma ferramenta de decisao.")
     ]
     for q, r in faq:
         conteudo.append(p(f"<b>P:</b> {q}", ESTILO_H3))
@@ -360,12 +362,12 @@ def gerar(buffer=None):
     conteudo.append(p("Acao: Aguarde a entrega."))
     
     conteudo.append(h2("Caso 4: Produto parado mas vendendo na rede (DEMONSTRAR)"))
-    conteudo.append(p("O que vejo: Fita Isolante, Motivo: 'Estoque parado (Vende na rede)'."))
-    conteudo.append(p("Acao: O produto vende na rede, mas nao nesta loja. Avise o gerente para expor melhor o produto ou treinar a equipe."))
+    conteudo.append(p("O que vejo: Fita Isolante, Motivo: 'ESTOQUE PARADO (VENDE NA REDE)'."))
+    conteudo.append(p("Acao: O produto vende na rede, mas nao nesta loja. Avise o gerente para expor melhor o produto."))
 
     conteudo.append(h2("Caso 5: Loja nunca recebeu o produto (DEMONSTRAR)"))
-    conteudo.append(p("O que vejo: Papel Colorido, Motivo: 'Falha de Distribuicao'."))
-    conteudo.append(p("Acao: O produto vende em todas as outras lojas, mas a Zona Norte nunca recebeu. O sistema esta sugerindo que ela peca uma quantidade inicial para testar a venda."))
+    conteudo.append(p("O que vejo: Papel Colorido, Origem: ATACADO, Destino: ZONA NORTE, Qtd: 5, Motivo: 'SEM REGISTRO NA FILIAL'."))
+    conteudo.append(p("Acao: A loja nunca teve historico. O sistema esta enviando 5 un do Atacado para testar a venda e iniciar o historico."))
 
     # ---------- GERAR ----------
     doc.build(conteudo, canvasmaker=ManualCanvas)
