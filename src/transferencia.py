@@ -209,7 +209,7 @@ def alocar_fluxo_normal(df_produto: pd.DataFrame, piso_exposicao: int = 0, ataca
         # Cálculo da Compra (usando Falta em vez de Ideal)
         necessidade_ideal = max(0, rec["Falta"] - qtd_recebida_transf)
         
-        if necessidade_ideal > 0:
+        if necessidade_ideal > 0 and rec["VelocidadePeriodo"] >= 0.10:
             minimo = piso_exposicao if atacado_tem_minimo_compra else 1
             if necessidade_ideal >= minimo:
                 if qtd_recebida_transf == 0 and rec["SaldoAjustado"] <= 0:
