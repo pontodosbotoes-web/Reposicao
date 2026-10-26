@@ -361,11 +361,7 @@ def gerar(buffer=None):
     conteudo.append(p("O que vejo: Papel Kraft, Em Transito 20."))
     conteudo.append(p("Acao: Aguarde a entrega."))
     
-    conteudo.append(h2("Caso 4: Produto parado mas vendendo na rede (DEMONSTRAR)"))
-    conteudo.append(p("O que vejo: Fita Isolante, Motivo: 'ESTOQUE PARADO (VENDE NA REDE)'."))
-    conteudo.append(p("Acao: O produto vende na rede, mas nao nesta loja. Avise o gerente para expor melhor o produto."))
-
-    conteudo.append(h2("Caso 5: Loja nunca recebeu o produto (DEMONSTRAR)"))
+    conteudo.append(h2("Caso 4: Loja nunca recebeu o produto (DEMONSTRAR)"))
     conteudo.append(p("O que vejo: Papel Colorido, Origem: ATACADO, Destino: ZONA NORTE, Qtd: 5, Motivo: 'SEM REGISTRO NA FILIAL'."))
     conteudo.append(p("Acao: A loja nunca teve historico. O sistema esta enviando 5 un do Atacado para testar a venda e iniciar o historico."))
 
