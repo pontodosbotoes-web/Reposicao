@@ -329,16 +329,10 @@ def render_manual() -> None:
                 "**Ação:** O caminhão já saiu. Apenas aguarde a entrega."
             )
 
-        with st.expander("Cenário 4: Produto parado na loja mas vendendo na rede (DEMONSTRAR)"):
+        with st.expander("Cenário 4: Loja nunca recebeu o produto (DEMONSTRAR)"):
             st.markdown(
-                "**O que vejo:** Fita Isolante, Motivo: `Estoque parado (Vende na rede)`.\n"
-                "**Ação:** O sistema identificou que a loja tem o produto, mas não vende. Avise o gerente da loja para reposicionar na prateleira ou treinar a equipe."
-            )
-
-        with st.expander("Cenário 5: Loja nunca recebeu o produto (DEMONSTRAR)"):
-            st.markdown(
-                "**O que vejo:** Papel Colorido, Motivo: `Falha de Distribuição (Nunca abastecida)`.\n"
-                "**Ação:** O produto vende em todas as outras lojas, mas a Zona Norte nunca recebeu. O sistema está sugerindo que ela peça uma quantidade inicial para testar a venda."
+                "**O que vejo:** Papel Colorido, Origem: ATACADO, Destino: ZONA NORTE, Qtd: 5, Motivo: `SEM REGISTRO NA FILIAL`.\n"
+                "**Ação:** O produto vende em outras lojas, mas a Zona Norte nunca recebeu. O sistema está sugerindo enviar 5 un do Atacado para iniciar o histórico."
             )
 
     st.markdown("---")
