@@ -29,6 +29,7 @@ WHERE m.TipoMov IN ('2.2','2.4','2.9')
   AND m.DtFinalizacao >= DATEADD(DAY, -:dias_transito, :data_referencia)
   AND m.DtFinalizacao <  DATEADD(DAY, 1, :data_referencia)
   AND m.CodFilial IN (1,2,3,4,5)
+  AND m.CodLocal = '01'
 GROUP BY i.IdProduto, 
     CASE m.CodCliFor
         WHEN 'C08327' THEN 1
