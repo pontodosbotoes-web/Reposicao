@@ -18,5 +18,5 @@ WHERE m.TipoMov IN ('1.1','1.2')
   AND m.DtFinalizacao >= DATEADD(DAY, -:dias_reposicao, :data_referencia)
   AND m.DtFinalizacao <  DATEADD(DAY, 1, :data_referencia)
   AND m.CodFilial IN (1,2,3,4,5)
-  AND m.CodLocal = '1'
+  AND m.CodLocal = '01'
 GROUP BY i.IdProduto, m.CodFilial;

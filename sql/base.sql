@@ -30,7 +30,7 @@ UltimaCompra AS
       AND m.CodCliFor NOT IN ('C08327','F00074','C08328','F10077','C22206','F15703','C16205','F14688','C30965','F16834')
       AND m.DtFinalizacao < DATEADD(DAY, 1, :data_referencia)
       AND m.CodFilial IN (1,2,3,4,5)
-      AND m.CodLocal = '1'
+      AND m.CodLocal = '01'
     GROUP BY i.IdProduto
 ),
 
@@ -61,9 +61,8 @@ Mov AS
     WHERE m.DtFinalizacao >= DATEADD(DAY, -:max_lookback, :data_referencia)
       AND m.DtFinalizacao <  DATEADD(DAY, 1, :data_referencia)
       AND m.CodFilial IN (1,2,3,4,5)
-      AND m.CodLocal = '1'
+      AND m.CodLocal = '01'
       AND m.TipoMov IN ('1.1','1.2','2.2','2.4','2.9')
-      AND m.CodLocal = '1'
     GROUP BY i.IdProduto, m.CodFilial
 ),
 
