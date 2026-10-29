@@ -380,13 +380,19 @@ def gerar_sugestoes(
     df_transf = pd.DataFrame(todas_transf)
     if not df_transf.empty:
         df_transf = df_transf.sort_values(["Prioridade", "NomeFilialDestino", "Produto", "Fabricante"]).reset_index(drop=True)
+    else:
+        df_transf = pd.DataFrame(columns=["Prioridade", "CodigoProduto", "ReferenciaFabricante", "Produto", "Fabricante", "Embalagem", "CodigoFilialOrigem", "NomeFilialOrigem", "CodigoFilialDestino", "NomeFilialDestino", "QtdTransferir", "ReservaOrigem", "IdealOrigem", "IdealDestino", "DiasAteZerarDestino", "Motivo", "SaldoAjustado", "QtdEmTransito", "RetornoFinanceiro"])
 
     df_compras = pd.DataFrame(todas_compras)
     if not df_compras.empty:
         df_compras = df_compras.sort_values(["NomeFilialDestino", "Produto"]).reset_index(drop=True)
+    else:
+        df_compras = pd.DataFrame(columns=["NomeFilialDestino", "CodigoProduto", "ReferenciaFabricante", "Produto", "Fabricante", "Embalagem", "QtdSugerida", "Motivo", "Velocidade", "Ideal", "Custo", "RetornoFinanceiro"])
 
     df_demonstracao = pd.DataFrame(todas_demonstracoes)
     if not df_demonstracao.empty:
         df_demonstracao = df_demonstracao.sort_values(["NomeFilialOrigem", "Produto"]).reset_index(drop=True)
+    else:
+        df_demonstracao = pd.DataFrame(columns=["Prioridade", "CodigoProduto", "ReferenciaFabricante", "Produto", "Fabricante", "Embalagem", "CodigoFilialOrigem", "NomeFilialOrigem", "CodigoFilialDestino", "NomeFilialDestino", "QtdTransferir", "ReservaOrigem", "IdealOrigem", "IdealDestino", "DiasAteZerarDestino", "Motivo", "SaldoAjustado", "QtdEmTransito", "RetornoFinanceiro"])
 
     return df_transf, df_compras, df_demonstracao
