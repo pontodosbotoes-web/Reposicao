@@ -450,12 +450,12 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
         
         if tipo == "ENV":
             heads = ["#", "PRI.", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "TRANS.", "RES.", "IDEAL", "MOTIVO"]
-            widths = [28, 34, 45, 180, 30, 120, 55, 55, 36, 40, 40, 36, 150]
+            widths = [28, 34, 45, 150, 30, 120, 55, 55, 36, 40, 40, 36, 180]
             mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["ReservaOrigem"]), "R"), (fmt_qtd(r["Qtd Ideal"]), "R"), (str(r["Motivo"]).upper(), "L")]
         
         elif tipo == "REC":
             heads = ["#", "PRI.", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "TRANS.", "DIAS", "IDEAL", "MOTIVO"]
-            widths = [28, 34, 45, 180, 30, 120, 55, 55, 36, 40, 40, 36, 150]
+            widths = [28, 34, 45, 150, 30, 120, 55, 55, 36, 40, 40, 36, 180]
             mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"), (fmt_qtd(r["Qtd Ideal"]), "R"), (str(r["Motivo"]).upper(), "L")]
 
         elif tipo == "COMP":
