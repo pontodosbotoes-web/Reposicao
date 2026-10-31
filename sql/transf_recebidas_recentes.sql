@@ -8,7 +8,7 @@
 SELECT
     i.IdProduto,
     m.CodFilial AS CodFilial,
-    SUM((i.Qtd - ISNULL(i.QtdCancel,0)) / NULLIF(i.FatorConvUnid,0)) AS QtdRecebidaRecente,
+    SUM((i.Qtd - ISNULL(i.QtdCancel,0)) * ISNULL(NULLIF(i.FatorConvUnid,0), 1)) AS QtdRecebidaRecente,
     MAX(CAST(m.DtFinalizacao AS DATE)) AS DataRecebimento
 FROM ItensMov i WITH (NOLOCK)
 INNER JOIN Movimento m WITH (NOLOCK) ON m.IdMov = i.IdMov

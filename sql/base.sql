@@ -41,17 +41,17 @@ Mov AS
         m.CodFilial,
         SUM(CASE WHEN m.TipoMov = '1.1'
                   AND m.CodCliFor NOT IN ('C08327','F00074','C08328','F10077','C22206','F15703','C16205','F14688','C30965','F16834')
-                 THEN (i.Qtd - ISNULL(i.QtdCancel,0)) / NULLIF(i.FatorConvUnid,0) ELSE 0 END) AS QtdComprada,
+                 THEN (i.Qtd - ISNULL(i.QtdCancel,0)) * ISNULL(NULLIF(i.FatorConvUnid,0), 1) ELSE 0 END) AS QtdComprada,
         SUM(CASE WHEN m.CodCliFor IN ('C08327','F00074','C08328','F10077','C22206','F15703','C16205','F14688','C30965','F16834')
                   AND m.TipoMov IN ('1.1','1.2')
-                 THEN (i.Qtd - ISNULL(i.QtdCancel,0)) / NULLIF(i.FatorConvUnid,0) ELSE 0 END) AS QtdRecebida,
+                 THEN (i.Qtd - ISNULL(i.QtdCancel,0)) * ISNULL(NULLIF(i.FatorConvUnid,0), 1) ELSE 0 END) AS QtdRecebida,
         SUM(CASE WHEN m.CodCliFor IN ('C08327','F00074','C08328','F10077','C22206','F15703','C16205','F14688','C30965','F16834')
                   AND m.TipoMov IN ('2.2','2.4','2.9')
                   AND (m.TipoMov = '2.2' OR (m.TipoMov IN ('2.4','2.9') AND m.NfeStatus = 'U'))
-                 THEN (i.Qtd - ISNULL(i.QtdCancel,0)) / NULLIF(i.FatorConvUnid,0) ELSE 0 END) AS QtdEnviada,
+                 THEN (i.Qtd - ISNULL(i.QtdCancel,0)) * ISNULL(NULLIF(i.FatorConvUnid,0), 1) ELSE 0 END) AS QtdEnviada,
         SUM(CASE WHEN m.TipoMov = '2.4' AND m.NfeStatus = 'U'
                   AND m.CodCliFor NOT IN ('C08327','F00074','C08328','F10077','C22206','F15703','C16205','F14688','C30965','F16834')
-                 THEN (i.Qtd - ISNULL(i.QtdCancel,0)) / NULLIF(i.FatorConvUnid,0) ELSE 0 END) AS QtdVendida,
+                 THEN (i.Qtd - ISNULL(i.QtdCancel,0)) * ISNULL(NULLIF(i.FatorConvUnid,0), 1) ELSE 0 END) AS QtdVendida,
         COUNT(DISTINCT CASE WHEN m.TipoMov = '2.4' AND m.NfeStatus = 'U'
                              AND m.CodCliFor NOT IN ('C08327','F00074','C08328','F10077','C22206','F15703','C16205','F14688','C30965','F16834')
                             THEN CAST(m.DtFinalizacao AS DATE) END) AS DiasAtivo

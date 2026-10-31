@@ -19,7 +19,7 @@ SELECT
         WHEN 'C30965' THEN 5
         WHEN 'F16834' THEN 5
     END AS CodFilialDestino,
-    SUM((i.Qtd - ISNULL(i.QtdCancel,0)) / NULLIF(i.FatorConvUnid,0)) AS QtdEmTransito,
+    SUM((i.Qtd - ISNULL(i.QtdCancel,0)) * ISNULL(NULLIF(i.FatorConvUnid,0), 1)) AS QtdEmTransito,
     MAX(CAST(m.DtFinalizacao AS DATE)) AS DataEnvio
 FROM ItensMov i WITH (NOLOCK)
 INNER JOIN Movimento m WITH (NOLOCK) ON m.IdMov = i.IdMov
