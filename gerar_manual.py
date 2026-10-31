@@ -207,6 +207,14 @@ def gerar(buffer=None):
         "Como não temos controle de inventário físico, o motor trata o saldo negativo como <b>zero</b> (loja vazia) "
         "e sugere apenas o necessário para atingir o Ideal, sem tentar 'resgatar' a dívida fantasma."
     ))
+
+    conteudo.append(h2("2.4 Produtos Pesáveis e a Trava de Compra"))
+    conteudo.append(p(
+        "O sistema lê a flag <b>ProdutoPesavel</b> do ERP para tratar itens vendidos a granel (KG, MTS, LT) de forma diferente. "
+        "Para esses produtos, a quantidade de teste no DEMONSTRAR e o Piso Exposição são ajustados para <b>0,1</b> (ex: 100g). "
+        "Além disso, a <b>Trava de Compra</b> impede que o sistema sugira comprar produtos que a filial vende muito pouco localmente, "
+        "evitando estoques parados em lojas que não têm demanda."
+    ))
     conteudo.append(PageBreak())
 
     # ---------- PARTE 3 ----------
@@ -285,11 +293,11 @@ def gerar(buffer=None):
     
     acoes_fim_linha = [
         ["Etapa", "Ação", "O que significa?"],
-        ["1", "DEMONSTRAR", "A loja nunca teve o item. O motor busca doadora com excesso (mín. 5 un) e envia para teste. O produto é bloqueado das etapas seguintes."],
+        ["1", "DEMONSTRAR", "A loja nunca teve o item. O motor busca doadora com excesso (mín. 5 un ou 0,1 kg) e envia para teste. O produto é bloqueado das etapas seguintes."],
         ["2", "DESCONTINUAR", "A rede toda vende muito pouco (velocidade entre 0 e 0.1). O item deve sair do mix das lojas restantes."],
         ["3", "LIQUIDAR", "A rede toda zerou as vendas. O estoque físico restante deve ser promovido."],
-        ["4", "ENVIAR/RECEBER", "O produto vende bem. O motor cruza o excesso de uma loja com a falta de outra."],
-        ["5", "COMPRAR", "Ninguém na rede tem o suficiente. A sugestão é comprar do fornecedor."]
+        ["4", "ENVIAR/RECEBER", "O produto vende bem. O motor cruza o excesso de uma loja com a falta de outra. (Inclui a Trava de Recompra)."],
+        ["5", "COMPRAR", "Ninguém na rede tem o suficiente. A sugestão é comprar do fornecedor (com Trava de Velocidade Local)."]
     ]
     conteudo.append(tabela(acoes_fim_linha, col_widths=[1.5 * cm, 3 * cm, 9.5 * cm]))
     conteudo.append(PageBreak())
@@ -298,7 +306,7 @@ def gerar(buffer=None):
     conteudo.append(h1("Parte 7 - O Livro dos Motivos"))
     motivos = [
         ["Motivo", "Significado"],
-        ["SEM REGISTRO NA FILIAL", "A loja nunca recebeu o item e o sistema está enviando 5 un para iniciar o histórico."],
+        ["SEM REGISTRO NA FILIAL", "A loja nunca recebeu o item e o sistema está enviando uma quantidade inicial (5 un ou 0,1 kg) para iniciar o histórico."],
         ["SEM ESTOQUE", "A loja está zerada e não há nada no caminhão nem na rede."],
         ["AGUARDANDO TRANSFERENCIA", "A loja tem falta, MAS já tem um caminhão indo para lá. Não faça novo pedido."],
         ["RECEBIDO RECENTEMENTE", "A loja recebeu há poucos dias (quarentena). Aguarde as vendas."],
@@ -306,9 +314,9 @@ def gerar(buffer=None):
         ["Origem parada, destino vendendo", "A doadora não vende, mas a receptora vende muito."],
         ["Alta rotacao no destino", "A receptora vende o dobro."],
         ["Reposicao de ciclo", "Fluxo normal de transferência."],
-        ["ESTOQUE COMPLEMENTAR", "Motivo de compra. A rede tem um pouco, mas não o suficiente."],
+        ["ESTOQUE COMPLEMENTAR", "Motivo de compra. A rede tem um pouco, mas não o suficiente para a filial."],
         ["ESTOQUE PARADO", "Liquidar. A velocidade de venda caiu para zero na rede."],
-        ["FIM DE CICLO", "Descontinuar. O produto vende muito pouco (abaixo do limite)."]
+        ["FIM DE CICLO NA REDE", "Descontinuar. O produto vende muito pouco (abaixo do limite) em todas as filiais."]
     ]
     est_tec = ParagraphStyle('Tec3', parent=styles['Normal'], fontSize=8, leading=10)
     for i, row in enumerate(motivos):
@@ -333,12 +341,13 @@ def gerar(buffer=None):
     faq = [
         ("A sugestao parece errada. O que faco?", "1. Leia o Motivo. 2. Confira Saldo e Em Transito. 3. Verifique se o produto nao caiu em DESC ou LIQ por causa da velocidade da rede."),
         ("Por que um produto nao aparece em mais de uma aba?", "O sistema usa Cascata. Se ele foi para DEMONSTRAR, nao vai para ENVIAR. Se foi para DESC, nao vai para LIQ. Isso evita duplicidade de pedidos."),
-        ("Por que a coluna de Prioridade sumiu em algumas abas?", "Acoes de DEMONSTRAR, DESC e LIQ sao absolutas (o item esta parado ou nao). A prioridade so e calculada no fluxo normal de transferencias (ENVIAR/RECEBER)."),
+        ("Por que a coluna de Prioridade sumiu em algumas abas?", "Acoes de DEMONSTRAR, DESC e LIQ sao absolutas. A prioridade so e calculada no fluxo normal de transferencias (ENVIAR/RECEBER)."),
         ("O que significa um saldo negativo (ex: -60)?", "E um erro de movimentacao (entrada nao lancada). O sistema trata como ZERO para nao pedir quantidades absurdas."),
-        ("O sistema sugere menos de 5 unidades?", "Nao. Regra de MOQ. Transferencias ou compras abaixo de 5 un sao ignoradas."),
+        ("Como o sistema trata produtos vendidos a granel (KG, MTS)?", "O sistema le a flag 'ProdutoPesavel' do ERP. Para esses itens, o teste inicial e de 0,1 (100g) e o limite para descontinuar e mais flexivel."),
+        ("O que e a Trava de Recompra?", "Se o Atacado tem estoque novo e as lojas tem falta (mesmo com velocidade historica baixa), o sistema forca a distribuicao (ENVIAR/RECEBER) em vez de liquidar."),
         ("Como ajustar se estiver sugerindo MUITO?", "Aumente Reposicao Recente ou Reserva. Diminua Cobertura."),
         ("Como ajustar se estiver sugerindo POUCO?", "Diminua Reposicao Recente ou Reserva. Aumente Cobertura."),
-        ("O Atacado compra para ele mesmo?", "Sim, se estiver abaixo do Ideal."),
+        ("O Atacado compra para ele mesmo?", "Sim, se ele estiver abaixo do Ideal."),
         ("Isso substitui o ERP?", "Nao. E uma ferramenta de decisao.")
     ]
     for q, r in faq:
@@ -349,9 +358,9 @@ def gerar(buffer=None):
     # ---------- PARTE 10 - CASOS PRATICOS ----------
     conteudo.append(h1("Parte 10 - Cenarios Reais"))
     
-    conteudo.append(h2("Caso 1: Produto em falta critica (RECEBER)"))
-    conteudo.append(p("O que vejo: Fita Adesiva, Motivo: 'URGENTE - zera hoje'."))
-    conteudo.append(p("Acao: Gere o PDF, envie para o Atacado, crie a ordem no ERP."))
+    conteudo.append(h2("Caso 4: Loja nunca recebeu o produto (DEMONSTRAR)"))
+    conteudo.append(p("O que vejo: Papel Colorido, Origem: ATACADO, Destino: ZONA NORTE, Qtd: 5, Motivo: 'SEM REGISTRO NA FILIAL'."))
+    conteudo.append(p("Acao: A loja nunca teve historico. O sistema esta enviando 5 un do Atacado para testar a venda e iniciar o historico."))
 
     conteudo.append(h2("Caso 2: A rede esta sem estoque (COMPRAR)"))
     conteudo.append(p("O que vejo: Fita Crepe, Sugestao 50, Retorno Financeiro R$ 25.00."))
