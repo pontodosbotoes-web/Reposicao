@@ -424,6 +424,15 @@ class HeaderFooterCanvas(canvas.Canvas):
         if self.parametros_texto: self.drawCentredString(w / 2, 12, self.parametros_texto)
         self.drawRightString(w - 15, 12, f"Página {self._pageNumber} de {page_count}")
 
+def fmt_qtd(val):
+    try:
+        v = float(val)
+        if v == 0: return "0"
+        if v.is_integer(): return str(int(v))
+        return f"{v:.2f}".replace(".", ",")
+    except:
+        return str(val)
+
 def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_perfil, parametros_texto):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=15, leftMargin=15, topMargin=35, bottomMargin=25)
@@ -442,27 +451,27 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
         if tipo == "ENV":
             heads = ["#", "PRI.", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "TRANS.", "RES.", "IDEAL", "MOTIVO"]
             widths = [28, 34, 45, 180, 30, 120, 55, 55, 36, 40, 40, 36, 150]
-            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (int(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["ReservaOrigem"]), "R"), (int(r["Qtd Ideal"]), "R"), (str(r["Motivo"]).upper(), "L")]
+            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["ReservaOrigem"]), "R"), (fmt_qtd(r["Qtd Ideal"]), "R"), (str(r["Motivo"]).upper(), "L")]
         
         elif tipo == "REC":
             heads = ["#", "PRI.", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "TRANS.", "DIAS", "IDEAL", "MOTIVO"]
             widths = [28, 34, 45, 180, 30, 120, 55, 55, 36, 40, 40, 36, 150]
-            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (int(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"), (int(r["Qtd Ideal"]), "R"), (str(r["Motivo"]).upper(), "L")]
+            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"), (fmt_qtd(r["Qtd Ideal"]), "R"), (str(r["Motivo"]).upper(), "L")]
 
         elif tipo == "COMP":
             if cod == 5:
                 heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN.", "MOTIVO"]
                 widths = [28, 45, 160, 30, 110, 50, 40, 50, 50, 60, 150]
-                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['Custo']:.2f}", "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (str(r["Motivo"]).upper(), "L")]
+                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (fmt_qtd(r["QtdSugerida"]), "R"), (f"R$ {r['Custo']:.2f}", "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (str(r["Motivo"]).upper(), "L")]
             else:
                 heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN.", "MOTIVO"]
                 widths = [28, 45, 160, 30, 110, 50, 40, 50, 50, 60, 150]
-                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (int(r["QtdSugerida"]), "R"), (f"R$ {r['Custo']:.2f}", "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (str(r["Motivo"]).upper(), "L")]
+                mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (fmt_qtd(r["QtdSugerida"]), "R"), (f"R$ {r['Custo']:.2f}", "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (str(r["Motivo"]).upper(), "L")]
 
         elif tipo == "DEM":
             heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "MOTIVO"]
             widths = [28, 45, 200, 30, 120, 60, 60, 50, 200]
-            mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (int(r["QtdTransferir"]), "R"), (str(r["Motivo"]).upper(), "L")]
+            mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (str(r["Motivo"]).upper(), "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
         for _, row in df_part.iterrows():
@@ -768,6 +777,8 @@ if "df_transf" in st.session_state:
                     dfe["Motivo"] = dfe["Motivo"].astype(str).str.upper()
                     dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "QtdEmTransito", "ReservaOrigem", "Qtd Ideal", "Motivo"]]
                     dfe.columns = ["#", "PRIORIDADE", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD TRANSF.", "EM TRÂNSITO", "RESERVA", "QTD IDEAL", "MOTIVO"]
+                    dfe["QTD TRANSF."] = dfe["QTD TRANSF."].map(fmt_qtd)
+                    dfe["QTD IDEAL"] = dfe["QTD IDEAL"].map(fmt_qtd)
                     st.dataframe(dfe.style.set_properties(subset=["QTD TRANSF.", "EM TRÂNSITO", "RESERVA", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfe) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">📥 RECEBER</div>', unsafe_allow_html=True)
@@ -780,6 +791,8 @@ if "df_transf" in st.session_state:
                     dfr["Motivo"] = dfr["Motivo"].astype(str).str.upper()
                     dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "QtdEmTransito", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
                     dfr.columns = ["#", "PRIORIDADE", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD TRANSF.", "EM TRÂNSITO", "DIAS P/ ZERAR", "QTD IDEAL", "MOTIVO"]
+                    dfr["QTD TRANSF."] = dfr["QTD TRANSF."].map(fmt_qtd)
+                    dfr["QTD IDEAL"] = dfr["QTD IDEAL"].map(fmt_qtd)
                     st.dataframe(dfr.style.set_properties(subset=["QTD TRANSF.", "EM TRÂNSITO", "DIAS P/ ZERAR", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">🎯 DEMONSTRAR</div>', unsafe_allow_html=True)
@@ -791,6 +804,7 @@ if "df_transf" in st.session_state:
                     dfm["Motivo"] = dfm["Motivo"].astype(str).str.upper()
                     dfm = dfm[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "Motivo"]]
                     dfm.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "MOTIVO"]
+                    dfm["QTD"] = dfm["QTD"].map(fmt_qtd)
                     st.dataframe(dfm.style.set_properties(subset=["QTD"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfm) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR</div>', unsafe_allow_html=True)
@@ -801,6 +815,8 @@ if "df_transf" in st.session_state:
                     dfd["Motivo"] = dfd["Motivo"].astype(str).str.upper()
                     dfd = dfd[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "IdealOrigem", "Motivo"]]
                     dfd.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD P/ DESC.", "QTD IDEAL", "MOTIVO"]
+                    dfd["QTD P/ DESC."] = dfd["QTD P/ DESC."].map(fmt_qtd)
+                    dfd["QTD IDEAL"] = dfd["QTD IDEAL"].map(fmt_qtd)
                     st.dataframe(dfd.style.set_properties(subset=["QTD P/ DESC.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfd) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">🔥 LIQUIDAR</div>', unsafe_allow_html=True)
@@ -811,6 +827,8 @@ if "df_transf" in st.session_state:
                     dfi["Motivo"] = dfi["Motivo"].astype(str).str.upper()
                     dfi = dfi[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "IdealOrigem", "Motivo"]]
                     dfi.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD P/ LIQ.", "QTD IDEAL", "MOTIVO"]
+                    dfi["QTD P/ LIQ."] = dfi["QTD P/ LIQ."].map(fmt_qtd)
+                    dfi["QTD IDEAL"] = dfi["QTD IDEAL"].map(fmt_qtd)
                     st.dataframe(dfi.style.set_properties(subset=["QTD P/ LIQ.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfi) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">🛒 COMPRAR</div>', unsafe_allow_html=True)
@@ -825,6 +843,8 @@ if "df_transf" in st.session_state:
                         dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "Custo", "RetornoFinanceiro", "Motivo"]]
                         dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
                         dfc.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)", "MOTIVO"]
+                        dfc["SUGESTÃO"] = dfc["SUGESTÃO"].map(fmt_qtd)
+                        dfc["IDEAL"] = dfc["IDEAL"].map(fmt_qtd)
                         st.dataframe(dfc.style.format({"CUSTO": "R$ {:.2f}", "RETORNO FIN. (R$)": "R$ {:.2f}"}).set_properties(subset=["VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
                     else:
                         dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "Custo", "RetornoFinanceiro", "Motivo"]]
