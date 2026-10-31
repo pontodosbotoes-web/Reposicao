@@ -45,6 +45,8 @@ def calcular_indicadores(
     df["Piso"] = df.apply(lambda r: calcular_qtd_minima(r["ProdutoPesavel"], r["CustoUnitario"], float(r["Piso"])), axis=1)
     
     df["EstoqueIdeal"] = np.maximum(df["Piso"], df["VelocidadePeriodo"] * dias).round(2)
+    # Força o arredondamento para cima se o produto NÃO for pesável
+    df["EstoqueIdeal"] = np.where(df["ProdutoPesavel"] == 'S', df["EstoqueIdeal"], np.ceil(df["EstoqueIdeal"]))
     df["Excesso"] = np.maximum(0, df["SaldoProvavel"] - df["EstoqueIdeal"]).round(2)
     df["Falta"] = np.maximum(0, df["EstoqueIdeal"] - np.maximum(0, df["SaldoAjustado"])).round(2)
 
@@ -148,6 +150,8 @@ def alocar_fluxo_normal(df_produto: pd.DataFrame, piso_exposicao: int = 0, ataca
 
             doa = doadoras[doadoras["CodigoFilial"] == cod_doador].iloc[0]
             qtd = min(excesso_livre[cod_doador], precisa)
+            if rec["ProdutoPesavel"] != 'S':
+                qtd = np.ceil(qtd) # Força para cima se não for pesável
             if qtd < qtd_min_rec: break
 
             if rec["QtdEmTransito"] > 0: motivo = "AGUARDANDO TRANSFERENCIA"
@@ -183,6 +187,8 @@ def alocar_fluxo_normal(df_produto: pd.DataFrame, piso_exposicao: int = 0, ataca
             qtd_recebida_transf += qtd
 
         necessidade_ideal = max(0, rec["Falta"] - qtd_recebida_transf)
+        if rec["ProdutoPesavel"] != 'S':
+            necessidade_ideal = np.ceil(necessidade_ideal) # Força para cima se não for pesável
         limite_compra = 0.01 if str(rec["ProdutoPesavel"]).strip().upper() == 'S' else 0.10
         
         if necessidade_ideal > 0 and rec["VelocidadePeriodo"] >= limite_compra:
