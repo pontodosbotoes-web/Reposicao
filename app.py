@@ -470,7 +470,7 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
 
         elif tipo == "DEM":
             heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "MOTIVO"]
-            widths = [28, 45, 200, 30, 120, 60, 60, 50, 200]
+            widths = [28, 45, 170, 30, 120, 60, 85, 50, 200]  # <-- DESTINO aumentou para 85, PRODUTO reduziu para 170
             mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (str(r["Motivo"]).upper(), "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
@@ -805,7 +805,7 @@ if "df_transf" in st.session_state:
                     dfm = dfm[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "Motivo"]]
                     dfm.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "MOTIVO"]
                     dfm["QTD"] = dfm["QTD"].map(fmt_qtd)
-                    st.dataframe(dfm.style.set_properties(subset=["QTD"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfm) * 36 + 42)))
+                    st.dataframe(dfm.style.set_properties(subset=["QTD"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfm) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
 
                 st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR</div>', unsafe_allow_html=True)
                 if df_desc.empty:
@@ -817,7 +817,7 @@ if "df_transf" in st.session_state:
                     dfd.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD P/ DESC.", "QTD IDEAL", "MOTIVO"]
                     dfd["QTD P/ DESC."] = dfd["QTD P/ DESC."].map(fmt_qtd)
                     dfd["QTD IDEAL"] = dfd["QTD IDEAL"].map(fmt_qtd)
-                    st.dataframe(dfd.style.set_properties(subset=["QTD P/ DESC.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfd) * 36 + 42)))
+                    st.dataframe(dfd.style.set_properties(subset=["QTD P/ DESC.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfd) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
 
                 st.markdown('<div class="secao-titulo">🔥 LIQUIDAR</div>', unsafe_allow_html=True)
                 if df_liq.empty:
@@ -829,7 +829,7 @@ if "df_transf" in st.session_state:
                     dfi.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD P/ LIQ.", "QTD IDEAL", "MOTIVO"]
                     dfi["QTD P/ LIQ."] = dfi["QTD P/ LIQ."].map(fmt_qtd)
                     dfi["QTD IDEAL"] = dfi["QTD IDEAL"].map(fmt_qtd)
-                    st.dataframe(dfi.style.set_properties(subset=["QTD P/ LIQ.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfi) * 36 + 42)))
+                    st.dataframe(dfi.style.set_properties(subset=["QTD P/ LIQ.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfi) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
 
                 st.markdown('<div class="secao-titulo">🛒 COMPRAR</div>', unsafe_allow_html=True)
                 if df_comp_view.empty:
