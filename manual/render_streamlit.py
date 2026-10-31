@@ -144,7 +144,11 @@ def render_manual() -> None:
             "Para evitar que um produto apareça em várias abas ao mesmo tempo, o motor usa a lógica de **eliminação em cascata**.\n\n"
             "1. O motor verifica primeiro se alguma loja **nunca recebeu** o produto (DEMONSTRAR).\n"
             "2. Se não houver lojas nessa situação, ele verifica a **velocidade da rede** (DESCONTINUAR ou LIQUIDAR).\n"
-            "3. Se o produto for saudável, ele gera o fluxo normal (ENVIAR/RECEBER/COMPRAR)."
+            "3. Se o produto for saudável, ele gera o fluxo normal (ENVIAR/RECEBER/COMPRAR).\n\n"
+            "**Inovações recentes:**\n"
+            "* **Produtos Pesáveis (KG/MTS):** O sistema lê a flag `ProdutoPesavel` do ERP e envia apenas 0,1 (100g) para teste no DEMONSTRAR.\n"
+            "* **Trava de Recompra:** Se o Atacado tem estoque e as lojas têm falta, o produto vai para ENVIAR/RECEBER (não vai para DESC/LIQ).\n"
+            "* **Trava de Compra:** A aba COMPRAR só sugere itens se a filial tiver velocidade local >= 0.10."
         )
 
     # ---------------- ABA 3 - Acesso ----------------
@@ -232,14 +236,14 @@ def render_manual() -> None:
             "O motor não mistura as sugestões. Se o item cai na primeira regra, ele é ignorado nas seguintes:"
         )
         render_tabela(["Etapa", "Seção", "O que significa?"], [
-            ["1º", "🎯 DEMONSTRAR", "Loja sem histórico. Envia 5 un da doadora com excedente para teste. (Prioridade oculta nesta aba)."],
-            ["2º", "⏸️ DESCONTINUAR", "Venda fraca na rede (0 < vel < 0.1). Deve sair do mix. (Prioridade oculta nesta aba)."],
-            ["3º", "🔥 LIQUIDAR", "Venda zero na rede. Deve ser promovido. (Prioridade oculta nesta aba)."],
+            ["1º", "🎯 DEMONSTRAR", "Loja sem histórico. Envia 5 un (ou 0,1 kg) da doadora com excedente para teste."],
+            ["2º", "⏸️ DESCONTINUAR", "Venda fraca na rede (0 < vel < 0.1). Deve sair do mix."],
+            ["3º", "🔥 LIQUIDAR", "Venda zero na rede. Deve ser promovido."],
             ["4º", "📤 ENVIAR", "A filial tem demais e vai doar."],
             ["4º", "📥 RECEBER", "A filial tem falta e vai receber."],
             ["4º", "🛒 COMPRAR", "Ninguém na rede tem o suficiente. Precisa comprar do fornecedor."]
         ])
-        st.info("💡 **Por que não há mais coluna de Prioridade em DEMONSTRAR, DESC e LIQUIDAR?** Essas são ações táticas e absolutas. O item está parado ou precisa ser testado, não importa a urgência. A prioridade (Crítica, Alta, Normal) só se aplica ao fluxo de transferências normais (ENVIAR/RECEBER).")
+        st.info("💡 **Por que não há coluna de Prioridade em DEMONSTRAR, DESC e LIQUIDAR?** Essas são ações absolutas. A prioridade só se aplica ao fluxo de transferências normais (ENVIAR/RECEBER).")
 
         st.subheader("O que é o 'Retorno Financeiro' (R$)?")
         st.markdown(
@@ -256,7 +260,7 @@ def render_manual() -> None:
         st.markdown("O Motivo é o coração do sistema. Ele diz exatamente o que está acontecendo.")
         
         motivos = {
-            "SEM REGISTRO NA FILIAL": "A loja nunca recebeu o item e o sistema está enviando 5 un para iniciar o histórico.",
+            "SEM REGISTRO NA FILIAL": "A loja nunca recebeu o item e o sistema está enviando a quantidade inicial (5 un ou 0,1 kg) para iniciar o histórico.",
             "SEM ESTOQUE": "A loja está zerada e não há nada no caminhão nem na rede.",
             "AGUARDANDO TRANSFERENCIA": "A loja tem falta, **MAS** já tem um caminhão cheio de produto indo para lá.",
             "RECEBIDO RECENTEMENTE": "A loja recebeu produto há poucos dias. Está em quarentena.",
@@ -268,7 +272,7 @@ def render_manual() -> None:
             "Reposicao de ciclo": "Fluxo normal.",
             "ESTOQUE COMPLEMENTAR": "Motivo de compra. A rede tem um pouco, mas não o suficiente.",
             "ESTOQUE PARADO": "Liquidar. A velocidade de venda é zero na rede.",
-            "FIM DE CICLO": "Descontinuar. O produto vende muito pouco."
+            "FIM DE CICLO NA REDE": "Descontinuar. O produto vende muito pouco em todas as lojas."
         }
         for k, v in motivos.items():
             st.markdown(f"**{k}:** {v}")
@@ -293,11 +297,12 @@ def render_manual() -> None:
     with tab9:
         st.header("Perguntas Frequentes")
         faq = [
-            ("A sugestão parece errada. O que faço?", "1. Leia o Motivo. 2. Confira o Saldo e o Em Trânsito. 3. Verifique se o produto não caiu em DESCONTINUAR ou LIQUIDAR por causa da velocidade da rede."),
-            ("Por que um produto não aparece em mais de uma aba?", "O sistema usa cascata. Se ele foi para DEMONSTRAR, ele não vai para ENVIAR. Se ele foi para DESC, não vai para LIQ. Isso evita duplicidade de pedidos."),
-            ("Por que a coluna de Prioridade sumiu em algumas abas?", "As ações de DEMONSTRAR, DESC e LIQ são absolutas. A prioridade (Crítica, Alta, Normal) só é calculada para o fluxo normal (Enviar/Receber)."),
-            ("O que significa um saldo negativo (ex: -60)?", "É um erro de movimentação (entrada não lançada no sistema). O motor trata esse saldo como ZERO para não pedir quantidades absurdas."),
-            ("O sistema sugere menos de 5 unidades?", "Não. O motor tem uma regra de MOQ (Quantidade Mínima). Transferências ou compras abaixo de 5 un são ignoradas."),
+            ("A sugestão parece errada. O que faço?", "1. Leia o Motivo. 2. Confira o Saldo e o Em Trânsito. 3. Verifique se o produto não caiu em DESC ou LIQ por causa da velocidade da rede."),
+            ("Por que um produto não aparece em mais de uma aba?", "O sistema usa cascata. Se ele foi para DEMONSTRAR, não vai para ENVIAR. Se foi para DESC, não vai para LIQ. Isso evita duplicidade."),
+            ("Como o sistema trata produtos vendidos a granel (KG, MTS)?", "Ele lê a flag `ProdutoPesavel` do ERP. Para esses itens, o teste inicial no DEMONSTRAR é de 0,1 (100g) e o limite para descontinuar é mais flexível."),
+            ("O que é a Trava de Recompra?", "Se o Atacado tem estoque novo e as lojas têm falta, o sistema força a distribuição (ENVIAR/RECEBER) em vez de liquidar o produto."),
+            ("O que é a Trava de Compra?", "A aba COMPRAR só sugere itens se a filial tiver uma velocidade local mínima. Isso evita comprar produtos que a loja não vende."),
+            ("O que significa um saldo negativo (ex: -60)?", "É um erro de movimentação. O motor trata esse saldo como ZERO para não pedir quantidades absurdas."),
             ("Como ajustar se estiver sugerindo MUITO?", "Aumente a Reposição Recente ou a Reserva Origem. Diminua a Cobertura."),
             ("Como ajustar se estiver sugerindo POUCO?", "Diminua a Reposição Recente ou a Reserva Origem. Aumente a Cobertura."),
             ("O Atacado compra para ele mesmo?", "Sim. Se ele estiver abaixo do Ideal, a aba COMPRAR dele sugere a compra para repor o CD."),
