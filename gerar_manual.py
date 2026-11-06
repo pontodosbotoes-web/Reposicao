@@ -247,11 +247,9 @@ def gerar(buffer=None):
         ["Padrao", "Produtos normais.", "Se usar em sazonal, acumula estoque fora de epoca."],
         ["Lancamento", "Sem historico de venda.", "Se usar Padrao, nao manda nada (prateleira vazia)."],
         ["Classe A", "Campeoes de venda.", "Se usar Baixo Giro, deixa faltar o principal."],
-        ["Alto Giro", "Venda rapida.", "Se usar Padrao, zera antes do caminhao chegar."],
         ["Sazonal Longo", "Natal, Carnaval.", "Se usar Curto, acaba no meio da campanha."],
         ["Sazonal Curto", "Pascoa, Halloween.", "Se usar Longo, sobra estoque apos a data."],
         ["Baixo Giro", "Encalhados.", "Se usar Classe A, compra uma montanha."],
-        ["Liquidacao", "Fim de ciclo.", "Se usar Padrao, transfere produto morto (gasta frete)."],
     ]
     est_tec = ParagraphStyle('Tec', parent=styles['Normal'], fontSize=8, leading=10)
     for i, row in enumerate(perfis_tec):
