@@ -170,13 +170,13 @@ def render_manual() -> None:
     # ---------------- ABA 4 - Filtros ----------------
     with tab4:
         st.header("Dicionário de Filtros")
-        render_tabela(["Filtro", "O que faz"], [
-            ["Perfil de Análise", "Configura os 9 parâmetros automaticamente."],
-            ["Fabricante", "Filtra produtos de uma marca."],
-            ["Departamento", "Categoria macro (ex: FITAS)."],
-            ["Grupo", "Subdivisão da categoria."],
-            ["Subgrupo", "Nível mais específico."],
-            ["Produto", "Busca por nome, código ou referência. **Atenção:** Ignora os outros filtros se usado."]
+        render_tabela(["Perfil", "Motivo de usar", "O que acontece se errar?"], [
+            ["Padrão", "Produtos normais.", "Se usar em sazonal, acumula estoque."],
+            ["Lançamento", "Sem histórico de venda.", "Se usar Padrão, não manda nada (prateleira vazia)."],
+            ["Classe A", "Campeão de vendas.", "Se usar Baixo Giro, deixa faltar o principal."],
+            ["Sazonal Longo", "Natal, Carnaval.", "Se usar Curto, acaba no meio da campanha."],
+            ["Sazonal Curto", "Páscoa, Halloween.", "Se usar Longo, sobra estoque após a data."],
+            ["Baixo Giro", "Encalhados.", "Se usar Classe A, compra uma montanha."],
         ])
         st.info(
             "**Busca Avançada:** Digite `CAIXA QUADRADA` (espaço = E) ou `CAPA, CAPUZ` (vírgula = OU). "
