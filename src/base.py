@@ -141,3 +141,13 @@ def carregar_transf_recebidas_recentes(
 
     df["QtdRecebidaRecente"] = pd.to_numeric(df["QtdRecebidaRecente"], errors="coerce").fillna(0)
     return df
+    
+_SQL_COMPRAS_PATH = Path(__file__).parent.parent / "sql" / "compras_recentes.sql"
+_SQL_COMPRAS = _SQL_COMPRAS_PATH.read_text(encoding="utf-8") if _SQL_COMPRAS_PATH.exists() else ""
+
+def carregar_compras_recentes() -> pd.DataFrame:
+    if not _SQL_COMPRAS:
+        return pd.DataFrame()
+    with get_engine().connect() as conn:
+        df = pd.read_sql(text(_SQL_COMPRAS), conn)
+    return df
