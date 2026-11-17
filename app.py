@@ -282,11 +282,22 @@ st.write("")
 # --- CONCILIAÇÃO DE COMPRA ---
 if not compras_recentes.empty:
     with st.expander("📦 Conciliação de Compra (Últimos 30 dias)", expanded=False):
-        opcoes_nf = ["Nenhuma"] + (compras_recentes["NumeroNF"].astype(str) + " | " + compras_recentes["NomeFornecedor"] + " | " + compras_recentes["DataCompra"].astype(str)).unique().tolist()
+        # Formata a data para DD/MM/AAAA e cria a string no formato desejado
+        compras_recentes["DataFormatada"] = pd.to_datetime(compras_recentes["DataCompra"]).dt.strftime('%d/%m/%Y')
+        
+        # Cria a lista: Data | Fornecedor | NumeroNF
+        lista_formatada = (
+            compras_recentes["DataFormatada"] + " | " + 
+            compras_recentes["NomeFornecedor"] + " | " + 
+            compras_recentes["NumeroNF"].astype(str)
+        ).unique().tolist()
+        
+        opcoes_nf = ["Nenhuma"] + lista_formatada
         nf_selecionada = st.selectbox("Selecione a Nota Fiscal para analisar", opcoes_nf, key="nf_sel")
         
         if nf_selecionada != "Nenhuma":
-            num_nf = nf_selecionada.split(" | ")[0]
+            # Como a nota está na terceira posição (índice 2), extraímos o valor real dela
+            num_nf = nf_selecionada.split(" | ")[2]
             df_nf = compras_recentes[compras_recentes["NumeroNF"].astype(str) == num_nf]
             
             st.markdown("**Itens que chegaram nesta compra:**")
