@@ -188,6 +188,7 @@ fabricantes = carregar_fabricantes()
 departamentos = carregar_departamentos()
 grupos = carregar_grupos()
 subgrupos = carregar_subgrupos()
+compras_recentes = carregar_compras_recentes()
 
 PERFIS = {
     "Padrão": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 0, "reserva": 25, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 15, "dias_transito": 10},
