@@ -16,7 +16,7 @@ from src.db import (
     carregar_filiais, carregar_fabricantes,
     carregar_departamentos, carregar_grupos, carregar_subgrupos,
 )
-from src.base import carregar_base, carregar_transf_em_transito, carregar_transf_recebidas_recentes
+from src.base import carregar_base, carregar_transf_em_transito, carregar_transf_recebidas_recentes, carregar_compras_recentes
 from src.transferencia import gerar_sugestoes
 
 
@@ -277,6 +277,27 @@ with f5:
 # LINHA 2: BOTÕES
 # ============================================================
 st.write("")
+
+# --- CONCILIAÇÃO DE COMPRA ---
+if not compras_recentes.empty:
+    with st.expander("📦 Conciliação de Compra (Últimos 30 dias)", expanded=False):
+        opcoes_nf = ["Nenhuma"] + (compras_recentes["NumeroNF"].astype(str) + " | " + compras_recentes["NomeFornecedor"] + " | " + compras_recentes["DataCompra"].astype(str)).unique().tolist()
+        nf_selecionada = st.selectbox("Selecione a Nota Fiscal para analisar", opcoes_nf, key="nf_sel")
+        
+        if nf_selecionada != "Nenhuma":
+            num_nf = nf_selecionada.split(" | ")[0]
+            df_nf = compras_recentes[compras_recentes["NumeroNF"].astype(str) == num_nf]
+            
+            st.markdown("**Itens que chegaram nesta compra:**")
+            st.dataframe(df_nf[["CodigoProduto", "Produto", "Fabricante", "QtdComprada"]], use_container_width=True, hide_index=True)
+            
+            # Variáveis para filtrar a tela
+            st.session_state["filtro_fabricantes_nf"] = df_nf["Fabricante"].unique().tolist()
+            st.session_state["filtro_produtos_nf"] = df_nf["CodigoProduto"].unique().tolist()
+        else:
+            st.session_state["filtro_fabricantes_nf"] = None
+            st.session_state["filtro_produtos_nf"] = None
+            
 b1, b2, b3, b4, b5, b6 = st.columns([1, 1, 1, 1.2, 1.5, 1.2])
 
 with b1: btn_consultar = st.button("🔍 Consultar", use_container_width=True, key="btn_consultar")
@@ -663,20 +684,31 @@ if "df_transf" in st.session_state:
     df_compras = st.session_state.get("df_compras", pd.DataFrame())
     df_demonstracao = st.session_state.get("df_demonstracao", pd.DataFrame())
 
-    if df.empty and df_compras.empty and df_demonstracao.empty:
-        st.info("Nenhuma sugestão encontrada.")
-    else:
-        nomes_todos = ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"]
-        produto_preenchido = bool(produto_busca and produto_busca.strip())
-        
-        if filial_sel != "(todas)" and not produto_preenchido:
-            cod_sel = int(filiais[filial_sel])
-            nomes = [n for n in nomes_todos if codigos_filial[n] == cod_sel]
-        else:
-            nomes = nomes_todos
+    # --- APLICA FILTRO DA NF (Se houver uma selecionada) ---
+    fab_nf = st.session_state.get("filtro_fabricantes_nf")
+    prod_nf = st.session_state.get("filtro_produtos_nf")
+    
+    if fab_nf is not None:
+        # Mantém apenas produtos dos fabricantes da NF e REMOVE os itens que já estão na NF
+        df = df[(df["Fabricante"].isin(fab_nf)) & (~df["CodigoProduto"].isin(prod_nf))] if not df.empty else df
+        df_compras = df_compras[(df_compras["Fabricante"].isin(fab_nf)) & (~df_compras["CodigoProduto"].isin(prod_nf))] if not df_compras.empty else df_compras
+        df_demonstracao = df_demonstracao[(df_demonstracao["Fabricante"].isin(fab_nf)) & (~df_demonstracao["CodigoProduto"].isin(prod_nf))] if not df_demonstracao.empty else df_demonstracao
+        st.info(f"🎯 **Foco da Compra:** Exibindo apenas sugestões dos fabricantes **{', '.join(fab_nf)}**. Os itens da NF selecionada foram ocultados.")
 
-        nomes_com_icone = [f"{icones_filial[n]} {n}" for n in nomes]
-        tabs = st.tabs(nomes_com_icone)
+    # A renderização das abas agora ocorre sempre (com os dados filtrados ou originais)
+    nomes_todos = ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"]
+    produto_preenchido = bool(produto_busca and produto_busca.strip())
+    
+    if filial_sel != "(todas)" and not produto_preenchido:
+        cod_sel = int(filiais[filial_sel])
+        nomes = [n for n in nomes_todos if codigos_filial[n] == cod_sel]
+    else:
+        nomes = nomes_todos
+
+    nomes_com_icone = [f"{icones_filial[n]} {n}" for n in nomes]
+    tabs = st.tabs(nomes_com_icone)
+    
+    for i, nome in enumerate(nomes):
         
         for i, nome in enumerate(nomes):
             cod = codigos_filial[nome]
