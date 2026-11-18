@@ -145,11 +145,11 @@ def carregar_transf_recebidas_recentes(
 _SQL_COMPRAS_PATH = Path(__file__).parent.parent / "sql" / "compras_recentes.sql"
 _SQL_COMPRAS = _SQL_COMPRAS_PATH.read_text(encoding="utf-8") if _SQL_COMPRAS_PATH.exists() else ""
 
-def carregar_compras_recentes() -> pd.DataFrame:
+def carregar_compras_recentes(dias_compra: int = 30) -> pd.DataFrame:
     if not _SQL_COMPRAS:
         return pd.DataFrame()
     with get_engine().connect() as conn:
-        df = pd.read_sql(text(_SQL_COMPRAS), conn)
+        df = pd.read_sql(text(_SQL_COMPRAS), conn, params={"dias_compra": dias_compra})
     if not df.empty and "QtdComprada" in df.columns:
         df["QtdComprada"] = pd.to_numeric(df["QtdComprada"], errors="coerce").fillna(0)
     return df
