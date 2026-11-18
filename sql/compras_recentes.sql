@@ -29,5 +29,5 @@ WHERE m.TipoMov = '1.1'
   AND m.CodLocal = '01'
   AND cf.CodCliFor LIKE 'F%'
   AND m.CodCliFor NOT IN ('C08327','F00074','C08328','F10077','C22206','F15703','C16205','F14688','C30965','F16834')
-  AND m.DtFinalizacao >= DATEADD(DAY, -30, GETDATE())
+  AND m.DtFinalizacao >= DATEADD(DAY, -:dias_compra, GETDATE())
 ORDER BY m.DtFinalizacao DESC, m.NumMov DESC;
