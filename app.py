@@ -376,10 +376,6 @@ if st.session_state.show_params:
             idx_am = lista_sn.index(st.session_state.get("atacado_min_compra", "Não")) if st.session_state.get("atacado_min_compra") in lista_sn else 0
             v_am = st.selectbox("Atacado tem Mínimo p/ Compra?", lista_sn, index=idx_am, help="Se Sim, usa o valor do Piso Exposição como quantidade mínima para sugerir compra.", disabled=bloqueado)
             st.session_state["atacado_min_compra"] = v_am
-            
-        with r3c4:
-            v_dc = st.number_input("Período de Compras (dias)", 1, 90, value=int(st.session_state.get("dias_compra", 30)), disabled=bloqueado)
-            st.session_state["dias_compra"] = v_dc
 
 # Recupera os valores
 opcao_data = st.session_state["opcao_data"]
