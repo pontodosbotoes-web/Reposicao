@@ -322,26 +322,24 @@ if st.session_state.show_params:
         r1c1, r1c2, r1c3, r1c4 = st.columns(4)
         
         with r1c1: 
-            lista_periodo = ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás", "30 dias atrás", "15 dias atrás", "7 dias atrás"]
-            idx_p = lista_periodo.index(st.session_state.get("opcao_data", "1 ano atrás")) if st.session_state.get("opcao_data") in lista_periodo else 0
-            v_opcao = st.selectbox("Período de Análise", lista_periodo, index=idx_p, disabled=bloqueado)
-            st.session_state["opcao_data"] = v_opcao
-            
-        with r1c2: 
             lista_filial = ["(todas)"] + list(filiais.keys())
             idx_f = lista_filial.index(st.session_state.get("filial_param", "(todas)")) if st.session_state.get("filial_param") in lista_filial else 0
             v_filial = st.selectbox("Filial", lista_filial, index=idx_f, help="Apenas visual: o motor sempre analisa todas as filiais.", disabled=bloqueado)
             st.session_state["filial_param"] = v_filial
             
-        with r1c3: 
+        with r1c2: 
             lista_cob = ["Para 7 dias", "Para 15 dias", "Para 30 dias", "Para 2 meses", "Para 3 meses", "Para 6 meses", "Para 1 ano"]
             idx_c = lista_cob.index(st.session_state.get("cobertura_opcao", "Para 30 dias")) if st.session_state.get("cobertura_opcao") in lista_cob else 2
             v_cob = st.selectbox("Cobertura de Vendas", lista_cob, index=idx_c, disabled=bloqueado)
             st.session_state["cobertura_opcao"] = v_cob
             
-        with r1c4: 
+        with r1c3: 
             v_lead = st.number_input("Tempo de Transporte (dias)", 0, 30, value=int(st.session_state.get("lead_time", 10)), disabled=bloqueado)
             st.session_state["lead_time"] = v_lead
+            
+        with r1c4:
+            v_dc = st.number_input("Período de Compras (dias)", 1, 90, value=int(st.session_state.get("dias_compra", 30)), disabled=bloqueado)
+            st.session_state["dias_compra"] = v_dc
 
         r2c1, r2c2, r2c3, r2c4 = st.columns(4)
         
@@ -364,7 +362,7 @@ if st.session_state.show_params:
             v_ar = st.selectbox("Atacado tem Reserva?", lista_sn, index=idx_ar, disabled=bloqueado)
             st.session_state["atacado_reserva"] = v_ar
 
-        r3c1, r3c2, r3c3, r3c4 = st.columns(4)
+        r3c1, r3c2, r3c3 = st.columns(3)
         
         with r3c1: 
             v_ag = st.number_input("Reposição Recente (dias)", 0, 90, value=int(st.session_state.get("anti_gangorra", 15)), disabled=bloqueado)
