@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import hashlib
+import math
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 from io import BytesIO
@@ -250,20 +251,38 @@ def _limpar_filtros():
 # ============================================================
 # LINHA 1: COMPRAS + FILTROS
 # ============================================================
-f_compra, f_periodo, f_fab, f_depto, f_grupo, f_sub, f_prod = st.columns([2.2, 1.3, 1.5, 1.0, 1.0, 1.0, 1.5], vertical_alignment="bottom")
+f_compra, f_periodo, f_fab, f_depto, f_grupo, f_sub, f_prod = st.columns([3.8, 1.2, 1.4, 0.9, 0.9, 0.9, 1.3], vertical_alignment="bottom")
+
+if "nf_num" not in st.session_state: st.session_state["nf_num"] = None
 
 with f_compra:
     if not compras_recentes.empty:
         compras_recentes["DataFormatada"] = pd.to_datetime(compras_recentes["DataCompra"]).dt.strftime('%d/%m/%Y')
-        lista_formatada = (
-            compras_recentes["DataFormatada"] + " | " + 
-            compras_recentes["NomeFornecedor"] + " | " + 
-            compras_recentes["NumeroNF"].astype(str)
-        ).unique().tolist()
-        opcoes_nf = ["Nenhuma"] + lista_formatada
+        
+        # Agrupa por NF: 1 linha por compra (com data, fornecedor, filial, num de itens)
+        agrupado = compras_recentes.groupby("NumeroNF").agg({
+            "DataFormatada": "first",
+            "NomeFornecedor": "first",
+            "Filial": "first",
+            "CodigoProduto": "count",
+        }).reset_index()
+        
+        agrupado["Label"] = (
+            agrupado["DataFormatada"] + " | " + 
+            agrupado["NomeFornecedor"] + " | " + 
+            agrupado["Filial"] + " | NF " + 
+            agrupado["NumeroNF"].astype(str) + " | " + 
+            agrupado["CodigoProduto"].astype(str) + " itens"
+        )
+        
+        label_to_nf = dict(zip(agrupado["Label"], agrupado["NumeroNF"].astype(str)))
+        opcoes_nf = ["Nenhuma"] + agrupado["Label"].tolist()
         nf_selecionada = st.selectbox("📦 Últimas Compras", opcoes_nf, key="nf_sel")
+        
+        st.session_state["nf_num"] = label_to_nf.get(nf_selecionada) if nf_selecionada != "Nenhuma" else None
     else:
         nf_selecionada = "Nenhuma"
+        st.session_state["nf_num"] = None
         st.selectbox("📦 Últimas Compras", ["Nenhuma"], key="nf_sel", disabled=True)
 
 bloqueado = (nf_selecionada != "Nenhuma")
@@ -641,7 +660,7 @@ if btn_consultar:
                 # Prepara IDs da NF (força fluxo normal no motor)
                 forcar_normal_ids = None
                 if bloqueado:
-                    num_nf_pre = nf_selecionada.split(" | ")[2]
+                    num_nf_pre = st.session_state.get("nf_num")
                     df_nf_pre = compras_recentes[compras_recentes["NumeroNF"].astype(str) == num_nf_pre]
                     forcar_normal_ids = df_nf_pre["IdProduto"].dropna().astype(int).unique().tolist()
 
@@ -653,7 +672,7 @@ if btn_consultar:
                 
                 # --- FILTRO E INJEÇÃO DA COMPRA RECENTE (Se houver NF selecionada) ---
                 if bloqueado:
-                    num_nf = nf_selecionada.split(" | ")[2]
+                    num_nf = st.session_state.get("nf_num")
                     df_nf = compras_recentes[compras_recentes["NumeroNF"].astype(str) == num_nf]
                     fab_nf = df_nf["Fabricante"].dropna().unique().tolist()
                     prod_nf = df_nf["CodigoProduto"].dropna().astype(str).unique().tolist()
@@ -776,25 +795,6 @@ if "df_transf" in st.session_state:
     df_compras = st.session_state.get("df_compras", pd.DataFrame())
     df_demonstracao = st.session_state.get("df_demonstracao", pd.DataFrame())
 
-    if bloqueado:
-        num_nf_view = nf_selecionada.split(" | ")[2]
-        df_nf_view = compras_recentes[compras_recentes["NumeroNF"].astype(str) == num_nf_view]
-        filial_view = df_nf_view["Filial"].iloc[0]
-        fab_view = ", ".join(sorted(df_nf_view["Fabricante"].dropna().unique()))
-        
-        st.success(f"📦 **Compra Selecionada:** NF {num_nf_view} | Entrada: **{filial_view}** | {len(df_nf_view)} itens")
-        
-        with st.expander("📋 Itens recebidos nesta NF (NÃO precisam ser comprados)", expanded=False):
-            df_summary = df_nf_view[["CodigoProduto", "Produto", "Fabricante", "QtdComprada"]].rename(
-                columns={"CodigoProduto": "Código", "Produto": "Produto", "Fabricante": "Fabricante", "QtdComprada": "Qtd Recebida"}
-            ).copy()
-            df_summary["Qtd Recebida"] = df_summary["Qtd Recebida"].apply(
-                lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x))
-            )
-            st.dataframe(df_summary, use_container_width=True, hide_index=True)
-        
-        st.info(f"🎯 **Foco:** Exibindo sugestões dos fabricantes **{fab_view}**. Itens da NF aparecem com **COMPRA RECENTE** nas abas ENVIAR/RECEBER e foram ocultados da aba COMPRAR.")
-
     if df.empty and df_compras.empty and df_demonstracao.empty:
         st.info("Nenhuma sugestão encontrada.")
     else:
@@ -813,6 +813,40 @@ if "df_transf" in st.session_state:
         for i, nome in enumerate(nomes):
             cod = codigos_filial[nome]
             with tabs[i]:
+                # --- ITENS DA NF (dentro de cada aba) ---
+                if bloqueado:
+                    num_nf_tab = st.session_state.get("nf_num")
+                    df_nf_tab = compras_recentes[compras_recentes["NumeroNF"].astype(str) == num_nf_tab].copy()
+                    
+                    # Calcula o ideal desta filial para cada produto da NF
+                    df_base_local = st.session_state.get("df_base", pd.DataFrame())
+                    ideals_tab = {}
+                    if not df_base_local.empty:
+                        df_base_filial = df_base_local[df_base_local["CodigoFilial"] == cod]
+                        for _, r in df_base_filial.iterrows():
+                            pesavel = str(r.get("ProdutoPesavel", "N")).strip().upper() == "S"
+                            custo = float(r.get("CustoUnitario", 0))
+                            piso_base = 0 if (cod == 5 and atacado_piso != "Sim") else piso
+                            if pesavel:
+                                piso_ajustado = 0.1
+                            elif custo >= 20.0:
+                                piso_ajustado = 1.0
+                            else:
+                                piso_ajustado = float(piso_base)
+                            ideal_raw = max(piso_ajustado, r["VelocidadePeriodo"] * (cobertura + lead_time))
+                            ideals_tab[str(r["CodigoProduto"])] = round(ideal_raw, 2) if pesavel else math.ceil(ideal_raw)
+                    
+                    if not df_nf_tab.empty:
+                        df_nf_tab["QtdIdealFilial"] = df_nf_tab["CodigoProduto"].astype(str).map(ideals_tab).fillna(0)
+                        df_nf_tab.insert(0, "#", range(1, len(df_nf_tab) + 1))
+                        df_nf_tab_display = df_nf_tab[["#", "CodigoProduto", "Produto", "Fabricante", "QtdComprada", "QtdIdealFilial"]].copy()
+                        df_nf_tab_display.columns = ["#", "COD", "PRODUTO", "FABRICANTE", "QTD COMPRADA", "QTD IDEAL"]
+                        df_nf_tab_display["QTD COMPRADA"] = df_nf_tab_display["QTD COMPRADA"].map(fmt_qtd)
+                        df_nf_tab_display["QTD IDEAL"] = df_nf_tab_display["QTD IDEAL"].map(fmt_qtd)
+                        
+                        with st.expander(f"📋 Itens desta NF ({len(df_nf_tab)} itens)", expanded=False):
+                            st.dataframe(df_nf_tab_display, use_container_width=True, hide_index=True)
+                
                 df_env_all = df[df["CodigoFilialOrigem"] == cod].copy().reset_index(drop=True)
                 df_rec = df[df["CodigoFilialDestino"] == cod].copy().reset_index(drop=True)
                 
