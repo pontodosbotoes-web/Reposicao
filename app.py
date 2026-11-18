@@ -620,7 +620,19 @@ if btn_consultar:
     else:
         try:
             with st.spinner("⏳ Construindo Base..."):
-                df_base = carregar_base(...)
+                # Recarrega compras recentes com o período atualizado
+                compras_recentes = carregar_compras_recentes(st.session_state.get("dias_compra", 30))
+                
+                df_base = carregar_base(
+                    data_ref.strftime("%Y-%m-%d"), 
+                    lookback, 
+                    fabricante_filtro, 
+                    departamento_filtro, 
+                    grupo_filtro, 
+                    subgrupo_filtro, 
+                    "", 
+                    produto_busca if not bloqueado else ""
+                )
                 st.session_state["df_base"] = df_base
 
             with st.spinner("⏳ Calculando sugestões..."):
