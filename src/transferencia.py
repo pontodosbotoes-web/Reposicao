@@ -104,6 +104,10 @@ def processar_demonstrar(grupo: pd.DataFrame) -> tuple[list[dict], list[int], pd
             if doadora is not None:
                 qtd_envio = calcular_qtd_minima(loja["ProdutoPesavel"], loja["CustoUnitario"], 5.0)
                 cod_origem = int(doadora["CodigoFilial"])
+                # Se o doador tem menos que o mínimo, envia o que tem
+                disponivel = excesso_livre.get(cod_origem, 0)
+                if disponivel < qtd_envio and disponivel > 0:
+                    qtd_envio = disponivel
                 
                 excesso_livre[cod_origem] -= qtd_envio
                 grupo_atual.loc[grupo_atual["CodigoFilial"] == cod_origem, "ExcessoTransferivel"] -= qtd_envio
@@ -243,6 +247,7 @@ def gerar_sugestoes(
     atacado_tem_piso: bool = False,
     atacado_tem_reserva: bool = False,
     atacado_tem_minimo_compra: bool = False,
+    forcar_normal_ids: list = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     
     df = df_base.copy()
@@ -288,6 +293,10 @@ def gerar_sugestoes(
         tem_estoque_atacado = not atacado_grupo.empty and atacado_grupo.iloc[0]["SaldoProvavel"] > 0
         tem_falta_lojas = grupo_restante[grupo_restante["CodigoFilial"] != 5]["Falta"].max() >= qtd_min
         forcar_normal = tem_estoque_atacado and tem_falta_lojas
+        
+        # FORÇA FLUXO NORMAL para produtos em NF selecionada (evita DESC/LIQ de recomprados)
+        if forcar_normal_ids and int(prod_id) in forcar_normal_ids:
+            forcar_normal = True
 
         if vel_max == 0 and not forcar_normal:
             _tem_hist = (grupo_restante["QtdComprada"] > 0) | (grupo_restante["QtdRecebida"] > 0) | (grupo_restante["QtdVendida"] > 0) | (grupo_restante["QtdEnviada"] > 0)
