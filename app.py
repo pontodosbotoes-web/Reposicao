@@ -252,7 +252,6 @@ def _mudar_perfil():
 # ============================================================
 # LINHA 1: COMPRAS RECENTES
 # ============================================================
-st.markdown("### 📦 Compras dos Últimos 30 dias")
 col_nf, _ = st.columns([2, 3])
 with col_nf:
     if not compras_recentes.empty:
@@ -263,7 +262,7 @@ with col_nf:
             compras_recentes["NumeroNF"].astype(str)
         ).unique().tolist()
         opcoes_nf = ["Nenhuma"] + lista_formatada
-        nf_selecionada = st.selectbox("Selecione a Nota Fiscal", opcoes_nf, key="nf_sel", label_visibility="collapsed")
+        nf_selecionada = st.selectbox("📦 Compras dos Últimos 30 dias", opcoes_nf, key="nf_sel")
     else:
         nf_selecionada = "Nenhuma"
         st.info("Nenhuma compra recente encontrada.")
@@ -641,9 +640,17 @@ if btn_consultar:
             with st.spinner("⏳ Calculando sugestões..."):
                 df_transito = carregar_transf_em_transito(data_ref.strftime("%Y-%m-%d"), dias_transito)
                 df_recebidas = carregar_transf_recebidas_recentes(data_ref.strftime("%Y-%m-%d"), anti_gangorra)
+                # Prepara IDs da NF (força fluxo normal no motor)
+                forcar_normal_ids = None
+                if bloqueado:
+                    num_nf_pre = nf_selecionada.split(" | ")[2]
+                    df_nf_pre = compras_recentes[compras_recentes["NumeroNF"].astype(str) == num_nf_pre]
+                    forcar_normal_ids = df_nf_pre["IdProduto"].dropna().astype(int).unique().tolist()
+
                 df_transf, df_compras, df_demonstracao = gerar_sugestoes(
                     df_base, df_transito, df_recebidas, cobertura, lead_time, piso, reserva, 
-                    (atacado_piso == "Sim"), (atacado_reserva == "Sim"), (atacado_min_compra == "Sim")
+                    (atacado_piso == "Sim"), (atacado_reserva == "Sim"), (atacado_min_compra == "Sim"),
+                    forcar_normal_ids=forcar_normal_ids
                 )
                 
                 # --- FILTRO E INJEÇÃO DA COMPRA RECENTE (Se houver NF selecionada) ---
@@ -652,24 +659,65 @@ if btn_consultar:
                     df_nf = compras_recentes[compras_recentes["NumeroNF"].astype(str) == num_nf]
                     fab_nf = df_nf["Fabricante"].dropna().unique().tolist()
                     prod_nf = df_nf["CodigoProduto"].dropna().astype(str).unique().tolist()
+                    filial_nf = df_nf["Filial"].iloc[0]
+                    cod_filial_nf = codigos_filial.get(filial_nf, 0)
+                    
+                    # Quantidade disponível por produto (para capar transferências)
+                    qtd_por_prod_nf = {str(k): float(v) for k, v in df_nf.groupby("CodigoProduto")["QtdComprada"].sum().items()}
 
                     # 1. ENVIAR / RECEBER
                     if not df_transf.empty:
                         df_transf = df_transf[df_transf["Fabricante"].isin(fab_nf)].copy()
+                        
+                        # Remove DESC/LIQ para os itens da nota (produto novo não é descontinuado)
+                        mask_desc_liq = df_transf["NomeFilialDestino"].isin(["DESCONTINUAR", "LIQUIDAR"])
+                        mask_prod_nf = df_transf["CodigoProduto"].astype(str).isin(prod_nf)
+                        df_transf = df_transf[~(mask_desc_liq & mask_prod_nf)].copy()
+
+                        # Cap quantidade + Força origem + Motivo COMPRA RECENTE
                         mask_comprado = df_transf["CodigoProduto"].astype(str).isin(prod_nf)
-                        df_transf.loc[mask_comprado, "Motivo"] = "COMPRA RECENTE"
-                        df_transf.loc[mask_comprado, "Prioridade"] = 1 # Força prioridade máxima para subir no PDF
+                        if mask_comprado.any():
+                            disponivel_nf = dict(qtd_por_prod_nf)
+                            for idx in df_transf[mask_comprado].sort_values("Prioridade").index:
+                                cod_prod = str(df_transf.loc[idx, "CodigoProduto"])
+                                disp = disponivel_nf.get(cod_prod, 0)
+                                qtd = df_transf.loc[idx, "QtdTransferir"]
+                                if qtd > disp:
+                                    df_transf.loc[idx, "QtdTransferir"] = disp
+                                    disponivel_nf[cod_prod] = 0
+                                else:
+                                    disponivel_nf[cod_prod] = disp - qtd
+                            
+                            df_transf.loc[mask_comprado, "NomeFilialOrigem"] = filial_nf
+                            df_transf.loc[mask_comprado, "CodigoFilialOrigem"] = cod_filial_nf
+                            df_transf.loc[mask_comprado, "Motivo"] = "COMPRA RECENTE"
+                            df_transf.loc[mask_comprado, "Prioridade"] = 1
+                            
+                            df_transf = df_transf[df_transf["QtdTransferir"] > 0].copy()
+                        
                         df_transf = df_transf.sort_values(["Prioridade", "NomeFilialDestino", "Produto"]).reset_index(drop=True)
 
-                    # 2. COMPRAR
+                    # 2. COMPRAR — Remove itens da NF (eles já chegaram)
                     if not df_compras.empty:
                         df_compras = df_compras[df_compras["Fabricante"].isin(fab_nf)].copy()
                         df_compras = df_compras[~df_compras["CodigoProduto"].astype(str).isin(prod_nf)]
 
-                    # 3. DEMONSTRAR
+                    # 3. DEMONSTRAR — Converte itens da NF em ENVIAR/RECEBER (evita sumir da tela)
                     if not df_demonstracao.empty:
                         df_demonstracao = df_demonstracao[df_demonstracao["Fabricante"].isin(fab_nf)].copy()
-                        df_demonstracao = df_demonstracao[~df_demonstracao["CodigoProduto"].astype(str).isin(prod_nf)]
+                        
+                        # Separa os que são da NF
+                        mask_dem_nf = df_demonstracao["CodigoProduto"].astype(str).isin(prod_nf)
+                        df_dem_nf = df_demonstracao[mask_dem_nf].copy()
+                        df_demonstracao = df_demonstracao[~mask_dem_nf].copy()
+                        
+                        # Move para df_transf como COMPRA RECENTE
+                        if not df_dem_nf.empty:
+                            df_dem_nf["NomeFilialOrigem"] = filial_nf
+                            df_dem_nf["CodigoFilialOrigem"] = cod_filial_nf
+                            df_dem_nf["Motivo"] = "COMPRA RECENTE"
+                            df_dem_nf["Prioridade"] = 1
+                            df_transf = pd.concat([df_transf, df_dem_nf], ignore_index=True)
 
                 st.session_state["df_transf"] = df_transf
                 st.session_state["df_compras"] = df_compras
@@ -719,7 +767,23 @@ if "df_transf" in st.session_state:
     df_demonstracao = st.session_state.get("df_demonstracao", pd.DataFrame())
 
     if bloqueado:
-        st.info(f"🎯 **Foco da Compra:** Exibindo apenas sugestões dos fabricantes da nota selecionada. Os itens da compra estão com o motivo **COMPRA RECENTE** nas abas ENVIAR/RECEBER e foram ocultados da aba COMPRAR.")
+        num_nf_view = nf_selecionada.split(" | ")[2]
+        df_nf_view = compras_recentes[compras_recentes["NumeroNF"].astype(str) == num_nf_view]
+        filial_view = df_nf_view["Filial"].iloc[0]
+        fab_view = ", ".join(sorted(df_nf_view["Fabricante"].dropna().unique()))
+        
+        st.success(f"📦 **Compra Selecionada:** NF {num_nf_view} | Entrada: **{filial_view}** | {len(df_nf_view)} itens")
+        
+        with st.expander("📋 Itens recebidos nesta NF (NÃO precisam ser comprados)", expanded=False):
+            df_summary = df_nf_view[["CodigoProduto", "Produto", "Fabricante", "QtdComprada"]].rename(
+                columns={"CodigoProduto": "Código", "Produto": "Produto", "Fabricante": "Fabricante", "QtdComprada": "Qtd Recebida"}
+            ).copy()
+            df_summary["Qtd Recebida"] = df_summary["Qtd Recebida"].apply(
+                lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x))
+            )
+            st.dataframe(df_summary, use_container_width=True, hide_index=True)
+        
+        st.info(f"🎯 **Foco:** Exibindo sugestões dos fabricantes **{fab_view}**. Itens da NF aparecem com **COMPRA RECENTE** nas abas ENVIAR/RECEBER e foram ocultados da aba COMPRAR.")
 
     if df.empty and df_compras.empty and df_demonstracao.empty:
         st.info("Nenhuma sugestão encontrada.")
