@@ -212,12 +212,6 @@ if st.session_state["view"] == "manual":
 if "perfil_sel" not in st.session_state:
     st.session_state["perfil_sel"] = "Padrão"
 
-if st.session_state.get("_ultimo_perfil_aplicado") != st.session_state["perfil_sel"]:
-    perfil_atual = st.session_state["perfil_sel"]
-    for k, v in PERFIS[perfil_atual].items():
-        st.session_state[k] = v
-    st.session_state["_ultimo_perfil_aplicado"] = perfil_atual
-
 for k, v in PERFIS["Padrão"].items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -227,6 +221,7 @@ if "grupo_sel" not in st.session_state: st.session_state["grupo_sel"] = "(todos)
 if "subgrupo_sel" not in st.session_state: st.session_state["subgrupo_sel"] = "(todos)"
 if "produto_busca" not in st.session_state: st.session_state["produto_busca"] = ""
 if "filial_param" not in st.session_state: st.session_state["filial_param"] = "(todas)"
+if "nf_sel" not in st.session_state: st.session_state["nf_sel"] = "Nenhuma"
 
 # ============================================================
 # CALLBACKS
@@ -243,6 +238,7 @@ def _limpar_filtros():
     st.session_state["subgrupo_sel"] = "(todos)"
     st.session_state["produto_busca"] = ""
     st.session_state["filial_param"] = "(todas)"
+    st.session_state["nf_sel"] = "Nenhuma"
     
     for _k in ("df_base", "df_transf", "df_compras", "df_demonstracao", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
         if _k in st.session_state: del st.session_state[_k]
@@ -254,62 +250,56 @@ def _mudar_perfil():
     st.session_state["_ultimo_perfil_aplicado"] = perfil_novo
 
 # ============================================================
-# LINHA 1: FILTROS
+# LINHA 1: COMPRAS RECENTES
 # ============================================================
-f0, f1, f2, f3, f4, f5 = st.columns([1.6, 1.9, 1.3, 1.3, 1.3, 1.8], vertical_alignment="bottom")
-
-with f0:
-    st.selectbox(
-        "Perfil de Análise", list(PERFIS.keys()), key="perfil_sel",
-        help="**Perfil de Análise**\n\nEscolha um perfil para ajustar automaticamente os 9 parâmetros.",
-        on_change=_mudar_perfil
-    )
-with f1: fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel")
-with f2: depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel")
-with f3: grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()), key="grupo_sel")
-with f4: subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel")
-with f5:
-    produto_busca = st.text_input(
-        "Produto", placeholder='Ex: CAIXA QUADRADA (E) | CAPA, CAPUZ (OU)', key="produto_busca",
-        help="Busca por produto com E / OU. Se preenchido, ignora os outros filtros."
-    )
-
-# ============================================================
-# LINHA 2: BOTÕES
-# ============================================================
-st.write("")
-
-# --- CONCILIAÇÃO DE COMPRA ---
-if not compras_recentes.empty:
-    with st.expander("📦 Conciliação de Compra (Últimos 30 dias)", expanded=False):
-        # Formata a data para DD/MM/AAAA e cria a string no formato desejado
+st.markdown("### 📦 Compras dos Últimos 30 dias")
+col_nf, _ = st.columns([2, 3])
+with col_nf:
+    if not compras_recentes.empty:
         compras_recentes["DataFormatada"] = pd.to_datetime(compras_recentes["DataCompra"]).dt.strftime('%d/%m/%Y')
-        
-        # Cria a lista: Data | Fornecedor | NumeroNF
         lista_formatada = (
             compras_recentes["DataFormatada"] + " | " + 
             compras_recentes["NomeFornecedor"] + " | " + 
             compras_recentes["NumeroNF"].astype(str)
         ).unique().tolist()
-        
         opcoes_nf = ["Nenhuma"] + lista_formatada
-        nf_selecionada = st.selectbox("Selecione a Nota Fiscal para analisar", opcoes_nf, key="nf_sel")
-        
-        if nf_selecionada != "Nenhuma":
-            # Como a nota está na terceira posição (índice 2), extraímos o valor real dela
-            num_nf = nf_selecionada.split(" | ")[2]
-            df_nf = compras_recentes[compras_recentes["NumeroNF"].astype(str) == num_nf]
-            
-            st.markdown("**Itens que chegaram nesta compra:**")
-            st.dataframe(df_nf[["CodigoProduto", "Produto", "Fabricante", "QtdComprada"]], use_container_width=True, hide_index=True)
-            
-            # Variáveis para filtrar a tela
-            st.session_state["filtro_fabricantes_nf"] = df_nf["Fabricante"].unique().tolist()
-            st.session_state["filtro_produtos_nf"] = df_nf["CodigoProduto"].unique().tolist()
-        else:
-            st.session_state["filtro_fabricantes_nf"] = None
-            st.session_state["filtro_produtos_nf"] = None
-            
+        nf_selecionada = st.selectbox("Selecione a Nota Fiscal", opcoes_nf, key="nf_sel", label_visibility="collapsed")
+    else:
+        nf_selecionada = "Nenhuma"
+        st.info("Nenhuma compra recente encontrada.")
+
+bloqueado = (nf_selecionada != "Nenhuma")
+if bloqueado:
+    st.session_state["perfil_sel"] = "Padrão"
+    for k, v in PERFIS["Padrão"].items():
+        st.session_state[k] = v
+    st.session_state["_ultimo_perfil_aplicado"] = "Padrão"
+
+# ============================================================
+# LINHA 2: FILTROS
+# ============================================================
+f0, f1, f2, f3, f4, f5 = st.columns([1.6, 1.9, 1.3, 1.3, 1.3, 1.8], vertical_alignment="bottom")
+
+with f0:
+    st.selectbox(
+        "Perfil de Análise", list(PERFIS.keys()), key="perfil_sel", disabled=bloqueado,
+        help="**Perfil de Análise**\n\nEscolha um perfil para ajustar automaticamente os 9 parâmetros.",
+        on_change=_mudar_perfil
+    )
+with f1: fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel", disabled=bloqueado)
+with f2: depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel", disabled=bloqueado)
+with f3: grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()), key="grupo_sel", disabled=bloqueado)
+with f4: subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel", disabled=bloqueado)
+with f5:
+    produto_busca = st.text_input(
+        "Produto", placeholder='Ex: CAIXA QUADRADA (E) | CAPA, CAPUZ (OU)', key="produto_busca", disabled=bloqueado,
+        help="Busca por produto com E / OU. Se preenchido, ignora os outros filtros."
+    )
+
+# ============================================================
+# LINHA 3: BOTÕES
+# ============================================================
+st.write("")
 b1, b2, b3, b4, b5, b6 = st.columns([1, 1, 1, 1.2, 1.5, 1.2])
 
 with b1: btn_consultar = st.button("🔍 Consultar", use_container_width=True, key="btn_consultar")
@@ -328,7 +318,7 @@ with b5:
 with b6:
     btn_pdf_global = st.button("📄 Gerar PDF", use_container_width=True, disabled=(filial_pdf is None), key="btn_pdf")
 
-if produto_busca and produto_busca.strip():
+if produto_busca and produto_busca.strip() and not bloqueado:
     st.markdown(
         '<div style="background-color: rgba(59,130,246,0.12); border-left: 3px solid #3B82F6; padding: 6px 12px; margin-top: 8px; border-radius: 4px; font-size: 0.85rem; color: #93C5FD;">'
         'ℹ️ <b>Busca por produto:</b> Fabricante, Departamento, Grupo, Subgrupo e Filial serão ignorados.'
@@ -347,59 +337,59 @@ if st.session_state.show_params:
         with r1c1: 
             lista_periodo = ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás", "30 dias atrás", "15 dias atrás", "7 dias atrás"]
             idx_p = lista_periodo.index(st.session_state.get("opcao_data", "1 ano atrás")) if st.session_state.get("opcao_data") in lista_periodo else 0
-            v_opcao = st.selectbox("Período de Análise", lista_periodo, index=idx_p)
+            v_opcao = st.selectbox("Período de Análise", lista_periodo, index=idx_p, disabled=bloqueado)
             st.session_state["opcao_data"] = v_opcao
             
         with r1c2: 
             lista_filial = ["(todas)"] + list(filiais.keys())
             idx_f = lista_filial.index(st.session_state.get("filial_param", "(todas)")) if st.session_state.get("filial_param") in lista_filial else 0
-            v_filial = st.selectbox("Filial", lista_filial, index=idx_f, help="Apenas visual: o motor sempre analisa todas as filiais.")
+            v_filial = st.selectbox("Filial", lista_filial, index=idx_f, help="Apenas visual: o motor sempre analisa todas as filiais.", disabled=bloqueado)
             st.session_state["filial_param"] = v_filial
             
         with r1c3: 
             lista_cob = ["Para 7 dias", "Para 15 dias", "Para 30 dias", "Para 2 meses", "Para 3 meses", "Para 6 meses", "Para 1 ano"]
             idx_c = lista_cob.index(st.session_state.get("cobertura_opcao", "Para 30 dias")) if st.session_state.get("cobertura_opcao") in lista_cob else 2
-            v_cob = st.selectbox("Cobertura de Vendas", lista_cob, index=idx_c)
+            v_cob = st.selectbox("Cobertura de Vendas", lista_cob, index=idx_c, disabled=bloqueado)
             st.session_state["cobertura_opcao"] = v_cob
             
         with r1c4: 
-            v_lead = st.number_input("Tempo de Transporte (dias)", 0, 30, value=int(st.session_state.get("lead_time", 10)))
+            v_lead = st.number_input("Tempo de Transporte (dias)", 0, 30, value=int(st.session_state.get("lead_time", 10)), disabled=bloqueado)
             st.session_state["lead_time"] = v_lead
 
         r2c1, r2c2, r2c3, r2c4 = st.columns(4)
         
         with r2c1: 
-            v_piso = st.number_input("Piso Exposição (un)", 0, 50, value=int(st.session_state.get("piso", 0)))
+            v_piso = st.number_input("Piso Exposição (un)", 0, 50, value=int(st.session_state.get("piso", 0)), disabled=bloqueado)
             st.session_state["piso"] = v_piso
             
         with r2c2: 
-            v_reserva = st.number_input("Reserva Origem (%)", 0, 100, value=int(st.session_state.get("reserva", 25)))
+            v_reserva = st.number_input("Reserva Origem (%)", 0, 100, value=int(st.session_state.get("reserva", 25)), disabled=bloqueado)
             st.session_state["reserva"] = v_reserva
             
         with r2c3: 
             lista_sn = ["Não", "Sim"]
             idx_ap = lista_sn.index(st.session_state.get("atacado_piso", "Não")) if st.session_state.get("atacado_piso") in lista_sn else 0
-            v_ap = st.selectbox("Atacado tem Piso?", lista_sn, index=idx_ap)
+            v_ap = st.selectbox("Atacado tem Piso?", lista_sn, index=idx_ap, disabled=bloqueado)
             st.session_state["atacado_piso"] = v_ap
             
         with r2c4: 
             idx_ar = lista_sn.index(st.session_state.get("atacado_reserva", "Não")) if st.session_state.get("atacado_reserva") in lista_sn else 0
-            v_ar = st.selectbox("Atacado tem Reserva?", lista_sn, index=idx_ar)
+            v_ar = st.selectbox("Atacado tem Reserva?", lista_sn, index=idx_ar, disabled=bloqueado)
             st.session_state["atacado_reserva"] = v_ar
 
         r3c1, r3c2, r3c3 = st.columns(3)
         
         with r3c1: 
-            v_ag = st.number_input("Reposição Recente (dias)", 0, 90, value=int(st.session_state.get("anti_gangorra", 15)))
+            v_ag = st.number_input("Reposição Recente (dias)", 0, 90, value=int(st.session_state.get("anti_gangorra", 15)), disabled=bloqueado)
             st.session_state["anti_gangorra"] = v_ag
             
         with r3c2: 
-            v_dt = st.number_input("Dias em Trânsito", 1, 60, value=int(st.session_state.get("dias_transito", 10)))
+            v_dt = st.number_input("Dias em Trânsito", 1, 60, value=int(st.session_state.get("dias_transito", 10)), disabled=bloqueado)
             st.session_state["dias_transito"] = v_dt
             
         with r3c3: 
             idx_am = lista_sn.index(st.session_state.get("atacado_min_compra", "Não")) if st.session_state.get("atacado_min_compra") in lista_sn else 0
-            v_am = st.selectbox("Atacado tem Mínimo p/ Compra?", lista_sn, index=idx_am, help="Se Sim, usa o valor do Piso Exposição como quantidade mínima para sugerir compra.")
+            v_am = st.selectbox("Atacado tem Mínimo p/ Compra?", lista_sn, index=idx_am, help="Se Sim, usa o valor do Piso Exposição como quantidade mínima para sugerir compra.", disabled=bloqueado)
             st.session_state["atacado_min_compra"] = v_am
 
 # Recupera os valores
@@ -475,6 +465,9 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
     cell_center = ParagraphStyle('CC', parent=styles['Normal'], fontSize=6.5, leading=8.5, alignment=1)
     cell_right = ParagraphStyle('CR', parent=styles['Normal'], fontSize=6.5, leading=8.5, alignment=2)
     header_style = ParagraphStyle('H', parent=styles['Normal'], fontSize=6.5, leading=8.5, fontName='Helvetica-Bold', textColor=colors.white, alignment=1)
+    
+    # Estilo para o motivo COMPRA RECENTE
+    cell_recente = ParagraphStyle('CRecente', parent=styles['Normal'], fontSize=6.5, leading=8.5, alignment=0, fontName='Helvetica-Bold', textColor=colors.HexColor('#DC2626'))
 
     def _build(df_part, tipo):
         if df_part.empty: return Paragraph("<i>Nenhum item.</i>", cell_style)
@@ -501,7 +494,7 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
 
         elif tipo == "DEM":
             heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "MOTIVO"]
-            widths = [28, 45, 170, 30, 120, 60, 85, 50, 200]  # <-- DESTINO aumentou para 85, PRODUTO reduziu para 170
+            widths = [28, 45, 170, 30, 120, 60, 85, 50, 200]
             mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (str(r["Motivo"]).upper(), "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
@@ -510,8 +503,12 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
             for v, align in mapper(row):
                 if v is None or (isinstance(v, float) and pd.isna(v)): v = ""
                 elif isinstance(v, float) and v.is_integer(): v = int(v)
-                stl = cell_right if align == "R" else (cell_center if align == "C" else cell_style)
-                vals.append(Paragraph(str(v), stl))
+                
+                if align == "L" and str(v).upper() == "COMPRA RECENTE":
+                    vals.append(Paragraph("[!!] COMPRA RECENTE", cell_recente))
+                else:
+                    stl = cell_right if align == "R" else (cell_center if align == "C" else cell_style)
+                    vals.append(Paragraph(str(v), stl))
             data.append(vals)
 
         t = Table(data, colWidths=widths, repeatRows=1, hAlign='LEFT')
@@ -623,22 +620,22 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
 # ============================================================
 if btn_consultar:
     produto_preenchido = bool(produto_busca and produto_busca.strip())
-    if produto_preenchido:
+    if produto_preenchido and not bloqueado:
         fabricante_filtro, departamento_filtro, grupo_filtro, subgrupo_filtro = "", "", "", ""
     else:
-        fabricante_filtro = "" if fabricante_sel == "(todos)" else fabricantes[fabricante_sel]
-        departamento_filtro = "" if depto_sel == "(todos)" else departamentos[depto_sel]
-        grupo_filtro = "" if grupo_sel == "(todos)" else grupos[grupo_sel]
-        subgrupo_filtro = "" if subgrupo_sel == "(todos)" else subgrupos[subgrupo_sel]
+        fabricante_filtro = "" if fabricante_sel == "(todos)" or bloqueado else fabricantes[fabricante_sel]
+        departamento_filtro = "" if depto_sel == "(todos)" or bloqueado else departamentos[depto_sel]
+        grupo_filtro = "" if grupo_sel == "(todos)" or bloqueado else grupos[grupo_sel]
+        subgrupo_filtro = "" if subgrupo_sel == "(todos)" or bloqueado else subgrupos[subgrupo_sel]
 
     nenhum_filtro = not produto_preenchido and not fabricante_filtro and not departamento_filtro and not grupo_filtro and not subgrupo_filtro
 
-    if nenhum_filtro:
+    if nenhum_filtro and not bloqueado:
         st.warning("⚠️ Digite um produto ou escolha pelo menos 1 filtro.")
     else:
         try:
             with st.spinner("⏳ Construindo Base..."):
-                df_base = carregar_base(data_ref.strftime("%Y-%m-%d"), lookback, fabricante_filtro, departamento_filtro, grupo_filtro, subgrupo_filtro, "", produto_busca)
+                df_base = carregar_base(data_ref.strftime("%Y-%m-%d"), lookback, fabricante_filtro, departamento_filtro, grupo_filtro, subgrupo_filtro, "", produto_busca if not bloqueado else "")
                 st.session_state["df_base"] = df_base
 
             with st.spinner("⏳ Calculando sugestões..."):
@@ -649,6 +646,31 @@ if btn_consultar:
                     (atacado_piso == "Sim"), (atacado_reserva == "Sim"), (atacado_min_compra == "Sim")
                 )
                 
+                # --- FILTRO E INJEÇÃO DA COMPRA RECENTE (Se houver NF selecionada) ---
+                if bloqueado:
+                    num_nf = nf_selecionada.split(" | ")[2]
+                    df_nf = compras_recentes[compras_recentes["NumeroNF"].astype(str) == num_nf]
+                    fab_nf = df_nf["Fabricante"].dropna().unique().tolist()
+                    prod_nf = df_nf["CodigoProduto"].dropna().astype(str).unique().tolist()
+
+                    # 1. ENVIAR / RECEBER
+                    if not df_transf.empty:
+                        df_transf = df_transf[df_transf["Fabricante"].isin(fab_nf)].copy()
+                        mask_comprado = df_transf["CodigoProduto"].astype(str).isin(prod_nf)
+                        df_transf.loc[mask_comprado, "Motivo"] = "COMPRA RECENTE"
+                        df_transf.loc[mask_comprado, "Prioridade"] = 1 # Força prioridade máxima para subir no PDF
+                        df_transf = df_transf.sort_values(["Prioridade", "NomeFilialDestino", "Produto"]).reset_index(drop=True)
+
+                    # 2. COMPRAR
+                    if not df_compras.empty:
+                        df_compras = df_compras[df_compras["Fabricante"].isin(fab_nf)].copy()
+                        df_compras = df_compras[~df_compras["CodigoProduto"].astype(str).isin(prod_nf)]
+
+                    # 3. DEMONSTRAR
+                    if not df_demonstracao.empty:
+                        df_demonstracao = df_demonstracao[df_demonstracao["Fabricante"].isin(fab_nf)].copy()
+                        df_demonstracao = df_demonstracao[~df_demonstracao["CodigoProduto"].astype(str).isin(prod_nf)]
+
                 st.session_state["df_transf"] = df_transf
                 st.session_state["df_compras"] = df_compras
                 st.session_state["df_demonstracao"] = df_demonstracao
@@ -696,31 +718,23 @@ if "df_transf" in st.session_state:
     df_compras = st.session_state.get("df_compras", pd.DataFrame())
     df_demonstracao = st.session_state.get("df_demonstracao", pd.DataFrame())
 
-    # --- APLICA FILTRO DA NF (Se houver uma selecionada) ---
-    fab_nf = st.session_state.get("filtro_fabricantes_nf")
-    prod_nf = st.session_state.get("filtro_produtos_nf")
-    
-    if fab_nf is not None:
-        # Mantém apenas produtos dos fabricantes da NF e REMOVE os itens que já estão na NF
-        df = df[(df["Fabricante"].isin(fab_nf)) & (~df["CodigoProduto"].isin(prod_nf))] if not df.empty else df
-        df_compras = df_compras[(df_compras["Fabricante"].isin(fab_nf)) & (~df_compras["CodigoProduto"].isin(prod_nf))] if not df_compras.empty else df_compras
-        df_demonstracao = df_demonstracao[(df_demonstracao["Fabricante"].isin(fab_nf)) & (~df_demonstracao["CodigoProduto"].isin(prod_nf))] if not df_demonstracao.empty else df_demonstracao
-        st.info(f"🎯 **Foco da Compra:** Exibindo apenas sugestões dos fabricantes **{', '.join(fab_nf)}**. Os itens da NF selecionada foram ocultados.")
+    if bloqueado:
+        st.info(f"🎯 **Foco da Compra:** Exibindo apenas sugestões dos fabricantes da nota selecionada. Os itens da compra estão com o motivo **COMPRA RECENTE** nas abas ENVIAR/RECEBER e foram ocultados da aba COMPRAR.")
 
-    # A renderização das abas agora ocorre sempre (com os dados filtrados ou originais)
-    nomes_todos = ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"]
-    produto_preenchido = bool(produto_busca and produto_busca.strip())
-    
-    if filial_sel != "(todas)" and not produto_preenchido:
-        cod_sel = int(filiais[filial_sel])
-        nomes = [n for n in nomes_todos if codigos_filial[n] == cod_sel]
+    if df.empty and df_compras.empty and df_demonstracao.empty:
+        st.info("Nenhuma sugestão encontrada.")
     else:
-        nomes = nomes_todos
+        nomes_todos = ["ATACADO", "ALECRIM", "VIA DIRETA", "ZONA SUL", "ZONA NORTE"]
+        produto_preenchido = bool(produto_busca and produto_busca.strip())
+        
+        if filial_sel != "(todas)" and not produto_preenchido and not bloqueado:
+            cod_sel = int(filiais[filial_sel])
+            nomes = [n for n in nomes_todos if codigos_filial[n] == cod_sel]
+        else:
+            nomes = nomes_todos
 
-    nomes_com_icone = [f"{icones_filial[n]} {n}" for n in nomes]
-    tabs = st.tabs(nomes_com_icone)
-    
-    for i, nome in enumerate(nomes):
+        nomes_com_icone = [f"{icones_filial[n]} {n}" for n in nomes]
+        tabs = st.tabs(nomes_com_icone)
         
         for i, nome in enumerate(nomes):
             cod = codigos_filial[nome]
@@ -898,4 +912,4 @@ if btn_manual:
     st.session_state["view"] = "manual"
     st.rerun()
 
-st.markdown('<div class="rodape">v4.3 — 2026-10-24</div>', unsafe_allow_html=True)
+st.markdown('<div class="rodape">v4.4 — 2026-11-17</div>', unsafe_allow_html=True)
