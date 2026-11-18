@@ -14,7 +14,12 @@ SELECT
     p.CODPRODUTO AS CodigoProduto,
     p.NOMEPRODUTO AS Produto,
     f.NOMEFABR AS Fabricante,
-    (i.Qtd - ISNULL(i.QtdCancel,0)) * ISNULL(NULLIF(i.FatorConvUnid,0), 1) AS QtdComprada
+    CASE 
+        WHEN ISNULL(p.ProdutoPesavel, 'N') = 'S' 
+            THEN (i.Qtd - ISNULL(i.QtdCancel,0)) / NULLIF(i.FatorConvUnid,0)
+        ELSE 
+            CEILING((i.Qtd - ISNULL(i.QtdCancel,0)) / NULLIF(i.FatorConvUnid,0))
+    END AS QtdComprada
 FROM Movimento m WITH (NOLOCK)
 INNER JOIN ItensMov i WITH (NOLOCK) ON m.IdMov = i.IdMov
 INNER JOIN Produtos p WITH (NOLOCK) ON i.IdProduto = p.IdProduto
