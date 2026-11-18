@@ -11,6 +11,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from manual.render_streamlit import render_manual
+import streamlit.components.v1 as components
 
 from src.db import (
     carregar_filiais, carregar_fabricantes,
@@ -188,16 +189,27 @@ fabricantes = carregar_fabricantes()
 departamentos = carregar_departamentos()
 grupos = carregar_grupos()
 subgrupos = carregar_subgrupos()
-compras_recentes = carregar_compras_recentes()
 
-PERFIS = {
-    "Padrão": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 0, "reserva": 25, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 15, "dias_transito": 10},
-    "Lançamento": {"opcao_data": "30 dias atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 5, "reserva": 0, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 7, "dias_transito": 10},
-    "Classe A": {"opcao_data": "3 meses atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 10, "reserva": 25, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Sim", "anti_gangorra": 7, "dias_transito": 7},
-    "Sazonal Longo": {"opcao_data": "2 meses atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 5, "reserva": 15, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Sim", "anti_gangorra": 7, "dias_transito": 10},
-    "Sazonal Curto": {"opcao_data": "30 dias atrás", "cobertura_opcao": "Para 15 dias", "lead_time": 7, "piso": 3, "reserva": 5, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 5, "dias_transito": 7},
-    "Baixo Giro": {"opcao_data": "1 ano atrás", "cobertura_opcao": "Para 30 dias", "lead_time": 10, "piso": 3, "reserva": 30, "atacado_piso": "Não", "atacado_reserva": "Não", "atacado_min_compra": "Não", "anti_gangorra": 20, "dias_transito": 10},
+# Valores padrão (antigo Perfil Padrão)
+DEFAULTS = {
+    "opcao_data": "1 ano atrás",
+    "cobertura_opcao": "Para 30 dias",
+    "lead_time": 10,
+    "piso": 0,
+    "reserva": 25,
+    "atacado_piso": "Não",
+    "atacado_reserva": "Não",
+    "atacado_min_compra": "Não",
+    "anti_gangorra": 15,
+    "dias_transito": 10,
+    "dias_compra": 30,
 }
+
+for k, v in DEFAULTS.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
+
+compras_recentes = carregar_compras_recentes(st.session_state.get("dias_compra", 30))
 
 if "show_params" not in st.session_state: st.session_state.show_params = False
 if "view" not in st.session_state: st.session_state["view"] = "calculadora"
@@ -209,12 +221,6 @@ if st.session_state["view"] == "manual":
 # ============================================================
 # INICIALIZAÇÃO E SINCRONIA DE ESTADO
 # ============================================================
-if "perfil_sel" not in st.session_state:
-    st.session_state["perfil_sel"] = "Padrão"
-
-for k, v in PERFIS["Padrão"].items():
-    if k not in st.session_state:
-        st.session_state[k] = v
 if "fabricante_sel" not in st.session_state: st.session_state["fabricante_sel"] = "(todos)"
 if "depto_sel" not in st.session_state: st.session_state["depto_sel"] = "(todos)"
 if "grupo_sel" not in st.session_state: st.session_state["grupo_sel"] = "(todos)"
@@ -227,10 +233,8 @@ if "nf_sel" not in st.session_state: st.session_state["nf_sel"] = "Nenhuma"
 # CALLBACKS
 # ============================================================
 def _limpar_filtros():
-    perfil_atual = st.session_state.get("perfil_sel", "Padrão")
-    for k, v in PERFIS[perfil_atual].items():
+    for k, v in DEFAULTS.items():
         st.session_state[k] = v
-    st.session_state["_ultimo_perfil_aplicado"] = perfil_atual
     
     st.session_state["fabricante_sel"] = "(todos)"
     st.session_state["depto_sel"] = "(todos)"
@@ -243,17 +247,12 @@ def _limpar_filtros():
     for _k in ("df_base", "df_transf", "df_compras", "df_demonstracao", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
         if _k in st.session_state: del st.session_state[_k]
 
-def _mudar_perfil():
-    perfil_novo = st.session_state["perfil_sel"]
-    for k, v in PERFIS[perfil_novo].items():
-        st.session_state[k] = v
-    st.session_state["_ultimo_perfil_aplicado"] = perfil_novo
+# ============================================================
+# LINHA 1: COMPRAS + FILTROS
+# ============================================================
+f_compra, f_periodo, f_fab, f_depto, f_grupo, f_sub, f_prod = st.columns([2.2, 1.3, 1.5, 1.0, 1.0, 1.0, 1.5], vertical_alignment="bottom")
 
-# ============================================================
-# LINHA 1: COMPRAS RECENTES
-# ============================================================
-col_nf, _ = st.columns([2, 3])
-with col_nf:
+with f_compra:
     if not compras_recentes.empty:
         compras_recentes["DataFormatada"] = pd.to_datetime(compras_recentes["DataCompra"]).dt.strftime('%d/%m/%Y')
         lista_formatada = (
@@ -262,34 +261,23 @@ with col_nf:
             compras_recentes["NumeroNF"].astype(str)
         ).unique().tolist()
         opcoes_nf = ["Nenhuma"] + lista_formatada
-        nf_selecionada = st.selectbox("📦 Compras dos Últimos 30 dias", opcoes_nf, key="nf_sel")
+        nf_selecionada = st.selectbox("📦 Últimas Compras", opcoes_nf, key="nf_sel")
     else:
         nf_selecionada = "Nenhuma"
-        st.info("Nenhuma compra recente encontrada.")
+        st.selectbox("📦 Últimas Compras", ["Nenhuma"], key="nf_sel", disabled=True)
 
 bloqueado = (nf_selecionada != "Nenhuma")
-if bloqueado:
-    st.session_state["perfil_sel"] = "Padrão"
-    for k, v in PERFIS["Padrão"].items():
-        st.session_state[k] = v
-    st.session_state["_ultimo_perfil_aplicado"] = "Padrão"
 
-# ============================================================
-# LINHA 2: FILTROS
-# ============================================================
-f0, f1, f2, f3, f4, f5 = st.columns([1.6, 1.9, 1.3, 1.3, 1.3, 1.8], vertical_alignment="bottom")
+with f_periodo:
+    lista_periodo = ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás", "30 dias atrás", "15 dias atrás", "7 dias atrás"]
+    idx_p = lista_periodo.index(st.session_state.get("opcao_data", "1 ano atrás")) if st.session_state.get("opcao_data") in lista_periodo else 0
+    st.selectbox("Período de Análise", lista_periodo, index=idx_p, key="opcao_data", disabled=bloqueado)
 
-with f0:
-    st.selectbox(
-        "Perfil de Análise", list(PERFIS.keys()), key="perfil_sel", disabled=bloqueado,
-        help="**Perfil de Análise**\n\nEscolha um perfil para ajustar automaticamente os 9 parâmetros.",
-        on_change=_mudar_perfil
-    )
-with f1: fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel", disabled=bloqueado)
-with f2: depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel", disabled=bloqueado)
-with f3: grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()), key="grupo_sel", disabled=bloqueado)
-with f4: subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel", disabled=bloqueado)
-with f5:
+with f_fab: fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel", disabled=bloqueado)
+with f_depto: depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel", disabled=bloqueado)
+with f_grupo: grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()), key="grupo_sel", disabled=bloqueado)
+with f_sub: subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel", disabled=bloqueado)
+with f_prod:
     produto_busca = st.text_input(
         "Produto", placeholder='Ex: CAIXA QUADRADA (E) | CAPA, CAPUZ (OU)', key="produto_busca", disabled=bloqueado,
         help="Busca por produto com E / OU. Se preenchido, ignora os outros filtros."
@@ -376,7 +364,7 @@ if st.session_state.show_params:
             v_ar = st.selectbox("Atacado tem Reserva?", lista_sn, index=idx_ar, disabled=bloqueado)
             st.session_state["atacado_reserva"] = v_ar
 
-        r3c1, r3c2, r3c3 = st.columns(3)
+        r3c1, r3c2, r3c3, r3c4 = st.columns(4)
         
         with r3c1: 
             v_ag = st.number_input("Reposição Recente (dias)", 0, 90, value=int(st.session_state.get("anti_gangorra", 15)), disabled=bloqueado)
@@ -390,6 +378,10 @@ if st.session_state.show_params:
             idx_am = lista_sn.index(st.session_state.get("atacado_min_compra", "Não")) if st.session_state.get("atacado_min_compra") in lista_sn else 0
             v_am = st.selectbox("Atacado tem Mínimo p/ Compra?", lista_sn, index=idx_am, help="Se Sim, usa o valor do Piso Exposição como quantidade mínima para sugerir compra.", disabled=bloqueado)
             st.session_state["atacado_min_compra"] = v_am
+            
+        with r3c4:
+            v_dc = st.number_input("Período de Compras (dias)", 1, 90, value=int(st.session_state.get("dias_compra", 30)), disabled=bloqueado)
+            st.session_state["dias_compra"] = v_dc
 
 # Recupera os valores
 opcao_data = st.session_state["opcao_data"]
@@ -634,7 +626,7 @@ if btn_consultar:
     else:
         try:
             with st.spinner("⏳ Construindo Base..."):
-                df_base = carregar_base(data_ref.strftime("%Y-%m-%d"), lookback, fabricante_filtro, departamento_filtro, grupo_filtro, subgrupo_filtro, "", produto_busca if not bloqueado else "")
+                df_base = carregar_base(...)
                 st.session_state["df_base"] = df_base
 
             with st.spinner("⏳ Calculando sugestões..."):
@@ -742,21 +734,33 @@ if btn_pdf_global:
         
         with st.spinner("Gerando PDF..."):
             try:
-                pdf_bytes, agora = gerar_pdf_filial(filial_pdf, cod_pdf, df_atual, df_compras_atual, df_demonstracao_atual, st.session_state.get("perfil_sel", "Padrão"), parametros_str)
+                pdf_bytes, agora = gerar_pdf_filial(
+                    filial_pdf, cod_pdf, df_atual, df_compras_atual, df_demonstracao_atual, 
+                    "Padrão", parametros_str
+                )
                 nome_file = filial_pdf.title().replace(" ", "")
                 st.session_state["pdf_bytes_global"] = (pdf_bytes, f"Reposicao {nome_file} {agora.strftime('%Y%m%d %H%M%S')}.pdf")
             except Exception as e:
                 st.error(f"Erro ao gerar PDF: {e}")
 
 if "pdf_bytes_global" in st.session_state and st.session_state["pdf_bytes_global"][0] is not None:
+    import base64
     _pdf_data, _file_name = st.session_state["pdf_bytes_global"]
-    st.download_button(
-        label=f"⬇️ Baixar {_file_name}",
-        data=_pdf_data,
-        file_name=_file_name,
-        mime="application/pdf",
-        key="btn_download_pdf"
-    )
+    
+    # Converte o PDF em base64
+    b64_pdf = base64.b64encode(_pdf_data.getvalue()).decode()
+    
+    # HTML/JS para acionar o download automaticamente
+    dl_html = f'''
+        <a id="auto_download_pdf" href="data:application/pdf;base64,{b64_pdf}" download="{_file_name}" style="display:none;"></a>
+        <script>
+            document.getElementById("auto_download_pdf").click();
+        </script>
+    '''
+    components.html(dl_html, height=0)
+    
+    # Limpa o estado após o download para não baixar várias vezes no refresh
+    st.session_state["pdf_bytes_global"] = (None, None)
 
 # ============================================================
 # RESULTADO (ABAS)
