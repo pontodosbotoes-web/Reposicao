@@ -2,6 +2,14 @@ SELECT
     m.NumMov AS NumeroNF, 
     CAST(m.DtFinalizacao AS DATE) AS DataCompra,
     cf.NomeCliFor AS NomeFornecedor,
+    CASE m.CodFilial 
+        WHEN 1 THEN 'ALECRIM' 
+        WHEN 2 THEN 'VIA DIRETA' 
+        WHEN 3 THEN 'ZONA SUL' 
+        WHEN 4 THEN 'ZONA NORTE' 
+        WHEN 5 THEN 'ATACADO' 
+        ELSE 'OUTRA' 
+    END AS Filial,
     i.IdProduto,
     p.CODPRODUTO AS CodigoProduto,
     p.NOMEPRODUTO AS Produto,
