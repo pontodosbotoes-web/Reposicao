@@ -150,4 +150,6 @@ def carregar_compras_recentes() -> pd.DataFrame:
         return pd.DataFrame()
     with get_engine().connect() as conn:
         df = pd.read_sql(text(_SQL_COMPRAS), conn)
+    if not df.empty and "QtdComprada" in df.columns:
+        df["QtdComprada"] = pd.to_numeric(df["QtdComprada"], errors="coerce").fillna(0)
     return df
