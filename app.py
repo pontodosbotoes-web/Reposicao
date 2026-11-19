@@ -243,14 +243,14 @@ def _limpar_filtros():
     st.session_state["subgrupo_sel"] = "(todos)"
     st.session_state["produto_busca"] = ""
     st.session_state["filial_param"] = "(todas)"
-    st.session_state["nf_sel"] = "Nenhuma"
+    st.session_state["nf_sel"] = "Últimas Compras"
     st.session_state["nf_num"] = None
     
     for _k in ("df_base", "df_transf", "df_compras", "df_demonstracao", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
         if _k in st.session_state: del st.session_state[_k]
 
 # Bloqueio calculado ANTES da linha de filtros
-bloqueado = st.session_state.get("nf_sel", "Nenhuma") != "Nenhuma"
+bloqueado = st.session_state.get("nf_sel", "Últimas Compras") != "Últimas Compras"
 
 # ============================================================
 # LINHA 1: FILTROS
@@ -308,16 +308,16 @@ with f_compra:
         )
         
         label_to_nf = dict(zip(agrupado["Label"], agrupado["NumeroNF"].astype(str)))
-        opcoes_nf = ["Nenhuma"] + agrupado["Label"].tolist()
+        opcoes_nf = ["Últimas Compras"] + agrupado["Label"].tolist()
         nf_selecionada = st.selectbox(
             "📦 Últimas Compras", opcoes_nf, key="nf_sel", label_visibility="collapsed"
         )
         
-        st.session_state["nf_num"] = label_to_nf.get(nf_selecionada) if nf_selecionada != "Nenhuma" else None
+        st.session_state["nf_num"] = label_to_nf.get(nf_selecionada) if nf_selecionada != "Últimas Compras" else None
     else:
-        nf_selecionada = "Nenhuma"
+        nf_selecionada = "Últimas Compras"
         st.session_state["nf_num"] = None
-        st.selectbox("📦 Últimas Compras", ["Nenhuma"], key="nf_sel", disabled=True, label_visibility="collapsed")
+        st.selectbox("📦 Últimas Compras", ["Últimas Compras"], key="nf_sel", disabled=True, label_visibility="collapsed")
 
 with b1: btn_consultar = st.button("🔍 Consultar", use_container_width=True, key="btn_consultar")
 with b2: st.button("🧹 Limpar", use_container_width=True, on_click=_limpar_filtros, key="btn_limpar")
