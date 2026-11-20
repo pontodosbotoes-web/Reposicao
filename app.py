@@ -973,9 +973,12 @@ if "df_transf" in st.session_state:
                     dfe["Motivo"] = dfe["Motivo"].astype(str).str.upper()
                     dfe = dfe[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "QtdEmTransito", "ReservaOrigem", "Qtd Ideal", "Motivo"]]
                     dfe.columns = ["#", "PRIORIDADE", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD TRANSF.", "EM TRÂNSITO", "RESERVA", "QTD IDEAL", "MOTIVO"]
-                    dfe["QTD TRANSF."] = dfe["QTD TRANSF."].map(fmt_qtd)
-                    dfe["QTD IDEAL"] = dfe["QTD IDEAL"].map(fmt_qtd)
-                    st.dataframe(dfe.style.set_properties(subset=["QTD TRANSF.", "EM TRÂNSITO", "RESERVA", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfe) * 36 + 42)))
+                    st.dataframe(dfe.style.format({
+                        "QTD TRANSF.": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                        "QTD IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                        "EM TRÂNSITO": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                        "RESERVA": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                    }).set_properties(subset=["QTD TRANSF.", "EM TRÂNSITO", "RESERVA", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfe) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">📥 RECEBER</div>', unsafe_allow_html=True)
                 if df_rec.empty:
@@ -987,9 +990,12 @@ if "df_transf" in st.session_state:
                     dfr["Motivo"] = dfr["Motivo"].astype(str).str.upper()
                     dfr = dfr[["#", "Prioridade", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "QtdEmTransito", "Dias p/ Zerar", "Qtd Ideal", "Motivo"]]
                     dfr.columns = ["#", "PRIORIDADE", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD TRANSF.", "EM TRÂNSITO", "DIAS P/ ZERAR", "QTD IDEAL", "MOTIVO"]
-                    dfr["QTD TRANSF."] = dfr["QTD TRANSF."].map(fmt_qtd)
-                    dfr["QTD IDEAL"] = dfr["QTD IDEAL"].map(fmt_qtd)
-                    st.dataframe(dfr.style.set_properties(subset=["QTD TRANSF.", "EM TRÂNSITO", "DIAS P/ ZERAR", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
+                    st.dataframe(dfr.style.format({
+                        "QTD TRANSF.": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                        "QTD IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                        "EM TRÂNSITO": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                        "DIAS P/ ZERAR": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                    }).set_properties(subset=["QTD TRANSF.", "EM TRÂNSITO", "DIAS P/ ZERAR", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
 
                 st.markdown('<div class="secao-titulo">🎯 DEMONSTRAR</div>', unsafe_allow_html=True)
                 if df_dem.empty:
@@ -1000,8 +1006,9 @@ if "df_transf" in st.session_state:
                     dfm["Motivo"] = dfm["Motivo"].astype(str).str.upper()
                     dfm = dfm[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "Motivo"]]
                     dfm.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "MOTIVO"]
-                    dfm["QTD"] = dfm["QTD"].map(fmt_qtd)
-                    st.dataframe(dfm.style.set_properties(subset=["QTD"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfm) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
+                    st.dataframe(dfm.style.format({
+                        "QTD": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                    }).set_properties(subset=["QTD"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfm) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
 
                 st.markdown('<div class="secao-titulo">⏸️ DESCONTINUAR</div>', unsafe_allow_html=True)
                 if df_desc.empty:
@@ -1011,9 +1018,10 @@ if "df_transf" in st.session_state:
                     dfd["Motivo"] = dfd["Motivo"].astype(str).str.upper()
                     dfd = dfd[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "IdealOrigem", "Motivo"]]
                     dfd.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD P/ DESC.", "QTD IDEAL", "MOTIVO"]
-                    dfd["QTD P/ DESC."] = dfd["QTD P/ DESC."].map(fmt_qtd)
-                    dfd["QTD IDEAL"] = dfd["QTD IDEAL"].map(fmt_qtd)
-                    st.dataframe(dfd.style.set_properties(subset=["QTD P/ DESC.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfd) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
+                    st.dataframe(dfd.style.format({
+                        "QTD P/ DESC.": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                        "QTD IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                    }).set_properties(subset=["QTD P/ DESC.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfd) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
 
                 st.markdown('<div class="secao-titulo">🔥 LIQUIDAR</div>', unsafe_allow_html=True)
                 if df_liq.empty:
@@ -1023,9 +1031,10 @@ if "df_transf" in st.session_state:
                     dfi["Motivo"] = dfi["Motivo"].astype(str).str.upper()
                     dfi = dfi[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "IdealOrigem", "Motivo"]]
                     dfi.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD P/ LIQ.", "QTD IDEAL", "MOTIVO"]
-                    dfi["QTD P/ LIQ."] = dfi["QTD P/ LIQ."].map(fmt_qtd)
-                    dfi["QTD IDEAL"] = dfi["QTD IDEAL"].map(fmt_qtd)
-                    st.dataframe(dfi.style.set_properties(subset=["QTD P/ LIQ.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfi) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
+                    st.dataframe(dfi.style.format({
+                        "QTD P/ LIQ.": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                        "QTD IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                    }).set_properties(subset=["QTD P/ LIQ.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfi) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
 
                 st.markdown('<div class="secao-titulo">🛒 COMPRAR</div>', unsafe_allow_html=True)
                 if df_comp_view.empty:
@@ -1039,14 +1048,22 @@ if "df_transf" in st.session_state:
                         dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "Custo", "RetornoFinanceiro", "Motivo"]]
                         dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
                         dfc.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)", "MOTIVO"]
-                        dfc["SUGESTÃO"] = dfc["SUGESTÃO"].map(fmt_qtd)
-                        dfc["IDEAL"] = dfc["IDEAL"].map(fmt_qtd)
-                        st.dataframe(dfc.style.format({"CUSTO": "R$ {:.2f}", "RETORNO FIN. (R$)": "R$ {:.2f}"}).set_properties(subset=["VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
+                        st.dataframe(dfc.style.format({
+                            "CUSTO": "R$ {:.2f}",
+                            "RETORNO FIN. (R$)": "R$ {:.2f}",
+                            "SUGESTÃO": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                            "IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                        }).set_properties(subset=["VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
                     else:
                         dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "Custo", "RetornoFinanceiro", "Motivo"]]
                         dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
                         dfc.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)", "MOTIVO"]
-                        st.dataframe(dfc.style.format({"CUSTO": "R$ {:.2f}", "RETORNO FIN. (R$)": "R$ {:.2f}"}).set_properties(subset=["VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
+                        st.dataframe(dfc.style.format({
+                            "CUSTO": "R$ {:.2f}",
+                            "RETORNO FIN. (R$)": "R$ {:.2f}",
+                            "SUGESTÃO": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                            "IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                        }).set_properties(subset=["VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
 
 if btn_manual:
     st.session_state["view"] = "manual"
