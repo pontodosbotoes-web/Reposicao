@@ -249,6 +249,14 @@ def _limpar_filtros():
     for _k in ("df_base", "df_transf", "df_compras", "df_demonstracao", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
         if _k in st.session_state: del st.session_state[_k]
 
+# Limpa valor antigo do nf_sel se ele não estiver nas opções válidas
+if "nf_sel" in st.session_state and st.session_state["nf_sel"] not in ("Últimas Compras", "Nenhuma") and not isinstance(st.session_state["nf_sel"], str):
+    pass  # valor válido (é uma NF selecionada)
+
+# Se o valor for "Nenhuma" (string antiga), remove da sessão
+if st.session_state.get("nf_sel") == "Nenhuma":
+    del st.session_state["nf_sel"]
+
 # Bloqueio calculado ANTES da linha de filtros
 bloqueado = st.session_state.get("nf_sel", "Últimas Compras") != "Últimas Compras"
 
