@@ -298,6 +298,7 @@ with f_compra:
             "NomeFornecedor": "first",
             "Filial": "first",
             "CodigoProduto": "count",
+            "Fabricante": lambda x: ", ".join(sorted(x.dropna().unique())),
         }).reset_index()
         
         agrupado = agrupado.sort_values(
@@ -310,7 +311,8 @@ with f_compra:
             agrupado["DataFormatada"] + " | " +
             agrupado["NomeFornecedor"] + " | NF " +
             agrupado["NumeroNF"].astype(str) + " | " +
-            agrupado["CodigoProduto"].astype(str) + " itens"
+            agrupado["CodigoProduto"].astype(str) + " itens | " +
+            agrupado["Fabricante"]
         )
         
         label_to_nf = dict(zip(agrupado["Label"], agrupado["NumeroNF"].astype(str)))
