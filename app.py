@@ -243,7 +243,7 @@ def _limpar_filtros():
     st.session_state["subgrupo_sel"] = "(todos)"
     st.session_state["produto_busca"] = ""
     st.session_state["filial_param"] = "(todas)"
-    st.session_state["nf_sel"] = "Últimas Compras"
+    st.session_state["nf_sel"] = "Nenhuma"
     st.session_state["nf_num"] = None
     
     for _k in ("df_base", "df_transf", "df_compras", "df_demonstracao", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
@@ -258,7 +258,7 @@ if st.session_state.get("nf_sel") == "Nenhuma":
     del st.session_state["nf_sel"]
 
 # Bloqueio calculado ANTES da linha de filtros
-bloqueado = st.session_state.get("nf_sel", "Últimas Compras") != "Últimas Compras"
+bloqueado = st.session_state.get("nf_sel", "Nenhuma") != "Nenhuma"
 
 # ============================================================
 # LINHA 1: FILTROS
@@ -300,13 +300,11 @@ with f_compra:
             "CodigoProduto": "count",
         }).reset_index()
         
-        # Ordena: finalização (DESC), fornecedor (ASC), NF (ASC)
         agrupado = agrupado.sort_values(
             ["DataCompra", "NomeFornecedor", "NumeroNF"],
             ascending=[False, True, True]
         ).reset_index(drop=True)
         
-        # Label: Filial | Data | Fornecedor | NF num | X itens
         agrupado["Label"] = (
             agrupado["Filial"] + " | " +
             agrupado["DataFormatada"] + " | " +
@@ -316,9 +314,16 @@ with f_compra:
         )
         
         label_to_nf = dict(zip(agrupado["Label"], agrupado["NumeroNF"].astype(str)))
-        opcoes_nf = ["Últimas Compras"] + agrupado["Label"].tolist()
+        opcoes_nf = ["Nenhuma"] + agrupado["Label"].tolist()
         nf_selecionada = st.selectbox(
-            "📦 Últimas Compras", opcoes_nf, key="nf_sel", label_visibility="collapsed"
+            "📦 Últimas Compras", opcoes_nf, key="nf_sel"
+        )
+        
+        st.session_state["nf_num"] = label_to_nf.get(nf_selecionada) if nf_selecionada != "Nenhuma" else None
+    else:
+        nf_selecionada = "Nenhuma"
+        st.session_state["nf_num"] = None
+        st.selectbox("📦 Últimas Compras", ["Nenhuma"], key="nf_sel", disabled=True)
         )
         
         st.session_state["nf_num"] = label_to_nf.get(nf_selecionada) if nf_selecionada != "Últimas Compras" else None
