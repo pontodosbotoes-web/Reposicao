@@ -316,21 +316,21 @@ with f_compra:
         label_to_nf = dict(zip(agrupado["Label"], agrupado["NumeroNF"].astype(str)))
         opcoes_nf = ["Nenhuma"] + agrupado["Label"].tolist()
         nf_selecionada = st.selectbox(
-            "📦 Últimas Compras", opcoes_nf, key="nf_sel"
+            "📦 Últimas Compras", 
+            opcoes_nf, 
+            key="nf_sel"
         )
         
         st.session_state["nf_num"] = label_to_nf.get(nf_selecionada) if nf_selecionada != "Nenhuma" else None
     else:
         nf_selecionada = "Nenhuma"
         st.session_state["nf_num"] = None
-        st.selectbox("📦 Últimas Compras", ["Nenhuma"], key="nf_sel", disabled=True)
+        st.selectbox(
+            "📦 Últimas Compras", 
+            ["Nenhuma"], 
+            key="nf_sel", 
+            disabled=True
         )
-        
-        st.session_state["nf_num"] = label_to_nf.get(nf_selecionada) if nf_selecionada != "Últimas Compras" else None
-    else:
-        nf_selecionada = "Últimas Compras"
-        st.session_state["nf_num"] = None
-        st.selectbox("📦 Últimas Compras", ["Últimas Compras"], key="nf_sel", disabled=True, label_visibility="collapsed")
 
 with b1: btn_consultar = st.button("🔍 Consultar", use_container_width=True, key="btn_consultar")
 with b2: st.button("🧹 Limpar", use_container_width=True, on_click=_limpar_filtros, key="btn_limpar")
