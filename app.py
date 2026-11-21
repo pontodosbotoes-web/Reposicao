@@ -102,19 +102,18 @@ st.markdown("""
             border-bottom: 1px solid #334155;
             padding-bottom: 4px;
         }
-        .metric-card-row {
+        .metric-card-single-line {
             display: flex;
             justify-content: space-around;
-            font-size: 0.75rem;
+            align-items: center;
+            font-size: 0.85rem;
             color: #94A3B8;
-            margin-bottom: 4px;
+            margin-top: 6px;
         }
-        .metric-card-values {
-            display: flex;
-            justify-content: space-around;
-            font-size: 1.2rem;
-            font-weight: bold;
+        .metric-card-single-line b {
+            font-size: 1.15rem;
             color: #F8FAFC;
+            margin-right: 3px;
         }
 
         /* --- ESTILIZAÇÃO DOS BOTÕES --- */
@@ -949,33 +948,45 @@ if "df_transf" in st.session_state:
                 <div class="metric-grid">
                     <div class="metric-card">
                         <div class="metric-card-title">📤 ENVIAR</div>
-                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
-                        <div class="metric-card-values"><div>{env_itens}</div><div>{env_unid}</div></div>
+                        <div class="metric-card-single-line">
+                            <span><b>{env_itens}</b> Itens</span>
+                            <span><b>{env_unid}</b> Und</span>
+                        </div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-card-title">📥 RECEBER</div>
-                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
-                        <div class="metric-card-values"><div>{rec_itens}</div><div>{rec_unid}</div></div>
+                        <div class="metric-card-single-line">
+                            <span><b>{rec_itens}</b> Itens</span>
+                            <span><b>{rec_unid}</b> Und</span>
+                        </div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-card-title">🎯 DEMONSTRAR</div>
-                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
-                        <div class="metric-card-values"><div>{dem_itens}</div><div>{dem_unid}</div></div>
+                        <div class="metric-card-single-line">
+                            <span><b>{dem_itens}</b> Itens</span>
+                            <span><b>{dem_unid}</b> Und</span>
+                        </div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-card-title">⏸️ DESC.</div>
-                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
-                        <div class="metric-card-values"><div>{desc_itens}</div><div>{desc_unid}</div></div>
+                        <div class="metric-card-single-line">
+                            <span><b>{desc_itens}</b> Itens</span>
+                            <span><b>{desc_unid}</b> Und</span>
+                        </div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-card-title">🔥 LIQUIDAR</div>
-                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
-                        <div class="metric-card-values"><div>{liq_itens}</div><div>{liq_unid}</div></div>
+                        <div class="metric-card-single-line">
+                            <span><b>{liq_itens}</b> Itens</span>
+                            <span><b>{liq_unid}</b> Und</span>
+                        </div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-card-title">🛒 COMPRAR</div>
-                        <div class="metric-card-row"><div>Itens</div><div>Unid</div></div>
-                        <div class="metric-card-values"><div>{comp_itens}</div><div>{comp_unid}</div></div>
+                        <div class="metric-card-single-line">
+                            <span><b>{comp_itens}</b> Itens</span>
+                            <span><b>{comp_unid}</b> Und</span>
+                        </div>
                     </div>
                 </div>
                 """
