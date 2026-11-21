@@ -243,22 +243,14 @@ def _limpar_filtros():
     st.session_state["subgrupo_sel"] = "(todos)"
     st.session_state["produto_busca"] = ""
     st.session_state["filial_param"] = "(todas)"
-    st.session_state["nf_sel"] = "Nenhuma"
     st.session_state["nf_num"] = None
+    if "busca_compra" in st.session_state: st.session_state["busca_compra"] = ""
     
     for _k in ("df_base", "df_transf", "df_compras", "df_demonstracao", "df_base_n", "pdf_bytes_global", "filial_pdf_sel"):
         if _k in st.session_state: del st.session_state[_k]
 
-# Limpa valor antigo do nf_sel se ele não estiver nas opções válidas
-if "nf_sel" in st.session_state and st.session_state["nf_sel"] not in ("Últimas Compras", "Nenhuma") and not isinstance(st.session_state["nf_sel"], str):
-    pass  # valor válido (é uma NF selecionada)
-
-# Se o valor for "Nenhuma" (string antiga), remove da sessão
-if st.session_state.get("nf_sel") == "Nenhuma":
-    del st.session_state["nf_sel"]
-
-# Bloqueio calculado ANTES da linha de filtros
-bloqueado = st.session_state.get("nf_sel", "Nenhuma") != "Nenhuma"
+if "nf_num" not in st.session_state: st.session_state["nf_num"] = None
+bloqueado = st.session_state.get("nf_num") is not None
 
 # ============================================================
 # LINHA 1: FILTROS + BUSCA DE COMPRA
@@ -284,15 +276,20 @@ with f_prod:
     )
 
 # ============================================================
-# LINHA 2: COMPRAS + BOTÕES
+# LINHA 2: BOTÕES
 # ============================================================
 st.write("")
-f_compra, b1, b2, b3, b4, b5, b6 = st.columns([3.8, 1, 1, 1, 1.2, 1.3, 1.2], vertical_alignment="bottom")
+b1, b2, b3, b4, b5, b6 = st.columns([1, 1, 1, 1.2, 1.5, 1.2])
 
 if "nf_num" not in st.session_state: st.session_state["nf_num"] = None
 
-with f_compra:
-    if not compras_recentes.empty:
+# ============================================================
+# SEÇÃO DE COMPRAS RECENTES (TABELA INTERATIVA)
+# ============================================================
+if not compras_recentes.empty:
+    with st.container(border=True):
+        st.markdown("#### 📦 Últimas Compras")
+        
         compras_recentes["DataFormatada"] = pd.to_datetime(compras_recentes["DataCompra"]).dt.strftime('%d/%m/%Y')
         
         agrupado = compras_recentes.groupby("NumeroNF").agg({
@@ -309,41 +306,49 @@ with f_compra:
             ascending=[False, True, True]
         ).reset_index(drop=True)
         
-        agrupado["Label"] = (
-            agrupado["Filial"] + " | " +
-            agrupado["DataFormatada"] + " | " +
-            agrupado["NomeFornecedor"] + " | NF " +
-            agrupado["NumeroNF"].astype(str) + " | " +
-            agrupado["CodigoProduto"].astype(str) + " itens | " +
-            agrupado["Fabricante"]
-        )
-        
+        col_busca, col_limpar = st.columns([4, 1])
+        with col_busca:
+            busca_compra = st.text_input("Buscar", placeholder="Digite Fornecedor, Fabricante ou NF para filtrar...", label_visibility="collapsed")
+        with col_limpar:
+            if st.button("Limpar Seleção", use_container_width=True):
+                st.session_state["nf_num"] = None
+                st.rerun()
+                
         if busca_compra:
-            agrupado = agrupado[agrupado["Label"].str.contains(busca_compra, case=False, na=False)]
+            mask = (
+                agrupado["NomeFornecedor"].str.contains(busca_compra, case=False, na=False) |
+                agrupado["Fabricante"].str.contains(busca_compra, case=False, na=False) |
+                agrupado["NumeroNF"].astype(str).str.contains(busca_compra, case=False, na=False)
+            )
+            agrupado = agrupado[mask]
             
         if agrupado.empty:
-            opcoes_nf = ["Nenhuma compra encontrada"]
-            st.selectbox("📦 Últimas Compras", opcoes_nf, key="nf_sel", disabled=True)
-            nf_selecionada = "Nenhuma"
-            st.session_state["nf_num"] = None
+            st.info("Nenhuma compra encontrada com os filtros atuais.")
         else:
-            label_to_nf = dict(zip(agrupado["Label"], agrupado["NumeroNF"].astype(str)))
-            opcoes_nf = ["Nenhuma"] + agrupado["Label"].tolist()
-            nf_selecionada = st.selectbox(
-                "📦 Últimas Compras", 
-                opcoes_nf, 
-                key="nf_sel"
+            # Prepara dataframe para visualização
+            df_display = agrupado[["Filial", "DataFormatada", "NomeFornecedor", "NumeroNF", "CodigoProduto", "Fabricante"]].copy()
+            df_display.columns = ["FILIAL", "DATA", "FORNECEDOR", "NF", "ITENS", "FABRICANTES"]
+            
+            # Tabela com seleção de linha
+            event = st.dataframe(
+                df_display,
+                use_container_width=True,
+                hide_index=True,
+                on_select="rerun",
+                selection_mode="single-row",
+                height=min(300, max(150, len(df_display) * 35 + 40))
             )
-            st.session_state["nf_num"] = label_to_nf.get(nf_selecionada) if nf_selecionada != "Nenhuma" else None
-    else:
-        nf_selecionada = "Nenhuma"
-        st.session_state["nf_num"] = None
-        st.selectbox(
-            "📦 Últimas Compras", 
-            ["Nenhuma"], 
-            key="nf_sel", 
-            disabled=True
-        )
+            
+            # Processa a seleção
+            if event.selection.rows:
+                selected_idx = event.selection.rows[0]
+                selected_nf = str(df_display.iloc[selected_idx]["NF"])
+                st.session_state["nf_num"] = selected_nf
+                
+            if st.session_state.get("nf_num"):
+                st.success(f"✅ **NF {st.session_state['nf_num']} selecionada.** Clique em Consultar abaixo.")
+            else:
+                st.info("👆 Clique em uma linha da tabela acima para selecionar a compra.")
 
 with b1: btn_consultar = st.button("🔍 Consultar", use_container_width=True, key="btn_consultar")
 with b2: st.button("🧹 Limpar", use_container_width=True, on_click=_limpar_filtros, key="btn_limpar")
@@ -697,7 +702,7 @@ if btn_consultar:
                 # Prepara IDs da NF (força fluxo normal no motor)
                 forcar_normal_ids = None
                 if bloqueado:
-                    num_nf_pre = st.session_state.get("nf_num")
+                    num_nf_pre = str(st.session_state.get("nf_num"))
                     df_nf_pre = compras_recentes[compras_recentes["NumeroNF"].astype(str) == num_nf_pre]
                     forcar_normal_ids = df_nf_pre["IdProduto"].dropna().astype(int).unique().tolist()
 
