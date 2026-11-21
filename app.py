@@ -211,6 +211,56 @@ for k, v in DEFAULTS.items():
 
 compras_recentes = carregar_compras_recentes(st.session_state.get("dias_compra", 30))
 
+@st.dialog("📦 Últimas Compras", width="large")
+def abrir_modal_compras():
+    if compras_recentes.empty:
+        st.info("Nenhuma compra recente encontrada.")
+        return
+
+    compras_view = compras_recentes.copy()
+    compras_view["DataFormatada"] = pd.to_datetime(compras_view["DataCompra"]).dt.strftime("%d/%m/%Y")
+    agrupado = compras_view.groupby("NumeroNF").agg({
+        "DataCompra": "first",
+        "DataFormatada": "first",
+        "NomeFornecedor": "first",
+        "Filial": "first",
+        "CodigoProduto": "count",
+        "Fabricante": lambda x: ", ".join(sorted(x.dropna().unique())),
+    }).reset_index()
+    agrupado = agrupado.sort_values(["DataCompra", "NomeFornecedor", "NumeroNF"], ascending=[False, True, True]).reset_index(drop=True)
+
+    busca_compra = st.text_input("Buscar", placeholder="Fornecedor, fabricante ou NF", key="busca_compra_modal")
+    if busca_compra:
+        mask = (
+            agrupado["NomeFornecedor"].str.contains(busca_compra, case=False, na=False) |
+            agrupado["Fabricante"].str.contains(busca_compra, case=False, na=False) |
+            agrupado["NumeroNF"].astype(str).str.contains(busca_compra, case=False, na=False)
+        )
+        agrupado = agrupado[mask]
+
+    if agrupado.empty:
+        st.info("Nenhuma compra encontrada com os filtros atuais.")
+        return
+
+    df_display = agrupado[["Filial", "DataFormatada", "NomeFornecedor", "NumeroNF", "CodigoProduto", "Fabricante"]].copy()
+    df_display.columns = ["FILIAL", "DATA", "FORNECEDOR", "NF", "ITENS", "FABRICANTES"]
+
+    event = st.dataframe(
+        df_display,
+        use_container_width=True,
+        hide_index=True,
+        on_select="rerun",
+        selection_mode="single-row",
+        height=min(400, max(200, len(df_display) * 35 + 40))
+    )
+
+    if event.selection.rows:
+        selected_idx = event.selection.rows[0]
+        selected_nf = str(df_display.iloc[selected_idx]["NF"])
+        st.session_state["nf_num"] = selected_nf
+        st.session_state["auto_consultar"] = True
+        st.rerun()
+
 if "show_params" not in st.session_state: st.session_state.show_params = False
 if "view" not in st.session_state: st.session_state["view"] = "calculadora"
 
@@ -275,75 +325,13 @@ with f_prod:
 # LINHA 2: BOTÕES
 # ============================================================
 st.write("")
-b1, b2, b3, b4, b5, b6 = st.columns([1, 1, 1, 1.2, 1.5, 1.2])
+b0, b1, b2, b3, b4, b5, b6 = st.columns([1.2, 1, 1, 1, 1.2, 1.5, 1.2])
 
 if "nf_num" not in st.session_state: st.session_state["nf_num"] = None
 
-# ============================================================
-# SEÇÃO DE COMPRAS RECENTES (EM EXPANDER)
-# ============================================================
-if not compras_recentes.empty:
-    with st.expander("📦 Últimas Compras (Clique para buscar e selecionar)", expanded=False):
-        
-        # Se já tem uma NF selecionada, mostra o status e o botão de limpar
-        if st.session_state.get("nf_num"):
-            col_msg, col_btn = st.columns([4, 1])
-            with col_msg:
-                st.success(f"✅ Compra selecionada: **NF {st.session_state['nf_num']}**")
-            with col_btn:
-                if st.button("Limpar Seleção", use_container_width=True):
-                    st.session_state["nf_num"] = None
-                    st.rerun()
-        
-        compras_recentes["DataFormatada"] = pd.to_datetime(compras_recentes["DataCompra"]).dt.strftime('%d/%m/%Y')
-        
-        agrupado = compras_recentes.groupby("NumeroNF").agg({
-            "DataCompra": "first",
-            "DataFormatada": "first",
-            "NomeFornecedor": "first",
-            "Filial": "first",
-            "CodigoProduto": "count",
-            "Fabricante": lambda x: ", ".join(sorted(x.dropna().unique())),
-        }).reset_index()
-        
-        agrupado = agrupado.sort_values(
-            ["DataCompra", "NomeFornecedor", "NumeroNF"],
-            ascending=[False, True, True]
-        ).reset_index(drop=True)
-        
-        busca_compra = st.text_input("Buscar", placeholder="Digite Fornecedor, Fabricante ou NF para filtrar...")
-        
-        if busca_compra:
-            mask = (
-                agrupado["NomeFornecedor"].str.contains(busca_compra, case=False, na=False) |
-                agrupado["Fabricante"].str.contains(busca_compra, case=False, na=False) |
-                agrupado["NumeroNF"].astype(str).str.contains(busca_compra, case=False, na=False)
-            )
-            agrupado = agrupado[mask]
-            
-        if agrupado.empty:
-            st.info("Nenhuma compra encontrada com os filtros atuais.")
-        else:
-            df_display = agrupado[["Filial", "DataFormatada", "NomeFornecedor", "NumeroNF", "CodigoProduto", "Fabricante"]].copy()
-            df_display.columns = ["FILIAL", "DATA", "FORNECEDOR", "NF", "ITENS", "FABRICANTES"]
-            
-            event = st.dataframe(
-                df_display,
-                use_container_width=True,
-                hide_index=True,
-                on_select="rerun",
-                selection_mode="single-row",
-                height=min(300, max(150, len(df_display) * 35 + 40))
-            )
-            
-            if event.selection.rows:
-                selected_idx = event.selection.rows[0]
-                selected_nf = str(df_display.iloc[selected_idx]["NF"])
-                
-                # Só atualiza se for uma NF diferente para evitar loop de rerun
-                if st.session_state.get("nf_num") != selected_nf:
-                    st.session_state["nf_num"] = selected_nf
-                    st.rerun()
+with b0:
+    if st.button("📦 Últimas Compras", use_container_width=True, key="btn_ultimas_compras"):
+        abrir_modal_compras()
 
 with b1: btn_consultar = st.button("🔍 Consultar", use_container_width=True, key="btn_consultar")
 with b2: st.button("🧹 Limpar", use_container_width=True, on_click=_limpar_filtros, key="btn_limpar")
@@ -360,6 +348,15 @@ with b5:
     
 with b6:
     btn_pdf_global = st.button("📄 Gerar PDF", use_container_width=True, disabled=(filial_pdf is None), key="btn_pdf")
+
+if st.session_state.get("nf_num"):
+    c_success, c_clear = st.columns([5, 1])
+    with c_success:
+        st.success(f"✅ Compra selecionada: **NF {st.session_state['nf_num']}**")
+    with c_clear:
+        if st.button("Limpar Seleção", key="btn_limpar_selecao_nf", use_container_width=True):
+            st.session_state["nf_num"] = None
+            st.rerun()
 
 if produto_busca and produto_busca.strip() and not bloqueado:
     st.markdown(
@@ -659,7 +656,10 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
 # ============================================================
 # CONSULTAR E EXPORTAR
 # ============================================================
-if btn_consultar:
+executar_consulta = btn_consultar or st.session_state.get("auto_consultar", False)
+
+if executar_consulta:
+    st.session_state["auto_consultar"] = False  # Reseta o gatilho
     produto_preenchido = bool(produto_busca and produto_busca.strip())
     if produto_preenchido and not bloqueado:
         fabricante_filtro, departamento_filtro, grupo_filtro, subgrupo_filtro = "", "", "", ""
