@@ -261,9 +261,12 @@ if st.session_state.get("nf_sel") == "Nenhuma":
 bloqueado = st.session_state.get("nf_sel", "Nenhuma") != "Nenhuma"
 
 # ============================================================
-# LINHA 1: FILTROS
+# LINHA 1: FILTROS + BUSCA DE COMPRA
 # ============================================================
-f_periodo, f_fab, f_depto, f_grupo, f_sub, f_prod = st.columns([1.3, 1.6, 1.0, 1.0, 1.0, 1.5], vertical_alignment="bottom")
+f_busca, f_periodo, f_fab, f_depto, f_grupo, f_sub, f_prod = st.columns([1.5, 1.2, 1.4, 1.0, 1.0, 1.0, 1.3], vertical_alignment="bottom")
+
+with f_busca:
+    busca_compra = st.text_input("Buscar Compra", placeholder="Fornecedor, NF ou Fabricante...", key="busca_compra", disabled=bloqueado)
 
 with f_periodo:
     lista_periodo = ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás", "30 dias atrás", "15 dias atrás", "7 dias atrás"]
@@ -276,7 +279,7 @@ with f_grupo: grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()
 with f_sub: subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel", disabled=bloqueado)
 with f_prod:
     produto_busca = st.text_input(
-        "Produto", placeholder='Ex: CAIXA QUADRADA (E) | CAPA, CAPUZ (OU)', key="produto_busca", disabled=bloqueado,
+        "Produto", placeholder='Ex: CAIXA QUADRADA (E)', key="produto_busca", disabled=bloqueado,
         help="Busca por produto com E / OU. Se preenchido, ignora os outros filtros."
     )
 
@@ -314,9 +317,6 @@ with f_compra:
             agrupado["CodigoProduto"].astype(str) + " itens | " +
             agrupado["Fabricante"]
         )
-        
-        # Campo de busca exata
-        busca_compra = st.text_input("Buscar Compra", placeholder="Digite fornecedor, NF ou fabricante...", label_visibility="collapsed", key="busca_compra")
         
         if busca_compra:
             agrupado = agrupado[agrupado["Label"].str.contains(busca_compra, case=False, na=False)]
