@@ -26,96 +26,137 @@ st.set_page_config(page_title="Reposição de Produtos", layout="wide", page_ico
 
 
 st.markdown("""
-<style>
-    :root {
-        --ops-bg: #0b1220;
-        --ops-panel: #111c2e;
-        --ops-panel-2: #162338;
-        --ops-border: rgba(148, 163, 184, .18);
-        --ops-text: #e5edf7;
-        --ops-muted: #91a2b8;
-        --ops-accent: #38bdf8;
-        --ops-success: #34d399;
-        --ops-warning: #fbbf24;
-        --ops-danger: #fb7185;
-    }
-    #MainMenu, footer, .stAppDeployButton { visibility: hidden; }
-    header { height: 0; }
-    .stApp { background: var(--ops-bg); }
-    .block-container {
-        max-width: 1680px !important;
-        padding: 1.25rem 2rem 3rem !important;
-    }
-    .ops-header {
-        display:flex; align-items:center; justify-content:space-between; gap:1rem;
-        padding: 1.1rem 1.35rem; margin: 0 0 1.1rem 0;
-        border:1px solid var(--ops-border); border-radius:14px;
-        background:linear-gradient(115deg, #14243a 0%, #101a2b 70%, #102b40 100%);
-    }
-    .ops-kicker { color:var(--ops-accent); font-size:.72rem; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }
-    .ops-title { color:var(--ops-text); font-size:1.65rem; line-height:1.2; font-weight:800; margin:.15rem 0 .25rem; }
-    .ops-subtitle { color:var(--ops-muted); font-size:.86rem; }
-    .ops-header-mark { font-size:2rem; opacity:.9; padding: .3rem .65rem; }
-    .section-heading {
-        display:flex; align-items:center; gap:.55rem; margin:.6rem 0 .7rem;
-        color:var(--ops-text); font-size:1rem; font-weight:750;
-    }
-    .section-note { color:var(--ops-muted); font-size:.78rem; margin-top:-.35rem; margin-bottom:.8rem; }
-    div[data-testid="stVerticalBlockBorderWrapper"] { border-color:var(--ops-border); border-radius:12px; }
-    div[data-testid="stMetric"] {
-        background:var(--ops-panel); border:1px solid var(--ops-border);
-        border-radius:11px; padding:.75rem .9rem;
-    }
-    div[data-testid="stMetricLabel"] { color:var(--ops-muted); font-size:.78rem; }
-    div[data-testid="stMetricValue"] { color:var(--ops-text); font-weight:800; }
-    .metric-grid {
-        display:grid; grid-template-columns:repeat(auto-fit, minmax(145px, 1fr));
-        gap:.65rem; margin:.8rem 0 1.1rem;
-    }
-    .metric-card {
-        background:linear-gradient(145deg, var(--ops-panel), var(--ops-panel-2));
-        border:1px solid var(--ops-border); border-radius:11px; padding:.8rem .7rem;
-        min-width:0;
-    }
-    .metric-card-title { color:var(--ops-text); font-size:.8rem; font-weight:800; text-align:center; padding-bottom:.45rem; border-bottom:1px solid var(--ops-border); }
-    .metric-card-row, .metric-card-values { display:flex; justify-content:space-around; gap:.5rem; }
-    .metric-card-row { color:var(--ops-muted); font-size:.7rem; margin-top:.55rem; }
-    .metric-card-values { color:var(--ops-text); font-size:1.2rem; font-weight:850; margin-top:.12rem; }
-    .stTabs [data-baseweb="tab-list"] { gap:.35rem; border-bottom:1px solid var(--ops-border); }
-    .stTabs [data-baseweb="tab"] { padding:.65rem 1rem; font-weight:650; }
-    .stTabs [aria-selected="true"] { color:var(--ops-accent) !important; }
-    div[data-testid="stDataFrame"] { border:1px solid var(--ops-border); border-radius:10px; overflow:hidden; }
-    div[data-testid="stDataFrame"] div[role="columnheader"] { justify-content:center !important; text-align:center !important; }
-    div[data-testid="stButton"] button, div[data-testid="stDownloadButton"] button {
-        min-height:2.55rem; border-radius:9px; font-weight:700; transition:all .15s ease;
-    }
-    .st-key-btn_consultar button { background:#0284c7 !important; color:white !important; border:1px solid #0ea5e9 !important; }
-    .st-key-btn_consultar button:hover { background:#0369a1 !important; }
-    .st-key-btn_limpar button { background:transparent !important; color:#fda4af !important; border:1px solid #9f1239 !important; }
-    .st-key-btn_parametros button { background:#1e293b !important; color:#dbeafe !important; border:1px solid #475569 !important; }
-    .st-key-btn_manual button { background:#123b38 !important; color:#a7f3d0 !important; border:1px solid #047857 !important; }
-    .st-key-btn_pdf button { background:#713f12 !important; color:#fde68a !important; border:1px solid #a16207 !important; }
-    .st-key_btn_download_pdf button { background:#155e75 !important; color:white !important; }
-    .rodape { position:fixed; bottom:8px; right:14px; font-size:.7rem; color:#64748b; z-index:1000; }
-    @media (max-width: 900px) {
-        .block-container { padding: .8rem .8rem 3rem !important; }
-        .ops-title { font-size:1.35rem; }
-        .ops-header { padding:.9rem; }
-    }
-</style>
+    <style>
+        /* --- LIMPEZA DA TELA --- */
+        #MainMenu {visibility: hidden;}
+        header {visibility: hidden;}
+        footer {visibility: hidden;}
+        .stAppDeployButton {display: none;}
+
+        .block-container {
+            padding-top: 1.5rem !important;
+            padding-bottom: 2rem !important;
+            padding-left: 0.8rem !important;
+            padding-right: 0.8rem !important;
+            max-width: 100% !important;
+        }
+
+        .titulo-pagina {
+            font-size: 1.6rem;
+            font-weight: 700;
+            text-align: center;
+            margin: 0 0 15px 0;
+            padding: 0;
+            color: #FAFAFA;
+            line-height: 1.2;
+        }
+        
+        .secao-titulo {
+            font-size: 1.05rem;
+            font-weight: bold;
+            padding: 6px 0;
+            margin-top: 10px;
+            margin-bottom: 6px;
+            border-bottom: 2px solid #334155;
+        }
+        
+        .rodape {
+            position: fixed;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.75rem;
+            color: #64748B;
+            z-index: 1000;
+        }
+
+        /* Abas centralizadas */
+        .stTabs [data-baseweb="tab-list"] {
+            justify-content: center;
+            gap: 4px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            font-size: 0.88rem;
+            padding: 8px 18px;
+        }
+
+        /* --- GRID RESPONSIVO PARA MÉTRICAS --- */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+        .metric-card {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+        .metric-card-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #F8FAFC;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 4px;
+        }
+        .metric-card-row {
+            display: flex;
+            justify-content: space-around;
+            font-size: 0.75rem;
+            color: #94A3B8;
+            margin-bottom: 4px;
+        }
+        .metric-card-values {
+            display: flex;
+            justify-content: space-around;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #F8FAFC;
+        }
+
+        /* --- ESTILIZAÇÃO DOS BOTÕES --- */
+        div[data-testid="stButton"] button,
+        div[data-testid="stDownloadButton"] button {
+            width: 100% !important;
+            height: 42px !important;
+            padding: 4px 2px !important;
+            font-size: 1.05rem !important;
+            border-radius: 6px !important;
+            font-weight: 600 !important;
+            transition: all 0.2s;
+        }
+
+        .st-key-btn_consultar button { background-color: #2563EB !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_consultar button:hover { background-color: #1D4ED8 !important; }
+        
+        .st-key-btn_limpar button { background-color: #DC2626 !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_limpar button:hover { background-color: #B91C1C !important; }
+        
+        .st-key-btn_parametros button { background-color: #7C3AED !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_parametros button:hover { background-color: #6D28D9 !important; }
+        
+        .st-key-btn_manual button { background-color: #059669 !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_manual button:hover { background-color: #047857 !important; }
+        
+        .st-key-btn_pdf button { background-color: #D97706 !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_pdf button:hover { background-color: #B45309 !important; }
+        .st-key-btn_pdf button:disabled { background-color: #334155 !important; color: #94A3B8 !important; cursor: not-allowed; }
+        
+        .st-key-btn_download_pdf button { background-color: #0891B2 !important; color: #FFFFFF !important; border: none !important; }
+        .st-key-btn_download_pdf button:hover { background-color: #0E7490 !important; }
+
+        div[data-testid="stDataFrame"] div[role="columnheader"] {
+            justify-content: center !important;
+            text-align: center !important;
+        }
+    </style>
 """, unsafe_allow_html=True)
 
 
-st.markdown("""
-<div class="ops-header">
-  <div>
-    <div class="ops-kicker">Painel operacional · Abastecimento</div>
-    <div class="ops-title">Reposição de Produtos</div>
-    <div class="ops-subtitle">Central de análise, transferência entre filiais e planejamento de compras</div>
-  </div>
-  <div class="ops-header-mark">📦</div>
-</div>
-""", unsafe_allow_html=True)
+st.markdown('<div class="titulo-pagina">Reposição de Produtos</div>', unsafe_allow_html=True)
 
 
 PRIO_TXT = {1: "CRÍTICA", 2: "ALTA", 3: "NORMAL"}
@@ -212,67 +253,67 @@ if "nf_num" not in st.session_state: st.session_state["nf_num"] = None
 bloqueado = st.session_state.get("nf_num") is not None
 
 # ============================================================
-# FILTROS OPERACIONAIS
+# LINHA 1: FILTROS (Exibidos apenas se não houver NF selecionada)
 # ============================================================
-lista_periodo = ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás", "30 dias atrás", "15 dias atrás", "7 dias atrás"]
-idx_p = lista_periodo.index(st.session_state.get("opcao_data", "1 ano atrás")) if st.session_state.get("opcao_data") in lista_periodo else 0
+f_periodo, f_fab, f_depto, f_grupo, f_sub, f_prod = st.columns([1.3, 1.6, 1.0, 1.0, 1.0, 1.5], vertical_alignment="bottom")
 
-with st.container(border=True):
-    st.markdown('<div class="section-heading">⌕ Critérios da consulta</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-note">Use os filtros para delimitar a análise. A busca por produto tem precedência sobre os demais filtros.</div>', unsafe_allow_html=True)
-    f_periodo, f_fab, f_depto, f_grupo, f_sub, f_prod = st.columns([1.25, 1.45, 1.05, 1.05, 1.05, 1.55], vertical_alignment="bottom")
-    with f_periodo:
-        st.selectbox("Período de análise", lista_periodo, index=idx_p, key="opcao_data", disabled=bloqueado)
-    with f_fab:
-        fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel", disabled=bloqueado)
-    with f_depto:
-        depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel", disabled=bloqueado)
-    with f_grupo:
-        grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()), key="grupo_sel", disabled=bloqueado)
-    with f_sub:
-        subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel", disabled=bloqueado)
-    with f_prod:
-        produto_busca = st.text_input("Produto", placeholder="Ex.: CAIXA QUADRADA (E)", key="produto_busca", disabled=bloqueado,
-            help="Busca por produto com E / OU. Se preenchido, ignora os outros filtros.")
+with f_periodo:
+    lista_periodo = ["1 ano atrás", "6 meses atrás", "3 meses atrás", "2 meses atrás", "30 dias atrás", "15 dias atrás", "7 dias atrás"]
+    idx_p = lista_periodo.index(st.session_state.get("opcao_data", "1 ano atrás")) if st.session_state.get("opcao_data") in lista_periodo else 0
+    st.selectbox("Período de Análise", lista_periodo, index=idx_p, key="opcao_data", disabled=bloqueado)
+
+with f_fab: fabricante_sel = st.selectbox("Fabricante", ["(todos)"] + list(fabricantes.keys()), key="fabricante_sel", disabled=bloqueado)
+with f_depto: depto_sel = st.selectbox("Departamento", ["(todos)"] + list(departamentos.keys()), key="depto_sel", disabled=bloqueado)
+with f_grupo: grupo_sel = st.selectbox("Grupo", ["(todos)"] + list(grupos.keys()), key="grupo_sel", disabled=bloqueado)
+with f_sub: subgrupo_sel = st.selectbox("Subgrupo", ["(todos)"] + list(subgrupos.keys()), key="subgrupo_sel", disabled=bloqueado)
+with f_prod:
+    produto_busca = st.text_input(
+        "Produto", placeholder='Ex: CAIXA QUADRADA (E)', key="produto_busca", disabled=bloqueado,
+        help="Busca por produto com E / OU. Se preenchido, ignora os outros filtros."
+    )
 
 # ============================================================
 # LINHA 2: BOTÕES
 # ============================================================
 st.write("")
-st.markdown('<div class="section-heading">⚡ Ações</div>', unsafe_allow_html=True)
-b1, b2, b3, b4, b5, b6 = st.columns([1.05, .85, 1.05, 1.25, 1.45, 1.15], vertical_alignment="bottom")
+b1, b2, b3, b4, b5, b6 = st.columns([1, 1, 1, 1.2, 1.5, 1.2])
 
 if "nf_num" not in st.session_state: st.session_state["nf_num"] = None
 
 # ============================================================
-# COMPRAS RECENTES / CONTEXTO DE NF
+# SEÇÃO DE COMPRAS RECENTES (EM EXPANDER)
 # ============================================================
 if not compras_recentes.empty:
-    with st.expander("📦 Compras recentes · selecionar uma NF", expanded=False):
+    with st.expander("📦 Últimas Compras (Clique para buscar e selecionar)", expanded=False):
+        
+        # Se já tem uma NF selecionada, mostra o status e o botão de limpar
         if st.session_state.get("nf_num"):
-            c_msg, c_clear = st.columns([5, 1])
-            with c_msg:
-                st.success(f"Compra selecionada: NF {st.session_state['nf_num']}")
-            with c_clear:
-                if st.button("Limpar NF", use_container_width=True, key="btn_limpar_nf_top"):
+            col_msg, col_btn = st.columns([4, 1])
+            with col_msg:
+                st.success(f"✅ Compra selecionada: **NF {st.session_state['nf_num']}**")
+            with col_btn:
+                if st.button("Limpar Seleção", use_container_width=True):
                     st.session_state["nf_num"] = None
                     st.rerun()
-
-        compras_view = compras_recentes.copy()
-        compras_view["DataFormatada"] = pd.to_datetime(compras_view["DataCompra"]).dt.strftime("%d/%m/%Y")
-        agrupado = compras_view.groupby("NumeroNF").agg({
-            "DataCompra": "first", "DataFormatada": "first", "NomeFornecedor": "first",
-            "Filial": "first", "CodigoProduto": "count",
+        
+        compras_recentes["DataFormatada"] = pd.to_datetime(compras_recentes["DataCompra"]).dt.strftime('%d/%m/%Y')
+        
+        agrupado = compras_recentes.groupby("NumeroNF").agg({
+            "DataCompra": "first",
+            "DataFormatada": "first",
+            "NomeFornecedor": "first",
+            "Filial": "first",
+            "CodigoProduto": "count",
             "Fabricante": lambda x: ", ".join(sorted(x.dropna().unique())),
         }).reset_index()
-        agrupado = agrupado.sort_values(["DataCompra", "NomeFornecedor", "NumeroNF"],
-            ascending=[False, True, True]).reset_index(drop=True)
-
-        c_search, c_hint = st.columns([2, 3])
-        with c_search:
-            busca_compra = st.text_input("Buscar compra", placeholder="Fornecedor, fabricante ou NF", key="busca_compra")
-        with c_hint:
-            st.caption("Selecione uma linha para contextualizar a análise com os itens da nota.")
+        
+        agrupado = agrupado.sort_values(
+            ["DataCompra", "NomeFornecedor", "NumeroNF"],
+            ascending=[False, True, True]
+        ).reset_index(drop=True)
+        
+        busca_compra = st.text_input("Buscar", placeholder="Digite Fornecedor, Fabricante ou NF para filtrar...")
+        
         if busca_compra:
             mask = (
                 agrupado["NomeFornecedor"].str.contains(busca_compra, case=False, na=False) |
@@ -280,19 +321,29 @@ if not compras_recentes.empty:
                 agrupado["NumeroNF"].astype(str).str.contains(busca_compra, case=False, na=False)
             )
             agrupado = agrupado[mask]
+            
         if agrupado.empty:
             st.info("Nenhuma compra encontrada com os filtros atuais.")
         else:
             df_display = agrupado[["Filial", "DataFormatada", "NomeFornecedor", "NumeroNF", "CodigoProduto", "Fabricante"]].copy()
             df_display.columns = ["FILIAL", "DATA", "FORNECEDOR", "NF", "ITENS", "FABRICANTES"]
-            event = st.dataframe(df_display, use_container_width=True, hide_index=True, on_select="rerun",
-                selection_mode="single-row", height=min(280, max(130, len(df_display) * 35 + 40)))
+            
+            event = st.dataframe(
+                df_display,
+                use_container_width=True,
+                hide_index=True,
+                on_select="rerun",
+                selection_mode="single-row",
+                height=min(300, max(150, len(df_display) * 35 + 40))
+            )
+            
             if event.selection.rows:
                 selected_idx = event.selection.rows[0]
                 selected_nf = str(df_display.iloc[selected_idx]["NF"])
+                
+                # Só atualiza se for uma NF diferente para evitar loop de rerun
                 if st.session_state.get("nf_num") != selected_nf:
                     st.session_state["nf_num"] = selected_nf
-                    st.session_state["auto_consultar"] = True  # <-- GATILHO
                     st.rerun()
 
 with b1: btn_consultar = st.button("🔍 Consultar", use_container_width=True, key="btn_consultar")
@@ -325,9 +376,6 @@ if btn_params: st.session_state.show_params = not st.session_state.show_params
 
 if st.session_state.show_params:
     with st.container(border=True):
-        st.markdown('<div class="section-heading">⚙️ Configuração do planejamento</div>', unsafe_allow_html=True)
-        st.caption("Parâmetros visuais e operacionais da consulta. As regras de cálculo permanecem no motor existente.")
-        st.markdown("**Escopo e horizonte**")
         r1c1, r1c2, r1c3, r1c4 = st.columns(4)
         
         with r1c1: 
@@ -350,7 +398,6 @@ if st.session_state.show_params:
             v_dc = st.number_input("Período de Compras (dias)", 1, 90, value=int(st.session_state.get("dias_compra", 30)), disabled=bloqueado)
             st.session_state["dias_compra"] = v_dc
 
-        st.markdown("**Política de estoque**")
         r2c1, r2c2, r2c3, r2c4 = st.columns(4)
         
         with r2c1: 
@@ -372,7 +419,6 @@ if st.session_state.show_params:
             v_ar = st.selectbox("Atacado tem Reserva?", lista_sn, index=idx_ar, disabled=bloqueado)
             st.session_state["atacado_reserva"] = v_ar
 
-        st.markdown("**Trânsito e proteção contra reposição repetida**")
         r3c1, r3c2, r3c3 = st.columns(3)
         
         with r3c1: 
@@ -614,11 +660,7 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
 # ============================================================
 # CONSULTAR E EXPORTAR
 # ============================================================
-executar_consulta = btn_consultar or st.session_state.get("auto_consultar", False)
-
-if executar_consulta:
-    st.session_state["auto_consultar"] = False # Reseta o gatilho para não rodar no próximo clique
-
+if btn_consultar:
     produto_preenchido = bool(produto_busca and produto_busca.strip())
     if produto_preenchido and not bloqueado:
         fabricante_filtro, departamento_filtro, grupo_filtro, subgrupo_filtro = "", "", "", ""
@@ -835,8 +877,6 @@ if "df_transf" in st.session_state:
         else:
             nomes = nomes_todos
 
-        st.markdown('<div class="section-heading">🏬 Visão por filial</div>', unsafe_allow_html=True)
-        st.caption("Acesse cada unidade para acompanhar transferências, compras e ações de estoque.")
         nomes_com_icone = [f"{icones_filial[n]} {n}" for n in nomes]
         tabs = st.tabs(nomes_com_icone)
 
@@ -942,10 +982,15 @@ if "df_transf" in st.session_state:
                 st.markdown(html_metrics, unsafe_allow_html=True)
                 st.write("")
 
-                st.markdown('<div class="section-heading">Movimentações e recomendações</div>', unsafe_allow_html=True)
-                st.caption("Escolha uma operação para consultar os itens da filial. Os indicadores acima permanecem consolidados.")
-                oper_tabs = st.tabs(['📤 Enviar', '📥 Receber', '🎯 Demonstrar', '⏸️ Descontinuar', '🔥 Liquidar', '🛒 Comprar'])
-                with oper_tabs[0]:
+                # ============================================================
+                # ABAS DE RESULTADOS (NA ORDEM SOLICITADA)
+                # ============================================================
+                tab_env, tab_rec, tab_comp, tab_dem, tab_desc, tab_liq = st.tabs([
+                    "📤 Enviar", "📥 Receber", "🛒 Comprar", "🎯 Demonstrar", "⏸️ Descontinuar", "🔥 Liquidar"
+                ])
+
+                # ---------------- ABA ENVIAR ----------------
+                with tab_env:
                     if df_env.empty:
                         st.caption("Nada a enviar")
                     else:
@@ -962,7 +1007,8 @@ if "df_transf" in st.session_state:
                             "RESERVA": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
                         }).set_properties(subset=["QTD TRANSF.", "EM TRÂNSITO", "RESERVA", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfe) * 36 + 42)))
 
-                with oper_tabs[1]:
+                # ---------------- ABA RECEBER ----------------
+                with tab_rec:
                     if df_rec.empty:
                         st.caption("Nada a receber")
                     else:
@@ -979,46 +1025,8 @@ if "df_transf" in st.session_state:
                             "DIAS P/ ZERAR": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
                         }).set_properties(subset=["QTD TRANSF.", "EM TRÂNSITO", "DIAS P/ ZERAR", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
 
-                with oper_tabs[2]:
-                    if df_dem.empty:
-                        st.caption("Nenhum produto para demonstração")
-                    else:
-                        dfm = df_dem.copy()
-                        dfm.insert(0, "#", range(1, len(dfm) + 1))
-                        dfm["Motivo"] = dfm["Motivo"].astype(str).str.upper()
-                        dfm = dfm[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "Motivo"]]
-                        dfm.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "MOTIVO"]
-                        st.dataframe(dfm.style.format({
-                            "QTD": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
-                        }).set_properties(subset=["QTD"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfm) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
-
-                with oper_tabs[3]:
-                    if df_desc.empty:
-                        st.caption("Nenhum produto para descontinuar")
-                    else:
-                        dfd = df_desc.copy(); dfd.insert(0, "#", range(1, len(dfd) + 1))
-                        dfd["Motivo"] = dfd["Motivo"].astype(str).str.upper()
-                        dfd = dfd[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "IdealOrigem", "Motivo"]]
-                        dfd.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD P/ DESC.", "QTD IDEAL", "MOTIVO"]
-                        st.dataframe(dfd.style.format({
-                            "QTD P/ DESC.": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
-                            "QTD IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
-                        }).set_properties(subset=["QTD P/ DESC.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfd) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
-
-                with oper_tabs[4]:
-                    if df_liq.empty:
-                        st.caption("Nenhum produto para liquidar")
-                    else:
-                        dfi = df_liq.copy(); dfi.insert(0, "#", range(1, len(dfi) + 1))
-                        dfi["Motivo"] = dfi["Motivo"].astype(str).str.upper()
-                        dfi = dfi[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "IdealOrigem", "Motivo"]]
-                        dfi.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD P/ LIQ.", "QTD IDEAL", "MOTIVO"]
-                        st.dataframe(dfi.style.format({
-                            "QTD P/ LIQ.": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
-                            "QTD IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
-                        }).set_properties(subset=["QTD P/ LIQ.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfi) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
-
-                with oper_tabs[5]:
+                # ---------------- ABA COMPRAR ----------------
+                with tab_comp:
                     if df_comp_view.empty:
                         st.caption("Nenhuma compra sugerida no momento")
                     else:
@@ -1046,6 +1054,48 @@ if "df_transf" in st.session_state:
                                 "SUGESTÃO": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
                                 "IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
                             }).set_properties(subset=["VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
+
+                # ---------------- ABA DEMONSTRAR ----------------
+                with tab_dem:
+                    if df_dem.empty:
+                        st.caption("Nenhum produto para demonstração")
+                    else:
+                        dfm = df_dem.copy()
+                        dfm.insert(0, "#", range(1, len(dfm) + 1))
+                        dfm["Motivo"] = dfm["Motivo"].astype(str).str.upper()
+                        dfm = dfm[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "Motivo"]]
+                        dfm.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "MOTIVO"]
+                        st.dataframe(dfm.style.format({
+                            "QTD": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                        }).set_properties(subset=["QTD"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfm) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
+
+                # ---------------- ABA DESCONTINUAR ----------------
+                with tab_desc:
+                    if df_desc.empty:
+                        st.caption("Nenhum produto para descontinuar")
+                    else:
+                        dfd = df_desc.copy(); dfd.insert(0, "#", range(1, len(dfd) + 1))
+                        dfd["Motivo"] = dfd["Motivo"].astype(str).str.upper()
+                        dfd = dfd[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "IdealOrigem", "Motivo"]]
+                        dfd.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD P/ DESC.", "QTD IDEAL", "MOTIVO"]
+                        st.dataframe(dfd.style.format({
+                            "QTD P/ DESC.": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                            "QTD IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                        }).set_properties(subset=["QTD P/ DESC.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfd) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
+
+                # ---------------- ABA LIQUIDAR ----------------
+                with tab_liq:
+                    if df_liq.empty:
+                        st.caption("Nenhum produto para liquidar")
+                    else:
+                        dfi = df_liq.copy(); dfi.insert(0, "#", range(1, len(dfi) + 1))
+                        dfi["Motivo"] = dfi["Motivo"].astype(str).str.upper()
+                        dfi = dfi[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "NomeFilialOrigem", "NomeFilialDestino", "QtdTransferir", "IdealOrigem", "Motivo"]]
+                        dfi.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD P/ LIQ.", "QTD IDEAL", "MOTIVO"]
+                        st.dataframe(dfi.style.format({
+                            "QTD P/ LIQ.": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                            "QTD IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                        }).set_properties(subset=["QTD P/ LIQ.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfi) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
 
 if btn_manual:
     st.session_state["view"] = "manual"
