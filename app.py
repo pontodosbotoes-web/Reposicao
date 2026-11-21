@@ -315,15 +315,26 @@ with f_compra:
             agrupado["Fabricante"]
         )
         
-        label_to_nf = dict(zip(agrupado["Label"], agrupado["NumeroNF"].astype(str)))
-        opcoes_nf = ["Nenhuma"] + agrupado["Label"].tolist()
-        nf_selecionada = st.selectbox(
-            "📦 Últimas Compras", 
-            opcoes_nf, 
-            key="nf_sel"
-        )
+        # Campo de busca exata
+        busca_compra = st.text_input("Buscar Compra", placeholder="Digite fornecedor, NF ou fabricante...", label_visibility="collapsed", key="busca_compra")
         
-        st.session_state["nf_num"] = label_to_nf.get(nf_selecionada) if nf_selecionada != "Nenhuma" else None
+        if busca_compra:
+            agrupado = agrupado[agrupado["Label"].str.contains(busca_compra, case=False, na=False)]
+            
+        if agrupado.empty:
+            opcoes_nf = ["Nenhuma compra encontrada"]
+            st.selectbox("📦 Últimas Compras", opcoes_nf, key="nf_sel", disabled=True)
+            nf_selecionada = "Nenhuma"
+            st.session_state["nf_num"] = None
+        else:
+            label_to_nf = dict(zip(agrupado["Label"], agrupado["NumeroNF"].astype(str)))
+            opcoes_nf = ["Nenhuma"] + agrupado["Label"].tolist()
+            nf_selecionada = st.selectbox(
+                "📦 Últimas Compras", 
+                opcoes_nf, 
+                key="nf_sel"
+            )
+            st.session_state["nf_num"] = label_to_nf.get(nf_selecionada) if nf_selecionada != "Nenhuma" else None
     else:
         nf_selecionada = "Nenhuma"
         st.session_state["nf_num"] = None
