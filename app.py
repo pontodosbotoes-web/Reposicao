@@ -516,18 +516,18 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
         
         if tipo == "ENV":
             heads = ["#", "PRI.", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "TRANS.", "RES.", "IDEAL", "MOTIVO"]
-            widths = [28, 34, 45, 150, 30, 120, 55, 55, 36, 40, 40, 36, 180]
+            widths = [28, 34, 45, 180, 30, 100, 55, 55, 36, 40, 40, 36, 170]
             mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["ReservaOrigem"]), "R"), (fmt_qtd(r["Qtd Ideal"]), "R"), (str(r["Motivo"]).upper(), "L")]
         
         elif tipo == "REC":
-            heads = ["#", "PRI.", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "TRANS.", "DIAS", "IDEAL", "MOTIVO"]
-            widths = [28, 34, 45, 150, 30, 120, 55, 55, 36, 40, 40, 36, 180]
-            mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"), (fmt_qtd(r["Qtd Ideal"]), "R"), (str(r["Motivo"]).upper(), "L")]
+            heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "TRANS.", "DIAS", "IDEAL", "MOTIVO"]
+            widths = [28, 45, 184, 30, 120, 55, 55, 36, 40, 40, 36, 180]
+            mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"), (fmt_qtd(r["Qtd Ideal"]), "R"), (str(r["Motivo"]).upper(), "L")]
 
         elif tipo == "COMP":
             if cod == 5:
                 heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN.", "MOTIVO"]
-                widths = [28, 45, 160, 30, 110, 50, 40, 50, 50, 60, 150]
+                widths = [28, 45, 180, 30, 95, 50, 40, 50, 50, 60, 150]
                 mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (fmt_qtd(r["QtdSugerida"]), "R"), (f"R$ {r['Custo']:.2f}", "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (str(r["Motivo"]).upper(), "L")]
             else:
                 heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN.", "MOTIVO"]
@@ -536,7 +536,7 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
 
         elif tipo == "DEM":
             heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "MOTIVO"]
-            widths = [28, 45, 170, 30, 120, 60, 85, 50, 200]
+            widths = [28, 45, 190, 30, 105, 60, 85, 50, 195]
             mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (str(r["Motivo"]).upper(), "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
@@ -567,7 +567,22 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
     # NOVO: Bloco "Itens da NF" no topo do PDF
     # ================================================
     if df_nf_pdf is not None and not df_nf_pdf.empty:
-        elements.append(Paragraph(f"<b>📋 ITENS DA NF {num_nf}</b>", filial_style))
+        # Extrai fornecedor e fabricantes para o título
+        fornecedor_nf = ""
+        if "NomeFornecedor" in df_nf_pdf.columns and not df_nf_pdf["NomeFornecedor"].dropna().empty:
+            fornecedor_nf = str(df_nf_pdf["NomeFornecedor"].dropna().iloc[0])
+        
+        fabricantes_nf = sorted(df_nf_pdf["Fabricante"].dropna().unique().tolist()) if "Fabricante" in df_nf_pdf.columns else []
+        fabricantes_str = ", ".join(fabricantes_nf)
+        
+        # Monta o título
+        titulo_nf = f"ITENS COMPRADOS DA NF {num_nf}"
+        if fornecedor_nf:
+            titulo_nf += f" - {fornecedor_nf}"
+        if fabricantes_str:
+            titulo_nf += f" ({fabricantes_str})"
+        
+        elements.append(Paragraph(f"<b>{titulo_nf}</b>", filial_style))
         elements.append(Spacer(1, 4))
         
         df_nf_tab = df_nf_pdf.copy()
@@ -576,15 +591,18 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
         )
         df_nf_tab.insert(0, "#", range(1, len(df_nf_tab) + 1))
         
-        nf_heads = ["#", "COD", "PRODUTO", "FABRICANTE", "QTD COMPRADA", "QTD IDEAL"]
-        nf_widths = [28, 55, 350, 150, 70, 60]
+        nf_heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "QTD COMPRADA", "QTD IDEAL"]
+        nf_widths = [28, 55, 340, 30, 130, 70, 60]
         
         nf_data = [[Paragraph(h, header_style) for h in nf_heads]]
         for _, row in df_nf_tab.iterrows():
+            emb_valor = row.get("Embalagem", "")
+            if pd.isna(emb_valor): emb_valor = ""
             nf_data.append([
                 Paragraph(str(row["#"]), cell_center),
                 Paragraph(str(row["CodigoProduto"]), cell_center),
                 Paragraph(str(row["Produto"]), cell_style),
+                Paragraph(str(emb_valor), cell_center),
                 Paragraph(str(row["Fabricante"]), cell_style),
                 Paragraph(fmt_qtd(row["QtdComprada"]), cell_right),
                 Paragraph(fmt_qtd(row["QtdIdealFilial"]), cell_right),
