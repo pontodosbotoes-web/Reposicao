@@ -13,6 +13,7 @@ SELECT
     i.IdProduto,
     p.CODPRODUTO AS CodigoProduto,
     p.NOMEPRODUTO AS Produto,
+    p.UNID AS Embalagem,
     f.NOMEFABR AS Fabricante,
     CASE 
         WHEN ISNULL(p.ProdutoPesavel, 'N') = 'S' 
