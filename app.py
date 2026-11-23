@@ -496,7 +496,7 @@ def fmt_qtd(val):
     except:
         return str(val)
 
-def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_perfil, parametros_texto):
+def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_perfil, parametros_texto, df_nf_pdf=None, ideals_dict=None, num_nf=None):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=15, leftMargin=15, topMargin=35, bottomMargin=25)
     elements = []
@@ -562,6 +562,53 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
         ]))
         return t
+
+    # ================================================
+    # NOVO: Bloco "Itens da NF" no topo do PDF
+    # ================================================
+    if df_nf_pdf is not None and not df_nf_pdf.empty:
+        elements.append(Paragraph(f"<b>📋 ITENS DA NF {num_nf}</b>", filial_style))
+        elements.append(Spacer(1, 4))
+        
+        df_nf_tab = df_nf_pdf.copy()
+        df_nf_tab["QtdIdealFilial"] = df_nf_tab["CodigoProduto"].apply(
+            lambda cp: (ideals_dict or {}).get((str(cp), cod), 0)
+        )
+        df_nf_tab.insert(0, "#", range(1, len(df_nf_tab) + 1))
+        
+        nf_heads = ["#", "COD", "PRODUTO", "FABRICANTE", "QTD COMPRADA", "QTD IDEAL"]
+        nf_widths = [28, 55, 350, 150, 70, 60]
+        
+        nf_data = [[Paragraph(h, header_style) for h in nf_heads]]
+        for _, row in df_nf_tab.iterrows():
+            nf_data.append([
+                Paragraph(str(row["#"]), cell_center),
+                Paragraph(str(row["CodigoProduto"]), cell_center),
+                Paragraph(str(row["Produto"]), cell_style),
+                Paragraph(str(row["Fabricante"]), cell_style),
+                Paragraph(fmt_qtd(row["QtdComprada"]), cell_right),
+                Paragraph(fmt_qtd(row["QtdIdealFilial"]), cell_right),
+            ])
+        
+        t_nf = Table(nf_data, colWidths=nf_widths, repeatRows=1, hAlign='LEFT')
+        t_nf.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E293B')),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTSIZE', (0, 0), (-1, -1), 6.5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
+            ('GRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#CBD5E1')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
+        ]))
+        elements.append(t_nf)
+        elements.append(Spacer(1, 14))
+
+    # ================================================
+    # Código existente continua normalmente
+    # ================================================
+    df_env = df[df["CodigoFilialOrigem"] == cod].copy()
+    df_rec = df[df["CodigoFilialDestino"] == cod].copy()
 
     df_env = df[df["CodigoFilialOrigem"] == cod].copy()
     df_rec = df[df["CodigoFilialDestino"] == cod].copy()
@@ -812,11 +859,41 @@ if btn_pdf_global:
         cod_pdf = codigos_filial[filial_pdf]
         parametros_str = f"Cob: {cobertura}d | Lead: {lead_time}d | Res: {reserva}% | Piso: {piso} | Quarentena: {anti_gangorra}d | Trânsito: {dias_transito}d | Mín.Compra: {atacado_min_compra}"
         
+        # NOVO: Prepara dados da NF selecionada + ideals por filial para o PDF
+        df_nf_pdf = pd.DataFrame()
+        ideals_pdf = {}
+        num_nf_pdf = None
+        if bloqueado:
+            num_nf_pdf = st.session_state.get("nf_num")
+            if num_nf_pdf:
+                df_nf_pdf = compras_recentes[compras_recentes["NumeroNF"].astype(str) == str(num_nf_pdf)].copy()
+                df_base_local = st.session_state.get("df_base", pd.DataFrame())
+                if not df_base_local.empty and not df_nf_pdf.empty:
+                    cobertura_local = {"Para 7 dias": 7, "Para 15 dias": 15, "Para 30 dias": 30, "Para 2 meses": 60, "Para 3 meses": 90, "Para 6 meses": 180, "Para 1 ano": 365}.get(cobertura_opcao, 30)
+                    dias_local = cobertura_local + lead_time
+                    for _, row in df_base_local.iterrows():
+                        key = (str(row["CodigoProduto"]), int(row["CodigoFilial"]))
+                        pesavel = str(row.get("ProdutoPesavel", "N")).strip().upper() == "S"
+                        custo = float(row.get("CustoUnitario", 0))
+                        velocidade = float(row.get("VelocidadePeriodo", 0))
+                        cod_f = int(row["CodigoFilial"])
+                        piso_base = 0 if (cod_f == 5 and atacado_piso != "Sim") else piso
+                        if pesavel:
+                            piso_ajustado = 0.1
+                        elif custo >= 20.0:
+                            piso_ajustado = 1.0
+                        else:
+                            piso_ajustado = float(piso_base)
+                        ideal_raw = max(piso_ajustado, velocidade * dias_local)
+                        ideal = round(ideal_raw, 2) if pesavel else math.ceil(ideal_raw)
+                        ideals_pdf[key] = ideal
+        
         with st.spinner("Gerando PDF..."):
             try:
                 pdf_bytes, agora = gerar_pdf_filial(
                     filial_pdf, cod_pdf, df_atual, df_compras_atual, df_demonstracao_atual, 
-                    "Padrão", parametros_str
+                    "Padrão", parametros_str,
+                    df_nf_pdf=df_nf_pdf, ideals_dict=ideals_pdf, num_nf=num_nf_pdf
                 )
                 nome_file = filial_pdf.title().replace(" ", "")
                 st.session_state["pdf_bytes_global"] = (pdf_bytes, f"Reposicao {nome_file} {agora.strftime('%Y%m%d %H%M%S')}.pdf")
@@ -1014,8 +1091,8 @@ if "df_transf" in st.session_state:
                 # ============================================================
                 # ABAS DE RESULTADOS (NA ORDEM SOLICITADA)
                 # ============================================================
-                tab_env, tab_rec, tab_comp, tab_dem, tab_desc, tab_liq = st.tabs([
-                    "📤 Enviar", "📥 Receber", "🛒 Comprar", "🎯 Demonstrar", "⏸️ Descontinuar", "🔥 Liquidar"
+                tab_env, tab_rec, tab_dem, tab_desc, tab_liq, tab_comp = st.tabs([
+                    "📤 Enviar", "📥 Receber", "🎯 Demonstrar", "⏸️ Descontinuar", "🔥 Liquidar", "🛒 Comprar"
                 ])
 
                 # ---------------- ABA ENVIAR ----------------
@@ -1053,36 +1130,6 @@ if "df_transf" in st.session_state:
                             "EM TRÂNSITO": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
                             "DIAS P/ ZERAR": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
                         }).set_properties(subset=["QTD TRANSF.", "EM TRÂNSITO", "DIAS P/ ZERAR", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfr) * 36 + 42)))
-
-                # ---------------- ABA COMPRAR ----------------
-                with tab_comp:
-                    if df_comp_view.empty:
-                        st.caption("Nenhuma compra sugerida no momento")
-                    else:
-                        dfc = df_comp_view.copy()
-                        dfc.insert(0, "#", range(1, len(dfc) + 1))
-                        dfc["Motivo"] = dfc["Motivo"].astype(str).str.upper()
-
-                        if nome == "ATACADO":
-                            dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "Custo", "RetornoFinanceiro", "Motivo"]]
-                            dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
-                            dfc.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)", "MOTIVO"]
-                            st.dataframe(dfc.style.format({
-                                "CUSTO": "R$ {:.2f}",
-                                "RETORNO FIN. (R$)": "R$ {:.2f}",
-                                "SUGESTÃO": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
-                                "IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
-                            }).set_properties(subset=["VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
-                        else:
-                            dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "Custo", "RetornoFinanceiro", "Motivo"]]
-                            dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
-                            dfc.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)", "MOTIVO"]
-                            st.dataframe(dfc.style.format({
-                                "CUSTO": "R$ {:.2f}",
-                                "RETORNO FIN. (R$)": "R$ {:.2f}",
-                                "SUGESTÃO": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
-                                "IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
-                            }).set_properties(subset=["VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
 
                 # ---------------- ABA DEMONSTRAR ----------------
                 with tab_dem:
@@ -1125,6 +1172,36 @@ if "df_transf" in st.session_state:
                             "QTD P/ LIQ.": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
                             "QTD IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
                         }).set_properties(subset=["QTD P/ LIQ.", "QTD IDEAL"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfi) * 36 + 42)), column_config={"DESTINO": st.column_config.TextColumn("DESTINO", width="medium")})
+                        
+                # ---------------- ABA COMPRAR ----------------
+                with tab_comp:
+                    if df_comp_view.empty:
+                        st.caption("Nenhuma compra sugerida no momento")
+                    else:
+                        dfc = df_comp_view.copy()
+                        dfc.insert(0, "#", range(1, len(dfc) + 1))
+                        dfc["Motivo"] = dfc["Motivo"].astype(str).str.upper()
+
+                        if nome == "ATACADO":
+                            dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "Custo", "RetornoFinanceiro", "Motivo"]]
+                            dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
+                            dfc.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)", "MOTIVO"]
+                            st.dataframe(dfc.style.format({
+                                "CUSTO": "R$ {:.2f}",
+                                "RETORNO FIN. (R$)": "R$ {:.2f}",
+                                "SUGESTÃO": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                                "IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                            }).set_properties(subset=["VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
+                        else:
+                            dfc = dfc[["#", "CodigoProduto", "Produto", "Embalagem", "Fabricante", "Velocidade", "Ideal", "QtdSugerida", "Custo", "RetornoFinanceiro", "Motivo"]]
+                            dfc["Velocidade"] = dfc["Velocidade"].apply(lambda x: f"{x:.2f}")
+                            dfc.columns = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)", "MOTIVO"]
+                            st.dataframe(dfc.style.format({
+                                "CUSTO": "R$ {:.2f}",
+                                "RETORNO FIN. (R$)": "R$ {:.2f}",
+                                "SUGESTÃO": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                                "IDEAL": lambda x: f"{x:.2f}".replace(".", ",") if x != int(x) else str(int(x)),
+                            }).set_properties(subset=["VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN. (R$)"], **{"text-align": "right"}), use_container_width=True, hide_index=True, height=min(420, max(120, len(dfc) * 36 + 42)))
 
 if btn_manual:
     st.session_state["view"] = "manual"
