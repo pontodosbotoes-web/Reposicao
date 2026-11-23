@@ -586,6 +586,7 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
         elements.append(Spacer(1, 4))
         
         df_nf_tab = df_nf_pdf.copy()
+        df_nf_tab = df_nf_tab.sort_values(by="Produto").reset_index(drop=True)  # <-- ADICIONE ESTA LINHA
         df_nf_tab["QtdIdealFilial"] = df_nf_tab["CodigoProduto"].apply(
             lambda cp: (ideals_dict or {}).get((str(cp), cod), 0)
         )
@@ -998,6 +999,7 @@ if "df_transf" in st.session_state:
                 # "Itens desta NF" dentro da aba (com ideal específico da filial)
                 if bloqueado and not df_nf_view.empty:
                     df_nf_tab = df_nf_view.copy()
+                    df_nf_tab = df_nf_tab.sort_values(by="Produto").reset_index(drop=True)  # <-- ADICIONE ESTA LINHA
                     df_nf_tab["QtdIdealFilial"] = df_nf_tab["CodigoProduto"].apply(
                         lambda cp: ideals_dict.get((str(cp), cod), 0)
                     )
