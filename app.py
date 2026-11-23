@@ -24,6 +24,14 @@ from src.transferencia import gerar_sugestoes
 @st.cache_data(ttl=300, show_spinner=False)
 def _compras_recentes_cached(dias_compra: int):
     return carregar_compras_recentes(dias_compra)
+    
+@st.cache_data(ttl=300, show_spinner=False)
+def _transito_cached(data_referencia: str, dias_transito: int):
+    return carregar_transf_em_transito(data_referencia, dias_transito)
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _recebidas_cached(data_referencia: str, dias_reposicao: int):
+    return carregar_transf_recebidas_recentes(data_referencia, dias_reposicao)
 
 
 st.set_page_config(page_title="Reposição de Produtos", layout="wide", page_icon="📊")
@@ -702,18 +710,26 @@ if executar_consulta:
             else:
                 df_base = st.session_state["df_base"]
 
-            with st.spinner("⏳ Calculando sugestões..."):
-                df_transito = carregar_transf_em_transito(data_ref.strftime("%Y-%m-%d"), dias_transito)
-                df_recebidas = carregar_transf_recebidas_recentes(data_ref.strftime("%Y-%m-%d"), anti_gangorra)
-                # Prepara IDs da NF (força fluxo normal no motor)
+            with st.spinner("⚙️ Aplicando regras do motor..."):
+                df_transito = _transito_cached(data_ref.strftime("%Y-%m-%d"), dias_transito)
+                df_recebidas = _recebidas_cached(data_ref.strftime("%Y-%m-%d"), anti_gangorra)
+                
+                # Se uma NF estiver selecionada, prepara filtro por fabricante e IDs
                 forcar_normal_ids = None
+                df_base_motor = df_base
                 if bloqueado:
                     num_nf_pre = str(st.session_state.get("nf_num"))
                     df_nf_pre = compras_recentes[compras_recentes["NumeroNF"].astype(str) == num_nf_pre]
                     forcar_normal_ids = df_nf_pre["IdProduto"].dropna().astype(int).unique().tolist()
+                    
+                    # ⚡ OTIMIZAÇÃO CRÍTICA: filtra a base para apenas os fabricantes da NF
+                    # Isso reduz de 50.000 linhas para ~50-500 (motor roda 100x mais rápido)
+                    fab_nf_pre = df_nf_pre["Fabricante"].dropna().unique().tolist()
+                    if fab_nf_pre:
+                        df_base_motor = df_base[df_base["Fabricante"].isin(fab_nf_pre)].copy()
 
                 df_transf, df_compras, df_demonstracao = gerar_sugestoes(
-                    df_base, df_transito, df_recebidas, cobertura, lead_time, piso, reserva, 
+                    df_base_motor, df_transito, df_recebidas, cobertura, lead_time, piso, reserva, 
                     (atacado_piso == "Sim"), (atacado_reserva == "Sim"), (atacado_min_compra == "Sim"),
                     forcar_normal_ids=forcar_normal_ids
                 )
