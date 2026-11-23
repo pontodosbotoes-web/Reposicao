@@ -21,6 +21,10 @@ from src.db import (
 from src.base import carregar_base, carregar_transf_em_transito, carregar_transf_recebidas_recentes, carregar_compras_recentes
 from src.transferencia import gerar_sugestoes
 
+@st.cache_data(ttl=300, show_spinner=False)
+def _compras_recentes_cached(dias_compra: int):
+    return carregar_compras_recentes(dias_compra)
+
 
 st.set_page_config(page_title="Reposição de Produtos", layout="wide", page_icon="📊")
 
@@ -209,7 +213,7 @@ for k, v in DEFAULTS.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
-compras_recentes = carregar_compras_recentes(st.session_state.get("dias_compra", 30))
+compras_recentes = _compras_recentes_cached(st.session_state.get("dias_compra", 30))
 
 @st.dialog("📦 Últimas Compras", width="large")
 def abrir_modal_compras():
@@ -257,9 +261,10 @@ def abrir_modal_compras():
     if event.selection.rows:
         selected_idx = event.selection.rows[0]
         selected_nf = str(df_display.iloc[selected_idx]["NF"])
-        st.session_state["nf_num"] = selected_nf
-        st.session_state["auto_consultar"] = True
-        st.rerun()
+        if st.session_state.get("nf_num") != selected_nf:
+            st.session_state["nf_num"] = selected_nf
+            st.session_state["auto_consultar"] = True
+            st.rerun()  # <-- Fecha o modal e dispara a consulta
 
 if "show_params" not in st.session_state: st.session_state.show_params = False
 if "view" not in st.session_state: st.session_state["view"] = "calculadora"
@@ -675,21 +680,27 @@ if executar_consulta:
         st.warning("⚠️ Digite um produto ou escolha pelo menos 1 filtro.")
     else:
         try:
-            with st.spinner("⏳ Construindo Base..."):
-                # Recarrega compras recentes com o período atualizado
-                compras_recentes = carregar_compras_recentes(st.session_state.get("dias_compra", 30))
-                
-                df_base = carregar_base(
-                    data_ref.strftime("%Y-%m-%d"), 
-                    lookback, 
-                    fabricante_filtro, 
-                    departamento_filtro, 
-                    grupo_filtro, 
-                    subgrupo_filtro, 
-                    "", 
-                    produto_busca if not bloqueado else ""
-                )
-                st.session_state["df_base"] = df_base
+            # Chave dos filtros atuais (para detectar mudanças)
+            _filtros_hash = (
+                data_ref.strftime("%Y-%m-%d"), lookback,
+                fabricante_filtro, departamento_filtro,
+                grupo_filtro, subgrupo_filtro,
+                produto_busca if not bloqueado else ""
+            )
+            
+            # Só recarrega a base se os filtros mudaram (a query pesada)
+            if st.session_state.get("_filtros_hash") != _filtros_hash or "df_base" not in st.session_state:
+                with st.spinner("⏳ Construindo Base..."):
+                    df_base = carregar_base(
+                        data_ref.strftime("%Y-%m-%d"), lookback,
+                        fabricante_filtro, departamento_filtro,
+                        grupo_filtro, subgrupo_filtro, "",
+                        produto_busca if not bloqueado else ""
+                    )
+                    st.session_state["df_base"] = df_base
+                    st.session_state["_filtros_hash"] = _filtros_hash
+            else:
+                df_base = st.session_state["df_base"]
 
             with st.spinner("⏳ Calculando sugestões..."):
                 df_transito = carregar_transf_em_transito(data_ref.strftime("%Y-%m-%d"), dias_transito)
