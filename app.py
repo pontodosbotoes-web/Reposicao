@@ -362,15 +362,6 @@ with b5:
 with b6:
     btn_pdf_global = st.button("📄 Gerar PDF", use_container_width=True, disabled=(filial_pdf is None), key="btn_pdf")
 
-if st.session_state.get("nf_num"):
-    c_success, c_clear = st.columns([5, 1])
-    with c_success:
-        st.success(f"✅ Compra selecionada: **NF {st.session_state['nf_num']}**")
-    with c_clear:
-        if st.button("Limpar Seleção", key="btn_limpar_selecao_nf", use_container_width=True):
-            st.session_state["nf_num"] = None
-            st.rerun()
-
 if produto_busca and produto_busca.strip() and not bloqueado:
     st.markdown(
         '<div style="background-color: rgba(59,130,246,0.12); border-left: 3px solid #3B82F6; padding: 6px 12px; margin-top: 8px; border-radius: 4px; font-size: 0.85rem; color: #93C5FD;">'
@@ -921,7 +912,7 @@ if "df_transf" in st.session_state:
                     df_nf_tab_display["QTD COMPRADA"] = df_nf_tab_display["QTD COMPRADA"].map(fmt_qtd)
                     df_nf_tab_display["QTD IDEAL"] = df_nf_tab_display["QTD IDEAL"].map(fmt_qtd)
 
-                    with st.expander(f"📋 Itens desta NF ({len(df_nf_tab)} itens)", expanded=False):
+                    with st.expander(f"📋 Itens da NF {st.session_state['nf_num']} ({len(df_nf_tab)} itens)", expanded=False):
                         st.dataframe(df_nf_tab_display, use_container_width=True, hide_index=True)
 
                 df_env_all = df[df["CodigoFilialOrigem"] == cod].copy().reset_index(drop=True)
