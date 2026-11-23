@@ -516,27 +516,27 @@ def gerar_pdf_filial(nome_filial, cod, df, df_compras, df_demonstracao, nome_per
         
         if tipo == "ENV":
             heads = ["#", "PRI.", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "TRANS.", "RES.", "IDEAL", "MOTIVO"]
-            widths = [28, 34, 45, 180, 30, 100, 55, 55, 36, 40, 40, 36, 170]
+            widths = [28, 34, 45, 150, 30, 100, 55, 55, 36, 40, 40, 36, 160] # Soma: 809
             mapper = lambda r: [(r["#"], "C"), (r["Prioridade"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["ReservaOrigem"]), "R"), (fmt_qtd(r["Qtd Ideal"]), "R"), (str(r["Motivo"]).upper(), "L")]
         
         elif tipo == "REC":
             heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "TRANS.", "DIAS", "IDEAL", "MOTIVO"]
-            widths = [28, 45, 184, 30, 120, 55, 55, 36, 40, 40, 36, 180]
+            widths = [28, 45, 154, 30, 120, 55, 55, 36, 40, 40, 36, 170] # Soma: 809
             mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (int(r["QtdEmTransito"]), "R"), (int(r["DiasAteZerarDestino"]) if pd.notna(r["DiasAteZerarDestino"]) else 0, "R"), (fmt_qtd(r["Qtd Ideal"]), "R"), (str(r["Motivo"]).upper(), "L")]
 
         elif tipo == "COMP":
             if cod == 5:
                 heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN.", "MOTIVO"]
-                widths = [28, 45, 180, 30, 95, 50, 40, 50, 50, 60, 150]
+                widths = [28, 45, 180, 30, 95, 50, 40, 50, 50, 60, 150] # Soma: 778
                 mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (fmt_qtd(r["QtdSugerida"]), "R"), (f"R$ {r['Custo']:.2f}", "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (str(r["Motivo"]).upper(), "L")]
             else:
                 heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "VELOCIDADE", "IDEAL", "SUGESTÃO", "CUSTO", "RETORNO FIN.", "MOTIVO"]
-                widths = [28, 45, 160, 30, 110, 50, 40, 50, 50, 60, 150]
+                widths = [28, 45, 180, 30, 95, 50, 40, 50, 50, 60, 150]
                 mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (f"{r['Velocidade']:.2f}", "R"), (int(r["Ideal"]), "R"), (fmt_qtd(r["QtdSugerida"]), "R"), (f"R$ {r['Custo']:.2f}", "R"), (f"R$ {r['RetornoFinanceiro']:.2f}", "R"), (str(r["Motivo"]).upper(), "L")]
 
         elif tipo == "DEM":
             heads = ["#", "COD", "PRODUTO", "EMB.", "FABRICANTE", "ORIGEM", "DESTINO", "QTD", "MOTIVO"]
-            widths = [28, 45, 190, 30, 105, 60, 85, 50, 195]
+            widths = [28, 45, 190, 30, 105, 60, 85, 50, 195] # Soma: 788
             mapper = lambda r: [(r["#"], "C"), (r["CodigoProduto"], "C"), (r["Produto"], "L"), (r["Embalagem"], "C"), (r["Fabricante"], "L"), (r["NomeFilialOrigem"], "C"), (r["NomeFilialDestino"], "C"), (fmt_qtd(r["QtdTransferir"]), "R"), (str(r["Motivo"]).upper(), "L")]
 
         data = [[Paragraph(h, header_style) for h in heads]]
